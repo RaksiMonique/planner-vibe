@@ -1304,10 +1304,23 @@ function initializeApp() {
     // Sidebar Toggle for Mobile
     const toggleBtn = document.getElementById('sidebar-toggle');
     if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
+        toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent document click from immediately closing it
             document.getElementById('sidebar').classList.toggle('active');
         });
     }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+        const sidebar = document.getElementById('sidebar');
+        const toggleBtn = document.getElementById('sidebar-toggle');
+        
+        if (window.innerWidth < 768 && sidebar.classList.contains('active')) {
+            if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+                sidebar.classList.remove('active');
+            }
+        }
+    });
 
     showSection('dashboard'); // Show initial section
 }

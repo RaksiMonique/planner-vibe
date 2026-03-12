@@ -20,6 +20,8 @@
             <a class="nav-link" href="#" data-section="habits"><i class="bi bi-check2-circle me-2"></i> Habit Tracker</a>
             <a class="nav-link" href="#" data-section="segments"><i class="bi bi-pie-chart me-2"></i> Life Segments</a>
             <a class="nav-link" href="#" data-section="meals"><i class="bi bi-egg-fried me-2"></i> Meal Planner</a>
+            <a class="nav-link" href="#" data-section="journal"><i class="bi bi-pencil-square me-2"></i> Journal</a>
+            <a class="nav-link" href="#" data-section="quotes"><i class="bi bi-chat-quote me-2"></i> Quotes</a>
         </nav>
         <div class="mt-auto pt-4 border-top border-secondary-subtle">
             <a class="nav-link" href="#" onclick="importData()"><i class="bi bi-upload me-2"></i> Import Data</a>
@@ -28,14 +30,17 @@
     </div>
 
     <div id="page-content">
-        <header class="bg-white shadow-sm p-3 d-flex justify-content-between align-items-center">
-            <h4 id="section-title" class="m-0">Dashboard</h4>
-            <form id="quick-add-task-form" class="input-group w-50 d-none">
+        <header class="bg-white shadow-sm p-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div class="d-flex align-items-center">
+                <button class="btn btn-link text-dark d-md-none me-2 p-0 text-decoration-none" id="sidebar-toggle"><i class="bi bi-list fs-2"></i></button>
+                <h4 id="section-title" class="m-0">Dashboard</h4>
+            </div>
+            <form id="quick-add-task-form" class="input-group d-none flex-grow-1 mx-md-4 order-3 order-md-2 w-100 w-md-auto mt-2 mt-md-0">
                 <input type="text" class="form-control" id="quick-add-task-input" placeholder="Add a task for today...">
                 <button class="btn btn-primary" type="submit">Quick Add</button>
             </form>
-            <div class="text-end" style="min-width: 150px;">
-                <div id="current-date" class="text-muted"></div>
+            <div class="text-end order-2 order-md-3">
+                <div id="current-date" class="text-muted small"></div>
             </div>
         </header>
 
@@ -269,6 +274,53 @@
                 <div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" onclick="saveBibleStudy()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quote Modal -->
+<div class="modal fade" id="quoteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="quoteModalTitle">Add Quote</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quoteForm">
+                    <input type="hidden" id="quoteId">
+                    <div class="mb-3">
+                        <label for="quoteText" class="form-label">Quote</label>
+                        <textarea class="form-control" id="quoteText" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="quoteSource" class="form-label">Source (Book/Movie/Song Title)</label>
+                        <input type="text" class="form-control" id="quoteSource" required>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="quoteAuthor" class="form-label">Author/Speaker</label>
+                            <input type="text" class="form-control" id="quoteAuthor">
+                        </div>
+                        <div class="col">
+                            <label for="quoteType" class="form-label">Type</label>
+                            <select class="form-select" id="quoteType">
+                                <option value="Book">Book</option>
+                                <option value="Movie">Movie</option>
+                                <option value="Song">Song</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-danger" id="deleteQuoteBtn" onclick="deleteQuote()" style="display:none;">Delete</button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveQuote()">Save</button>
                 </div>
             </div>
         </div>

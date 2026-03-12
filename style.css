@@ -48,6 +48,10 @@ body {
     position: fixed;
     background-color: var(--bs-dark);
     color: white;
+    left: 0;
+    top: 0;
+    z-index: 1050;
+    transition: margin-left 0.3s ease-in-out;
 }
 
 #sidebar .nav-link {
@@ -67,6 +71,7 @@ body {
 #page-content {
     margin-left: var(--sidebar-width);
     width: calc(100% - var(--sidebar-width));
+    transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out;
 }
 
 .card {
@@ -204,4 +209,26 @@ a:hover {
 
 .fade-in {
     animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    #sidebar {
+        margin-left: calc(-1 * var(--sidebar-width));
+    }
+
+    #sidebar.active {
+        margin-left: 0;
+        box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+    }
+
+    #page-content {
+        margin-left: 0;
+        width: 100%;
+    }
+
+    /* Allow calendar to scroll horizontally on small screens */
+    .calendar-grid {
+        min-width: 600px;
+    }
 }

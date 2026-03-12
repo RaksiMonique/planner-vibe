@@ -6,8 +6,20 @@ let state = JSON.parse(localStorage.getItem('secondBrainData')) || {
     segments: { God: [], Finance: [], Health: [], Leisure: [], Business: [] },
     routines: { morning: [], evening: [] },
     recipes: [],
-    mealPlan: {}
+    mealPlan: {},
+    journal: {},
+    quotes: []
 };
+
+// Ensure journal object exists for backward compatibility with old data
+if (!state.journal) {
+    state.journal = {};
+}
+
+// Ensure quotes array exists for backward compatibility with old data
+if (!state.quotes) {
+    state.quotes = [];
+}
 
 const saveState = () => localStorage.setItem('secondBrainData', JSON.stringify(state));
 
@@ -52,7 +64,17 @@ function importData() {
         reader.onload = readerEvent => {
             try {
                 const importedState = JSON.parse(readerEvent.target.result);
+
+                // Add default for journal if missing for backward compatibility
+                if (!importedState.journal) {
+                    importedState.journal = {};
+                }
                 
+                // Add default for quotes if missing
+                if (!importedState.quotes) {
+                    importedState.quotes = [];
+                }
+
                 // Basic validation
                 const requiredKeys = ['tasks', 'bibleStudies', 'habits', 'segments', 'recipes', 'mealPlan'];
                 const hasAllKeys = requiredKeys.every(key => key in importedState);
@@ -127,6 +149,8 @@ function showSection(section) {
         case 'habits': renderHabits(container); break;
         case 'segments': renderSegments(container); break;
         case 'meals': renderMeals(container); break;
+        case 'journal': renderJournal(container); break;
+        case 'quotes': renderQuotes(container); break;
     }
 
     // Trigger Animation
@@ -491,8 +515,10 @@ function renderCalendar(container) {
                     <button class="btn btn-outline-secondary btn-sm" onclick="changeMonth(1)"><i class="bi bi-chevron-right"></i></button>
                 </div>
             </div>
-            <div class="calendar-grid">
-                ${gridHtml}
+            <div class="overflow-auto">
+                <div class="calendar-grid">
+                    ${gridHtml}
+                </div>
             </div>
         </div>
     `;
@@ -995,6 +1021,206 @@ function renderBibleStudy(container) {
     `;
 }
 
+// --- COMPONENT: JOURNAL ---
+function saveJournalEntry() {
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const content = document.getElementById('journal-entry-today').value;
+
+    if (content.trim() === '') {
+        if (state.journal[todayStr]) {
+            delete state.journal[todayStr];
+        }
+    } else {
+        state.journal[todayStr] = content;
+    }
+
+    saveState();
+    showToast('Journal entry saved!');
+
+    const saveBtn = document.getElementById('save-journal-btn');
+    saveBtn.disabled = true;
+    saveBtn.innerText = 'Saved!';
+}
+
+function renderJournal(container) {
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const todaysEntry = state.journal[todayStr] || '';
+
+    const pastEntries = Object.keys(state.journal)
+        .filter(date => date !== todayStr)
+        .sort((a, b) => new Date(b) - new Date(a));
+
+    container.innerHTML = `
+        <div class="row g-4">
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="m-0">Today's Journal - ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</h5>
+                    </div>
+                    <div class="card-body">
+                        <textarea id="journal-entry-today" class="form-control" rows="12" placeholder="What's on your mind?"></textarea>
+                    </div>
+                    <div class="card-footer text-end">
+                        <button id="save-journal-btn" class="btn btn-primary" onclick="saveJournalEntry()">Save Entry</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="m-0"><i class="bi bi-clock-history"></i> Past Entries</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                        ${pastEntries.length > 0 ? `
+                            <div class="accordion accordion-flush" id="past-entries-accordion">
+                                ${pastEntries.map((date, index) => `
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header" id="heading-${index}">
+                                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse-${index}">
+                                                ${new Date(date + 'T00:00:00').toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                            </button>
+                                        </h2>
+                                        <div id="collapse-${index}" class="accordion-collapse collapse" data-bs-parent="#past-entries-accordion">
+                                            <div class="accordion-body small" style="white-space: pre-wrap;">${state.journal[date]}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        ` : '<p class="text-muted fst-italic">No past journal entries found.</p>'}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add a listener to the textarea to enable the save button on input
+    const textarea = document.getElementById('journal-entry-today');
+    const saveBtn = document.getElementById('save-journal-btn');
+    if (textarea && saveBtn) {
+        textarea.value = todaysEntry; // Set value safely via JS
+        textarea.addEventListener('input', () => {
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Save Entry';
+        });
+    }
+}
+
+// --- COMPONENT: QUOTES ---
+function openQuoteModal(quoteId = null) {
+    const modalEl = document.getElementById('quoteModal');
+    const modalTitle = document.getElementById('quoteModalTitle');
+    const deleteBtn = document.getElementById('deleteQuoteBtn');
+    document.getElementById('quoteForm').reset();
+
+    if (quoteId) {
+        const quote = state.quotes.find(q => q.id === quoteId);
+        if (!quote) return;
+
+        modalTitle.innerText = 'Edit Quote';
+        deleteBtn.style.display = 'block';
+        
+        document.getElementById('quoteId').value = quote.id;
+        document.getElementById('quoteText').value = quote.text;
+        document.getElementById('quoteSource').value = quote.source;
+        document.getElementById('quoteAuthor').value = quote.author || '';
+        document.getElementById('quoteType').value = quote.type;
+    } else {
+        modalTitle.innerText = 'Add Quote';
+        deleteBtn.style.display = 'none';
+        document.getElementById('quoteId').value = '';
+    }
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+function saveQuote() {
+    const id = document.getElementById('quoteId').value;
+    const text = document.getElementById('quoteText').value;
+    const source = document.getElementById('quoteSource').value;
+    
+    if (!text || !source) {
+        showToast('Quote text and source are required.', 'error');
+        return;
+    }
+
+    const quoteData = {
+        id: id ? parseInt(id) : Date.now(),
+        text: text,
+        source: source,
+        author: document.getElementById('quoteAuthor').value,
+        type: document.getElementById('quoteType').value
+    };
+
+    if (id) {
+        const index = state.quotes.findIndex(q => q.id == id);
+        if (index !== -1) state.quotes[index] = quoteData;
+    } else {
+        state.quotes.push(quoteData);
+    }
+
+    saveState();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('quoteModal'));
+    if (modal) modal.hide();
+    showToast('Quote saved!');
+    renderQuotes(document.getElementById('main-render'));
+}
+
+function deleteQuote() {
+    const id = parseInt(document.getElementById('quoteId').value);
+    if (confirm('Delete this quote?')) {
+        state.quotes = state.quotes.filter(q => q.id !== id);
+        saveState();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('quoteModal'));
+        if (modal) modal.hide();
+        showToast('Quote deleted.');
+        renderQuotes(document.getElementById('main-render'));
+    }
+}
+
+function renderQuotes(container) {
+    const quotes = state.quotes;
+    const icons = {
+        Book: 'bi-book',
+        Movie: 'bi-film',
+        Song: 'bi-music-note-beamed',
+        Other: 'bi-chat-quote'
+    };
+
+    container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4>Media Quotes</h4>
+            <button class="btn btn-primary" onclick="openQuoteModal()">
+                <i class="bi bi-plus-lg"></i> Add Quote
+            </button>
+        </div>
+        <div class="row g-4">
+            ${quotes.map(q => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <figure class="mb-0">
+                                <blockquote class="blockquote">
+                                    <p class="fs-6">"${q.text}"</p>
+                                </blockquote>
+                                <figcaption class="blockquote-footer mb-0">
+                                    ${q.author ? `${q.author} in ` : ''} <cite title="Source">${q.source}</cite>
+                                </figcaption>
+                            </figure>
+                        </div>
+                        <div class="card-footer d-flex justify-content-between align-items-center text-muted small">
+                            <span><i class="bi ${icons[q.type]} me-1"></i> ${q.type}</span>
+                            <button class="btn btn-link btn-sm p-0 text-secondary" onclick="openQuoteModal(${q.id})">Edit</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('') || '<div class="col-12"><p class="text-muted fst-italic">No quotes added yet.</p></div>'}
+        </div>
+    `;
+}
+
 // --- HELPER FUNCTIONS ---
 function calculateTotalProgress() {
     let total = 0, completed = 0;
@@ -1062,12 +1288,26 @@ function initializeApp() {
             const section = link.dataset.section;
             if (section) {
                 showSection(section);
+                
+                // Auto-close sidebar on mobile
+                const sidebar = document.getElementById('sidebar');
+                if (window.innerWidth < 768 && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
             }
         });
     });
 
     // Setup Quick Add form
     document.getElementById('quick-add-task-form').addEventListener('submit', quickAddTask);
+
+    // Sidebar Toggle for Mobile
+    const toggleBtn = document.getElementById('sidebar-toggle');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('active');
+        });
+    }
 
     showSection('dashboard'); // Show initial section
 }

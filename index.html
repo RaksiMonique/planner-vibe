@@ -18,6 +18,7 @@
             <a class="nav-link" href="#" data-section="calendar"><i class="bi bi-calendar3 me-2"></i> Calendar & Tasks</a>
             <a class="nav-link" href="#" data-section="bible"><i class="bi bi-book me-2"></i> Bible Study</a>
             <a class="nav-link" href="#" data-section="habits"><i class="bi bi-check2-circle me-2"></i> Habit Tracker</a>
+            <a class="nav-link" href="#" data-section="studies"><i class="bi bi-mortarboard me-2"></i> Study Tracker</a>
             <a class="nav-link" href="#" data-section="segments"><i class="bi bi-pie-chart me-2"></i> Life Segments</a>
             <a class="nav-link" href="#" data-section="meals"><i class="bi bi-egg-fried me-2"></i> Meal Planner</a>
             <a class="nav-link" href="#" data-section="journal"><i class="bi bi-pencil-square me-2"></i> Journal</a>
@@ -37,6 +38,7 @@
             </div>
             <form id="quick-add-task-form" class="input-group d-none flex-grow-1 mx-md-4 order-3 order-md-2 w-100 w-md-auto mt-2 mt-md-0">
                 <input type="text" class="form-control" id="quick-add-task-input" placeholder="Add a task for today...">
+                <button class="btn btn-outline-secondary d-none d-md-block" type="button" onclick="openDetailedTaskModal()" title="Edit Details"><i class="bi bi-sliders"></i></button>
                 <button class="btn btn-primary" type="submit">Quick Add</button>
             </form>
             <div class="text-end order-2 order-md-3">
@@ -151,6 +153,43 @@
                     <button type="button" class="btn btn-primary" onclick="updateTask()">Save Changes</button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Routines Modal -->
+<div class="modal fade" id="routinesModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Daily Routines</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-sun"></i> Morning Routine</h6>
+                        <ul class="list-group mb-3" id="morning-routines-container">
+                            <!-- Morning items will be rendered here -->
+                        </ul>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="morning-routine-input" placeholder="Add morning item...">
+                            <button class="btn btn-outline-primary" type="button" onclick="addRoutineItem('morning')">Add</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-moon-stars"></i> Evening Routine</h6>
+                        <ul class="list-group mb-3" id="evening-routines-container">
+                            <!-- Evening items will be rendered here -->
+                        </ul>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="evening-routine-input" placeholder="Add evening item...">
+                            <button class="btn btn-outline-primary" type="button" onclick="addRoutineItem('evening')">Add</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal" onclick="showSection('dashboard')">Done</button></div>
         </div>
     </div>
 </div>
@@ -274,6 +313,59 @@
                 <div>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn btn-primary" onclick="saveBibleStudy()">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- General Study Modal -->
+<div class="modal fade" id="generalStudyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="generalStudyModalTitle">Add Study Subject</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="generalStudyForm">
+                    <input type="hidden" id="generalStudyId">
+                    <div class="mb-3">
+                        <label for="generalStudyTitle" class="form-label">Subject / Course Title</label>
+                        <input type="text" class="form-control" id="generalStudyTitle" required placeholder="e.g. CS101, Spanish, AWS Cert">
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col">
+                            <label for="generalStudyCategory" class="form-label">Category</label>
+                            <select class="form-select" id="generalStudyCategory">
+                                <option value="University">University</option>
+                                <option value="Certification">Certification</option>
+                                <option value="Language">Language</option>
+                                <option value="Skill">Skill / Hobby</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col">
+                            <label for="generalStudyDeadline" class="form-label">Target Date</label>
+                            <input type="date" class="form-control" id="generalStudyDeadline">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="generalStudyProgress" class="form-label">Progress</label>
+                        <input type="range" class="form-range" id="generalStudyProgress" min="0" max="100" step="5" oninput="this.nextElementSibling.value = this.value + '%'">
+                        <output class="fw-bold text-primary">0%</output>
+                    </div>
+                    <div class="mb-3">
+                        <label for="generalStudyNotes" class="form-label">Notes / Next Step</label>
+                        <textarea class="form-control" id="generalStudyNotes" rows="3" placeholder="Current topic, chapter, or next assignment..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn btn-danger" id="deleteGeneralStudyBtn" onclick="deleteGeneralStudy()" style="display:none;">Delete</button>
+                <div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="saveGeneralStudy()">Save</button>
                 </div>
             </div>
         </div>

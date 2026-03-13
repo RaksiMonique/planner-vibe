@@ -8,7 +8,8 @@ let state = JSON.parse(localStorage.getItem('secondBrainData')) || {
     recipes: [],
     mealPlan: {},
     journal: {},
-    quotes: []
+    quotes: [],
+    studies: []
 };
 
 // Ensure journal object exists for backward compatibility with old data
@@ -19,6 +20,16 @@ if (!state.journal) {
 // Ensure quotes array exists for backward compatibility with old data
 if (!state.quotes) {
     state.quotes = [];
+}
+
+// Ensure studies array exists for backward compatibility with old data
+if (!state.studies) {
+    state.studies = [];
+}
+
+// Ensure routines object exists for backward compatibility with old data
+if (!state.routines) {
+    state.routines = { morning: [], evening: [] };
 }
 
 const saveState = () => localStorage.setItem('secondBrainData', JSON.stringify(state));
@@ -75,6 +86,16 @@ function importData() {
                     importedState.quotes = [];
                 }
 
+                // Add default for studies if missing
+                if (!importedState.studies) {
+                    importedState.studies = [];
+                }
+
+                // Add default for routines if missing
+                if (!importedState.routines) {
+                    importedState.routines = { morning: [], evening: [] };
+                }
+
                 // Basic validation
                 const requiredKeys = ['tasks', 'bibleStudies', 'habits', 'segments', 'recipes', 'mealPlan'];
                 const hasAllKeys = requiredKeys.every(key => key in importedState);
@@ -108,10 +129,13 @@ function quickAddTask(event) {
 
     if (!title) return;
 
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
     const newTask = {
         id: Date.now(),
         title: title,
-        dueDate: new Date().toISOString().split('T')[0], // Today's date
+        dueDate: todayStr,
         priority: 3, // Medium priority
         segment: '',
         completed: false
@@ -119,14 +143,31 @@ function quickAddTask(event) {
 
     state.tasks.push(newTask);
     saveState();
-    input.value = ''; // Clear input
-    renderDashboard(document.getElementById('main-render')); // Refresh dashboard
-    
+    input.value = '';
+
     const originalPlaceholder = input.placeholder;
     input.placeholder = "Task added!";
+    showSection('dashboard'); // Refresh the dashboard view
     setTimeout(() => {
         input.placeholder = originalPlaceholder;
     }, 2000);
+}
+
+// --- DETAILED QUICK ADD ---
+function openDetailedTaskModal() {
+    const input = document.getElementById('quick-add-task-input');
+    const title = input.value.trim();
+    
+    document.getElementById('addTaskForm').reset();
+    document.getElementById('taskTitle').value = title;
+    
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    document.getElementById('taskDate').value = todayStr;
+    
+    const modal = new bootstrap.Modal(document.getElementById('addTaskModal'));
+    modal.show();
+    input.value = '';
 }
 
 // --- NAVIGATION ---
@@ -151,6 +192,7 @@ function showSection(section) {
         case 'meals': renderMeals(container); break;
         case 'journal': renderJournal(container); break;
         case 'quotes': renderQuotes(container); break;
+        case 'studies': renderStudies(container); break;
     }
 
     // Trigger Animation
@@ -176,7 +218,8 @@ function renderDashboard(container) {
         .sort((a, b) => b.priority - a.priority || new Date(a.dueDate) - new Date(b.dueDate))
         .slice(0, 8);
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const d = new Date();
+    const todayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const todaysEvents = state.tasks.filter(t => t.dueDate === todayStr);
 
     container.innerHTML = `
@@ -234,7 +277,10 @@ function renderDashboard(container) {
                     </ul>
                 </div>
                 <div class="card p-4 bg-light border-0">
-                    <h5>Daily Routines</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="m-0">Daily Routines</h5>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="openRoutinesModal()"><i class="bi bi-pencil"></i> Edit</button>
+                    </div>
                     <div class="mt-3">
                         <h6><i class="bi bi-sun"></i> Morning</h6>
                         <ul class="ps-3 mb-4">${state.routines.morning.length > 0 ? state.routines.morning.map(r => `<li>${r}</li>`).join('') : '<li class="text-muted fst-italic list-unstyled">Add morning tasks...</li>'}</ul>
@@ -245,6 +291,48 @@ function renderDashboard(container) {
             </div>
         </div>
     `;
+}
+
+function openRoutinesModal() {
+    const morningContainer = document.getElementById('morning-routines-container');
+    const eveningContainer = document.getElementById('evening-routines-container');
+
+    const renderList = (container, type) => {
+        container.innerHTML = state.routines[type].map((item, index) => `
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                ${item}
+                <button class="btn btn-sm btn-outline-danger" onclick="deleteRoutineItem('${type}', ${index})"><i class="bi bi-trash"></i></button>
+            </li>
+        `).join('');
+    };
+
+    renderList(morningContainer, 'morning');
+    renderList(eveningContainer, 'evening');
+
+    const modal = new bootstrap.Modal(document.getElementById('routinesModal'));
+    modal.show();
+}
+
+function addRoutineItem(type) {
+    const input = document.getElementById(`${type}-routine-input`);
+    const text = input.value.trim();
+    if (text) {
+        state.routines[type].push(text);
+        saveState();
+        input.value = '';
+        // Re-render the modal content to show the new item
+        openRoutinesModal();
+    }
+}
+
+function deleteRoutineItem(type, index) {
+    const itemText = state.routines[type][index];
+    if (confirm(`Are you sure you want to delete "${itemText}"?`)) {
+        state.routines[type].splice(index, 1);
+        saveState();
+        // Re-render the modal content to reflect the deletion
+        openRoutinesModal();
+    }
 }
 
 function toggleTask(taskId) {
@@ -275,7 +363,7 @@ function addHabitPrompt() {
         logs: []
     });
     saveState();
-    renderHabits(document.getElementById('main-render'));
+    showSection('habits');
 }
 
 function logHabit(habitIndex) {
@@ -291,7 +379,7 @@ function logHabit(habitIndex) {
 
     habit.logs.push(Date.now());
     saveState();
-    renderHabits(document.getElementById('main-render'));
+    showSection('habits');
 }
 
 function undoLastHabitLog(habitIndex) {
@@ -299,7 +387,7 @@ function undoLastHabitLog(habitIndex) {
     if (habit && habit.logs.length > 0) {
         habit.logs.pop();
         saveState();
-        renderHabits(document.getElementById('main-render'));
+        showSection('habits');
     }
 }
 
@@ -307,7 +395,7 @@ function deleteHabit(habitIndex) {
     if (confirm(`Are you sure you want to delete the habit "${state.habits[habitIndex].name}"?`)) {
         state.habits.splice(habitIndex, 1);
         saveState();
-        renderHabits(document.getElementById('main-render'));
+        showSection('habits');
     }
 }
 
@@ -399,7 +487,8 @@ function saveNewTask() {
     document.getElementById('addTaskForm').reset();
 
     showToast('Task added successfully!');
-    renderCalendar(document.getElementById('main-render'));
+    const activeSection = document.querySelector('#sidebar .nav-link.active').dataset.section || 'calendar';
+    showSection(activeSection);
 }
 
 function openEditTaskModal(taskId) {
@@ -532,22 +621,25 @@ function addGoal(segment) {
     
     state.segments[segment].push({ text, done: false });
     saveState();
-    renderSegments(document.getElementById('main-render'));
+    showSection('segments');
 }
 
 function toggleGoal(segment, index) {
     state.segments[segment][index].done = !state.segments[segment][index].done;
     saveState();
-    renderSegments(document.getElementById('main-render'));
+    showSection('segments');
 }
 
 function deleteGoal(segment, index) {
-    state.segments[segment].splice(index, 1);
-    saveState();
-    renderSegments(document.getElementById('main-render'));
+    const goalText = state.segments[segment][index].text;
+    if (confirm(`Are you sure you want to delete the goal "${goalText}"?`)) {
+        state.segments[segment].splice(index, 1);
+        saveState();
+        showSection('segments');
+    }
 }
 
-function renderSegments(container) {
+function renderSegments(container) {    
     const segments = Object.keys(state.segments);
     
     let html = '<div class="row g-4">';
@@ -583,17 +675,17 @@ function renderSegments(container) {
                             ${goals.map((g, i) => `
                                 <li class="list-group-item d-flex align-items-center px-0">
                                     <input class="form-check-input me-2" type="checkbox" 
-                                        ${g.done ? 'checked' : ''} 
-                                        onchange="toggleGoal('${segment}', ${i})">
+                                        ${g.done ? 'checked' : ''}
+                                        data-action="toggle-goal" data-segment="${segment}" data-index="${i}">
                                     <span class="${g.done ? 'text-decoration-line-through text-muted' : ''} flex-grow-1">${g.text}</span>
-                                    <button class="btn btn-sm text-danger" onclick="deleteGoal('${segment}', ${i})"><i class="bi bi-trash"></i></button>
+                                    <button class="btn btn-sm text-danger" data-action="delete-goal" data-segment="${segment}" data-index="${i}"><i class="bi bi-trash"></i></button>
                                 </li>
                             `).join('') || '<li class="list-group-item text-muted fst-italic px-0">No goals set yet.</li>'}
                         </ul>
 
                         <div class="input-group">
                             <input type="text" class="form-control form-control-sm" id="input-${segment}" placeholder="New goal...">
-                            <button class="btn btn-outline-secondary btn-sm" type="button" onclick="addGoal('${segment}')">Add</button>
+                            <button class="btn btn-outline-secondary btn-sm" type="button" data-action="add-goal" data-segment="${segment}">Add</button>
                         </div>
                     </div>
                 </div>
@@ -603,6 +695,25 @@ function renderSegments(container) {
     
     html += '</div>';
     container.innerHTML = html;
+
+    // Add event listeners after rendering for stability
+    container.querySelectorAll('[data-action="add-goal"]').forEach(button => {
+        button.addEventListener('click', () => {
+            addGoal(button.dataset.segment);
+        });
+    });
+
+    container.querySelectorAll('[data-action="toggle-goal"]').forEach(checkbox => {
+        checkbox.addEventListener('change', () => {
+            toggleGoal(checkbox.dataset.segment, checkbox.dataset.index);
+        });
+    });
+
+    container.querySelectorAll('[data-action="delete-goal"]').forEach(button => {
+        button.addEventListener('click', () => {
+            deleteGoal(button.dataset.segment, button.dataset.index);
+        });
+    });
 }
 
 // --- COMPONENT: MEAL PLANNER ---
@@ -613,7 +724,7 @@ function planMeal(date, recipeId) {
         delete state.mealPlan[date];
     }
     saveState();
-    renderMeals(document.getElementById('main-render'));
+    showSection('meals');
 }
 
 function openRecipeModal(recipeId = null) {
@@ -710,7 +821,7 @@ function saveRecipe() {
     if (modal) modal.hide();
 
     showToast('Recipe saved!');
-    renderMeals(document.getElementById('main-render'));
+    showSection('meals');
 }
 
 function deleteRecipe() {
@@ -734,7 +845,7 @@ function deleteRecipe() {
     if (modal) modal.hide();
 
     showToast('Recipe deleted.');
-    renderMeals(document.getElementById('main-render'));
+    showSection('meals');
 }
 
 function renderMeals(container) {
@@ -940,7 +1051,7 @@ function saveBibleStudy() {
     const modal = bootstrap.Modal.getInstance(document.getElementById('bibleStudyModal'));
     if (modal) modal.hide();
     showToast('Bible study saved!');
-    renderBibleStudy(document.getElementById('main-render'));
+    showSection('bible');
 }
 
 function deleteBibleStudy() {
@@ -951,7 +1062,7 @@ function deleteBibleStudy() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('bibleStudyModal'));
         if (modal) modal.hide();
         showToast('Bible study deleted.');
-        renderBibleStudy(document.getElementById('main-render'));
+        showSection('bible');
     }
 }
 
@@ -961,7 +1072,7 @@ function logStudySession(id) {
         study.lastUpdate = Date.now();
         saveState();
         showToast('Session logged!');
-        renderBibleStudy(document.getElementById('main-render'));
+        showSection('bible');
     }
 }
 
@@ -1017,6 +1128,134 @@ function renderBibleStudy(container) {
                 ${completed.map(createCard).join('')}
             </div>
         ` : ''}
+        </div>
+    `;
+}
+
+// --- COMPONENT: STUDY TRACKER (GENERAL) ---
+function openGeneralStudyModal(id = null) {
+    const modalEl = document.getElementById('generalStudyModal');
+    const modalTitle = document.getElementById('generalStudyModalTitle');
+    const deleteBtn = document.getElementById('deleteGeneralStudyBtn');
+    const form = document.getElementById('generalStudyForm');
+    
+    form.reset();
+    // Reset output for range input
+    const output = document.querySelector('#generalStudyProgress + output');
+    if (output) output.value = '0%';
+
+    if (id) {
+        const s = state.studies.find(s => s.id === id);
+        if (!s) return;
+
+        modalTitle.innerText = 'Edit Study Subject';
+        deleteBtn.style.display = 'block';
+        
+        document.getElementById('generalStudyId').value = s.id;
+        document.getElementById('generalStudyTitle').value = s.title;
+        document.getElementById('generalStudyCategory').value = s.category;
+        document.getElementById('generalStudyDeadline').value = s.deadline || '';
+        document.getElementById('generalStudyProgress').value = s.progress;
+        if (output) output.value = s.progress + '%';
+        document.getElementById('generalStudyNotes').value = s.notes;
+    } else {
+        modalTitle.innerText = 'Add Study Subject';
+        deleteBtn.style.display = 'none';
+        document.getElementById('generalStudyId').value = '';
+    }
+
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+function saveGeneralStudy() {
+    const id = document.getElementById('generalStudyId').value;
+    const title = document.getElementById('generalStudyTitle').value;
+
+    if (!title) {
+        showToast('Subject title is required', 'error');
+        return;
+    }
+
+    const data = {
+        id: id ? parseInt(id) : Date.now(),
+        title: title,
+        category: document.getElementById('generalStudyCategory').value,
+        deadline: document.getElementById('generalStudyDeadline').value,
+        progress: parseInt(document.getElementById('generalStudyProgress').value),
+        notes: document.getElementById('generalStudyNotes').value
+    };
+
+    if (id) {
+        const idx = state.studies.findIndex(s => s.id == id);
+        if (idx !== -1) state.studies[idx] = data;
+    } else {
+        state.studies.push(data);
+    }
+
+    saveState();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('generalStudyModal'));
+    if (modal) modal.hide();
+    showToast('Study saved!');
+    showSection('studies');
+}
+
+function deleteGeneralStudy() {
+    const id = parseInt(document.getElementById('generalStudyId').value);
+    if (confirm('Delete this subject?')) {
+        state.studies = state.studies.filter(s => s.id !== id);
+        saveState();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('generalStudyModal'));
+        if (modal) modal.hide();
+        showToast('Study deleted.');
+        showSection('studies');
+    }
+}
+
+function renderStudies(container) {
+    const studies = state.studies || [];
+    
+    // Calculate urgency for deadline
+    const getDeadlineClass = (dateStr) => {
+        if (!dateStr) return 'text-muted';
+        const daysLeft = (new Date(dateStr) - new Date()) / (1000 * 60 * 60 * 24);
+        if (daysLeft < 0) return 'text-danger fw-bold';
+        if (daysLeft < 7) return 'text-warning fw-bold';
+        return 'text-secondary';
+    };
+
+    container.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h4>Study Tracker</h4>
+            <button class="btn btn-primary" onclick="openGeneralStudyModal()"><i class="bi bi-plus-lg"></i> Add Subject</button>
+        </div>
+        <div class="row g-4">
+            ${studies.map(s => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h5 class="card-title text-truncate" title="${s.title}">${s.title}</h5>
+                                <span class="badge bg-secondary">${s.category}</span>
+                            </div>
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between small mb-1">
+                                    <span>Progress</span>
+                                    <span class="fw-bold">${s.progress}%</span>
+                                </div>
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar ${s.progress >= 100 ? 'bg-success' : 'bg-primary'}" style="width: ${s.progress}%"></div>
+                                </div>
+                            </div>
+                            ${s.deadline ? `<p class="card-text small mb-2"><i class="bi bi-calendar-event"></i> Target: <span class="${getDeadlineClass(s.deadline)}">${new Date(s.deadline).toLocaleDateString()}</span></p>` : ''}
+                            <p class="card-text small text-muted fst-italic bg-light p-2 rounded">${s.notes || 'No notes added.'}</p>
+                        </div>
+                        <div class="card-footer bg-white border-top-0 text-end">
+                            <button class="btn btn-sm btn-outline-primary" onclick="openGeneralStudyModal(${s.id})">Update</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('') || '<div class="col-12"><p class="text-muted fst-italic">No active study subjects. Add one to start tracking!</p></div>'}
         </div>
     `;
 }
@@ -1165,7 +1404,7 @@ function saveQuote() {
     const modal = bootstrap.Modal.getInstance(document.getElementById('quoteModal'));
     if (modal) modal.hide();
     showToast('Quote saved!');
-    renderQuotes(document.getElementById('main-render'));
+    showSection('quotes');
 }
 
 function deleteQuote() {
@@ -1176,7 +1415,7 @@ function deleteQuote() {
         const modal = bootstrap.Modal.getInstance(document.getElementById('quoteModal'));
         if (modal) modal.hide();
         showToast('Quote deleted.');
-        renderQuotes(document.getElementById('main-render'));
+        showSection('quotes');
     }
 }
 
@@ -1277,6 +1516,46 @@ function getNextBibleStudy() {
     return "All completed!";
 }
 
+// --- EXPOSE FUNCTIONS TO WINDOW (Fixes inline onclicks) ---
+window.importData = importData;
+window.exportData = exportData;
+window.openRoutinesModal = openRoutinesModal;
+window.addRoutineItem = addRoutineItem;
+window.deleteRoutineItem = deleteRoutineItem;
+window.toggleTask = toggleTask;
+window.addHabitPrompt = addHabitPrompt;
+window.logHabit = logHabit;
+window.undoLastHabitLog = undoLastHabitLog;
+window.deleteHabit = deleteHabit;
+window.changeMonth = changeMonth;
+window.openDetailedTaskModal = openDetailedTaskModal;
+window.saveNewTask = saveNewTask;
+window.openEditTaskModal = openEditTaskModal;
+window.updateTask = updateTask;
+window.deleteTask = deleteTask;
+window.addGoal = addGoal;
+window.toggleGoal = toggleGoal;
+window.deleteGoal = deleteGoal;
+window.planMeal = planMeal;
+window.openRecipeModal = openRecipeModal;
+window.addIngredientField = addIngredientField;
+window.saveRecipe = saveRecipe;
+window.deleteRecipe = deleteRecipe;
+window.generateGroceryList = generateGroceryList;
+window.copyGroceryList = copyGroceryList;
+window.openBibleStudyModal = openBibleStudyModal;
+window.saveBibleStudy = saveBibleStudy;
+window.deleteBibleStudy = deleteBibleStudy;
+window.logStudySession = logStudySession;
+window.openGeneralStudyModal = openGeneralStudyModal;
+window.saveGeneralStudy = saveGeneralStudy;
+window.deleteGeneralStudy = deleteGeneralStudy;
+window.saveJournalEntry = saveJournalEntry;
+window.openQuoteModal = openQuoteModal;
+window.saveQuote = saveQuote;
+window.deleteQuote = deleteQuote;
+window.showSection = showSection;
+
 // Initialize
 function initializeApp() {
     document.getElementById('current-date').innerText = new Date().toDateString();
@@ -1319,6 +1598,11 @@ function initializeApp() {
             if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
                 sidebar.classList.remove('active');
             }
+        }
+
+        // Fallback for delegation if inline onclicks fail
+        if (e.target.matches('[onclick*="openRoutinesModal"]')) {
+            openRoutinesModal();
         }
     });
 

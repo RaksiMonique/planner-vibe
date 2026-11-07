@@ -1,0 +1,136 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+  Approved palette (instructions.md 2.1). These are the only colours in
+  the app. Components use the semantic tokens below or the named palette
+  utilities (bg-sage, text-burgundy, ...), never raw hex values.
+*/
+:root {
+  --burgundy: #722f37;
+  --terracotta: #b65c45;
+  --coral: #d98576;
+  --peach: #e8b4a2;
+  --blush: #f5e6dc;
+  --ivory: #faf7f2;
+  --beige: #d8c8b8;
+  --sage: #8b9278;
+  --charcoal: #35312f;
+  --warm-grey: #80766f;
+  --white: #ffffff;
+
+  /* Semantic tokens consumed by shadcn/ui */
+  --background: var(--ivory);
+  --foreground: var(--charcoal);
+  --card: var(--white);
+  --card-foreground: var(--charcoal);
+  --popover: var(--white);
+  --popover-foreground: var(--charcoal);
+  --primary: var(--burgundy);
+  --primary-foreground: var(--ivory);
+  --secondary: var(--blush);
+  --secondary-foreground: var(--burgundy);
+  --muted: var(--blush);
+  /* Warm Grey passes AA only at 18px and up. Use text-muted-foreground
+     for captions, labels and placeholders, not for body copy. */
+  --muted-foreground: var(--warm-grey);
+  --accent: var(--peach);
+  --accent-foreground: var(--charcoal);
+  /* Terracotta with white text passes AA (4.56). */
+  --destructive: var(--terracotta);
+  --destructive-foreground: var(--white);
+  --border: var(--beige);
+  --input: var(--beige);
+  --ring: var(--burgundy);
+  --chart-1: var(--burgundy);
+  --chart-2: var(--terracotta);
+  --chart-3: var(--sage);
+  --chart-4: var(--coral);
+  --chart-5: var(--peach);
+  --sidebar: var(--white);
+  --sidebar-foreground: var(--charcoal);
+  --sidebar-primary: var(--burgundy);
+  --sidebar-primary-foreground: var(--ivory);
+  --sidebar-accent: var(--blush);
+  --sidebar-accent-foreground: var(--burgundy);
+  --sidebar-border: var(--beige);
+  --sidebar-ring: var(--burgundy);
+  --radius: 0.875rem;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Named palette utilities: bg-sage, text-burgundy, border-beige ... */
+  --color-burgundy: var(--burgundy);
+  --color-terracotta: var(--terracotta);
+  --color-coral: var(--coral);
+  --color-peach: var(--peach);
+  --color-blush: var(--blush);
+  --color-ivory: var(--ivory);
+  --color-beige: var(--beige);
+  --color-sage: var(--sage);
+  --color-charcoal: var(--charcoal);
+  --color-warm-grey: var(--warm-grey);
+
+  --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-playfair), ui-serif, Georgia, serif;
+
+  --tracking-eyebrow: 0.14em;
+  --tracking-heading: -0.015em;
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-heading tracking-heading;
+  }
+}

@@ -1,0 +1,20 @@
+#!/bin/sh
+# Blocks pushes that introduce high/critical npm vulnerabilities that
+# aren't already accepted in .githooks/audit-allowlist.txt.
+#
+# The allowlist is deliberate: known unfixable advisories (e.g. a leaf
+# dep whose upstream hasn't released a patch, or a dev-only tool with
+# no runtime footprint) can be deferred and the push still goes
+# through. Anything at high/critical NOT on the list still blocks.
+# See .githooks/audit-check.js for the parsing logic and
+# .githooks/audit-allowlist.txt for the current deferrals.
+#
+# Rationale for every allowlisted entry MUST live in docs/fixes.md so
+# they don't rot.
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+echo "🔍 Running npm audit before push…"
+
+npm audit --json 2>/dev/null \
+  | node "$REPO_ROOT/.githooks/audit-check.js" "$REPO_ROOT/.githooks/audit-allowlist.txt"

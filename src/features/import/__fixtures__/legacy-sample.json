@@ -1,0 +1,133 @@
+{
+  "tasks": [
+    {
+      "id": 1772583968001,
+      "title": "Review Quarterly Budget",
+      "dueDate": "2026-01-15",
+      "priority": 5,
+      "segment": "Finance",
+      "completed": true,
+      "recurring": false
+    },
+    {
+      "id": 1772583968002,
+      "title": "Call Mom",
+      "dueDate": "2026-02-28",
+      "priority": 3,
+      "segment": "Leisure",
+      "completed": true,
+      "recurring": true
+    },
+    {
+      "id": 1772583968003,
+      "title": "Urgent: Submit Tax Return",
+      "dueDate": "2026-03-06",
+      "priority": 5,
+      "segment": "Finance",
+      "completed": false
+    },
+    {
+      "id": 999001,
+      "title": "Unfiled idea from the old app",
+      "dueDate": "2026-03-20",
+      "priority": 3,
+      "segment": "",
+      "completed": false
+    }
+  ],
+  "habits": [
+    {
+      "name": "Read Bible (1ch)",
+      "goal": 25,
+      "logs": [1772457600000, 1772371200000, 1772284800000]
+    },
+    {
+      "name": "Exercise 30m",
+      "goal": 20,
+      "logs": [1772457600000, 1772284800000, 1771939200000]
+    }
+  ],
+  "segments": {
+    "God": [
+      {
+        "text": "Daily Prayer",
+        "done": true
+      },
+      {
+        "text": "Read Bible in a Year",
+        "done": false
+      }
+    ],
+    "Finance": [
+      {
+        "text": "Save $10k Emergency Fund",
+        "done": true
+      },
+      {
+        "text": "Pay off Credit Card",
+        "done": false
+      }
+    ],
+    "Health": [
+      {
+        "text": "Run 5k",
+        "done": true
+      },
+      {
+        "text": "Meal Prep Sundays",
+        "done": false
+      }
+    ]
+  },
+  "routines": {
+    "morning": ["Pray & Meditate", "Make Bed", "Drink Water"],
+    "evening": ["Review Day", "Read 10 Pages"]
+  },
+  "bibleStudies": [
+    {
+      "id": 1,
+      "name": "Genesis",
+      "type": "Book",
+      "priority": "High",
+      "status": "Completed",
+      "bible": "ESV",
+      "prereqId": null,
+      "lastUpdate": 1755288000000
+    }
+  ],
+  "recipes": [
+    {
+      "id": 1,
+      "name": "Chicken Curry",
+      "instructions": "1. Prep ingredients.\n2. Cook according to taste.\n3. Serve hot.",
+      "ingredients": [
+        {
+          "name": "Chicken",
+          "qty": 500,
+          "unit": "g"
+        },
+        {
+          "name": "Curry Paste",
+          "qty": 2,
+          "unit": "tbsp"
+        }
+      ]
+    }
+  ],
+  "mealPlan": {
+    "2026-03-06": 1,
+    "2026-03-07": 2
+  },
+  "journal": {
+    "2026-03-01": "A quiet day."
+  },
+  "quotes": [
+    {
+      "id": 1,
+      "text": "Do small things with great love.",
+      "source": "",
+      "author": "St Teresa",
+      "type": "Saint"
+    }
+  ]
+}

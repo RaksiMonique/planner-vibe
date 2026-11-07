@@ -214,6 +214,14 @@ erDiagram
 - `legacy_import_files`: the raw JSON export of the old app, stored once per upload with a summary, so later releases can import the sections Release 1 defers (Bible studies, studies, recipes, meal plan, journal, quotes) without asking for the file again.
 - `legacy_map`: `(user_id, entity_type, legacy_key) → new_id`, which makes re-running an import skip records it already created.
 
+## Release 3 tables
+
+- Faith: `bible_books` (reference data, 73 rows inserted by migration 0005, no RLS), `scripture_references`, `bible_studies`, `bible_study_notes`, `reading_plans`, `reading_progress`, `prayer_entries`, `devotional_entries`. Passages are stored as references only; Bible text is never stored.
+- Learning: `subjects`, `courses`, `lessons`, `study_sessions` (optionally linked to a time entry), `study_notes`, `assignments` (optionally mirrored as a task), `learning_resources`.
+- Reflection: `journal_entries` (kind daily, gratitude, wellness, reflection), `reviews` (kind weekly, monthly, quarterly, annual, goal; answers keyed by prompt).
+- Media: `media_items` (segment optional, a library record), `media_logs` (segment required), `media_lists`, `media_list_items`.
+- Resources: `notes` (kind note or quote).
+
 ## Working with the schema
 
 First time on a project: run `db:migrate` before any `db:push`. drizzle-kit's `schemaFilter` keeps the `planner` schema itself out of its snapshot, so `push` does not create it; the first migration does (`CREATE SCHEMA IF NOT EXISTS "planner"`), as does the migrator for its journal. If you must start with `push`, create the schema once in the SQL editor: `create schema if not exists planner;`.

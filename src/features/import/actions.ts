@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { requireUser } from '@/lib/auth';
 import { fail, fromError, ok, type ActionResult } from '@/lib/action-result';
-import { importLegacy, type ImportSummary } from './service';
+import { importDeferred, importLegacy, type ImportSummary } from './service';
 
 const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -25,17 +25,42 @@ export async function importLegacyAction(
       return fail('That file is not valid JSON.');
     }
     const summary = await importLegacy(user.id, raw, file.name);
-    for (const path of [
-      '/dashboard',
-      '/tasks',
-      '/goals',
-      '/habits',
-      '/routines',
-      '/segments',
-      '/calendar',
-    ]) {
-      revalidatePath(path);
-    }
+    refreshAll();
+    return ok(summary);
+  } catch (e) {
+    return fromError(e);
+  }
+}
+
+function refreshAll() {
+  for (const path of [
+    '/dashboard',
+    '/tasks',
+    '/goals',
+    '/habits',
+    '/routines',
+    '/segments',
+    '/calendar',
+    '/bible',
+    '/study',
+    '/journal',
+    '/notes',
+    '/notes/quotes',
+    '/settings/data',
+  ]) {
+    revalidatePath(path);
+  }
+}
+
+/** Imports Bible studies, studies, journal entries and quotes from the latest stored export. */
+export async function importDeferredAction(
+  _prev: ActionResult<ImportSummary> | null
+): Promise<ActionResult<ImportSummary>> {
+  void _prev;
+  try {
+    const user = await requireUser();
+    const summary = await importDeferred(user.id);
+    refreshAll();
     return ok(summary);
   } catch (e) {
     return fromError(e);

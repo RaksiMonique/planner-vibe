@@ -1,5 +1,5 @@
 import { formatInTimeZone } from 'date-fns-tz';
-import type { LegacyExport } from './schema';
+import { legacyBibleStudy, legacyQuote, legacyStudy, type LegacyExport } from './schema';
 
 /** Old segment names to new default slugs (instructions.md, Starting point). */
 export const SEGMENT_MAP: Record<string, string> = {
@@ -13,14 +13,11 @@ export const SEGMENT_MAP: Record<string, string> = {
   recreation: 'recreation',
 };
 
-export const DEFERRED_SECTIONS = [
-  'bibleStudies',
-  'studies',
-  'recipes',
-  'mealPlan',
-  'journal',
-  'quotes',
-] as const;
+/** Sections that still wait for a later release (recipes and meal plans arrive in Release 4). */
+export const DEFERRED_SECTIONS = ['recipes', 'mealPlan'] as const;
+
+/** Sections Release 3 imports from the stored raw file. */
+export const RELEASE3_SECTIONS = ['bibleStudies', 'studies', 'journal', 'quotes'] as const;
 
 /** Legacy habits carry no segment; guess one from the name, else Personal Development. */
 export function guessHabitSegment(name: string): string {
@@ -123,7 +120,7 @@ export function planImport(
     habits: [],
     goals: [],
     routines: [],
-    deferred: { bibleStudies: 0, studies: 0, recipes: 0, mealPlan: 0, journal: 0, quotes: 0 },
+    deferred: { recipes: 0, mealPlan: 0 },
     problems,
   };
 
@@ -199,12 +196,195 @@ export function planImport(
   }
 
   plan.deferred = {
-    bibleStudies: legacy.bibleStudies.length,
-    studies: legacy.studies.length,
     recipes: legacy.recipes.length,
     mealPlan: Object.keys(legacy.mealPlan).length,
-    journal: Object.keys(legacy.journal).length,
-    quotes: legacy.quotes.length,
   };
+  return plan;
+}
+
+export type PlannedBibleStudy = {
+  key: string;
+  lifeSegmentId: string;
+  title: string;
+  kind: 'study' | 'devotional' | 'reading' | 'course';
+  status: 'not_started' | 'in_progress' | 'done';
+  priority: 'low' | 'medium' | 'high';
+  translation: string | null;
+  /** Legacy key of the prerequisite study, resolved through legacy_map after insert. */
+  prerequisiteKey: string | null;
+};
+export type PlannedSubject = { key: string; lifeSegmentId: string; name: string };
+export type PlannedCourse = {
+  key: string;
+  lifeSegmentId: string;
+  subjectKey: string;
+  title: string;
+  dueDate: string | null;
+  progress: number;
+  notes: string | null;
+};
+export type PlannedJournalEntry = {
+  key: string;
+  lifeSegmentId: string;
+  date: string;
+  content: string;
+};
+export type PlannedQuote = {
+  key: string;
+  lifeSegmentId: string;
+  content: string;
+  author: string | null;
+  source: string | null;
+  title: string | null;
+};
+
+export type DeferredPlan = {
+  bibleStudies: PlannedBibleStudy[];
+  subjects: PlannedSubject[];
+  courses: PlannedCourse[];
+  journal: PlannedJournalEntry[];
+  quotes: PlannedQuote[];
+  stillDeferred: Record<(typeof DEFERRED_SECTIONS)[number], number>;
+  problems: string[];
+};
+
+function bibleKind(type: string | null | undefined): PlannedBibleStudy['kind'] {
+  const t = (type ?? '').trim().toLowerCase();
+  if (t.includes('devotion')) return 'devotional';
+  if (t.includes('reading') || t.includes('plan')) return 'reading';
+  if (t.includes('course')) return 'course';
+  return 'study';
+}
+
+function bibleStatus(status: string | null | undefined): PlannedBibleStudy['status'] {
+  const s = (status ?? '').trim().toLowerCase();
+  if (s.startsWith('complete') || s === 'done') return 'done';
+  if (s.includes('progress')) return 'in_progress';
+  return 'not_started';
+}
+
+function wordPriority(priority: string | null | undefined): PlannedBibleStudy['priority'] {
+  const p = (priority ?? '').trim().toLowerCase();
+  if (p === 'high') return 'high';
+  if (p === 'low') return 'low';
+  return 'medium';
+}
+
+/**
+ * Pure mapping for the sections Release 1 stored raw: Bible studies, studies
+ * (a subject per category plus a course per study), the journal and quotes.
+ */
+export function planDeferredImport(
+  legacy: LegacyExport,
+  segmentsBySlug: Record<string, string>,
+  opts: { timeZone: string; fallbackSlug?: string }
+): DeferredPlan {
+  const fallbackSlug = opts.fallbackSlug ?? 'growth';
+  const problems: string[] = [];
+  const segmentId = (slug: string): string | null => {
+    const id =
+      segmentsBySlug[slug] ?? segmentsBySlug[fallbackSlug] ?? Object.values(segmentsBySlug)[0];
+    if (!id) problems.push(`No Life Segment available for "${slug}".`);
+    return id ?? null;
+  };
+  const plan: DeferredPlan = {
+    bibleStudies: [],
+    subjects: [],
+    courses: [],
+    journal: [],
+    quotes: [],
+    stillDeferred: {
+      recipes: legacy.recipes.length,
+      mealPlan: Object.keys(legacy.mealPlan).length,
+    },
+    problems,
+  };
+
+  const faith = segmentId('faith');
+  for (const raw of legacy.bibleStudies) {
+    const parsed = legacyBibleStudy.safeParse(raw);
+    if (!parsed.success || !faith) {
+      problems.push('A Bible study in the export could not be read and was skipped.');
+      continue;
+    }
+    const b = parsed.data;
+    const title = b.name.trim();
+    if (!title) continue;
+    plan.bibleStudies.push({
+      key: String(b.id),
+      lifeSegmentId: faith,
+      title,
+      kind: bibleKind(b.type),
+      status: bibleStatus(b.status),
+      priority: wordPriority(b.priority),
+      translation: b.bible?.trim() || null,
+      prerequisiteKey: b.prereqId === null || b.prereqId === undefined ? null : String(b.prereqId),
+    });
+  }
+
+  const learning = segmentId('learning');
+  const subjectKeys = new Map<string, string>();
+  for (const raw of legacy.studies) {
+    const parsed = legacyStudy.safeParse(raw);
+    if (!parsed.success || !learning) {
+      problems.push('A study in the export could not be read and was skipped.');
+      continue;
+    }
+    const st = parsed.data;
+    const title = st.title.trim();
+    if (!title) continue;
+    const category = st.category?.trim() || 'General';
+    const subjectKey = `subject:${category.toLowerCase()}`;
+    if (!subjectKeys.has(subjectKey)) {
+      subjectKeys.set(subjectKey, category);
+      plan.subjects.push({ key: subjectKey, lifeSegmentId: learning, name: category });
+    }
+    plan.courses.push({
+      key: String(st.id),
+      lifeSegmentId: learning,
+      subjectKey,
+      title,
+      dueDate: st.deadline ? toDateKey(st.deadline, opts.timeZone) : null,
+      progress: Math.max(0, Math.min(100, Math.round(st.progress ?? 0))),
+      notes: st.notes?.trim() || null,
+    });
+  }
+
+  const growth = segmentId('growth');
+  for (const [date, value] of Object.entries(legacy.journal)) {
+    const key = toDateKey(date, opts.timeZone);
+    if (!key || !growth) continue;
+    const content =
+      typeof value === 'string'
+        ? value
+        : value &&
+            typeof value === 'object' &&
+            'content' in value &&
+            typeof value.content === 'string'
+          ? value.content
+          : '';
+    if (!content.trim()) continue;
+    plan.journal.push({ key, lifeSegmentId: growth, date: key, content: content.trim() });
+  }
+
+  for (const raw of legacy.quotes) {
+    const parsed = legacyQuote.safeParse(raw);
+    if (!parsed.success || !growth) {
+      problems.push('A quote in the export could not be read and was skipped.');
+      continue;
+    }
+    const q = parsed.data;
+    const content = q.text.trim();
+    if (!content) continue;
+    plan.quotes.push({
+      key: String(q.id),
+      lifeSegmentId: growth,
+      content,
+      author: q.author?.trim() || null,
+      source: q.source?.trim() || null,
+      title: q.type?.trim() || null,
+    });
+  }
+
   return plan;
 }

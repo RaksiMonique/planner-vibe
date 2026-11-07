@@ -18,6 +18,13 @@ for (const route of [
   '/habits',
   '/routines',
   '/time',
+  '/bible',
+  '/prayer',
+  '/study',
+  '/media/reading',
+  '/journal',
+  '/reviews',
+  '/notes/quotes',
 ]) {
   test(`screenshot ${route}`, async ({ page }, testInfo) => {
     await page.goto(route);

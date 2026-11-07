@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fixture from './__fixtures__/legacy-sample.json';
-import { guessHabitSegment, planImport } from './mapping';
+import { guessHabitSegment, planDeferredImport, planImport } from './mapping';
 import { legacyExport } from './schema';
 
 const segments = {
@@ -61,15 +61,8 @@ describe('planImport', () => {
     expect(plan.routines[0].steps[2]).toMatchObject({ key: 'morning:2', sortOrder: 2 });
   });
 
-  it('counts the sections deferred to later releases', () => {
-    expect(plan.deferred).toEqual({
-      bibleStudies: 1,
-      studies: 0,
-      recipes: 1,
-      mealPlan: 2,
-      journal: 1,
-      quotes: 1,
-    });
+  it('counts the sections still deferred to Release 4', () => {
+    expect(plan.deferred).toEqual({ recipes: 1, mealPlan: 2 });
     expect(plan.problems).toEqual([]);
   });
 
@@ -85,5 +78,108 @@ describe('guessHabitSegment', () => {
     expect(guessHabitSegment('Read Bible (1ch)')).toBe('faith');
     expect(guessHabitSegment('No spend day')).toBe('finance');
     expect(guessHabitSegment('Tidy desk')).toBe('growth');
+  });
+});
+
+describe('planDeferredImport', () => {
+  const legacy = legacyExport.parse(fixture);
+  const plan = planDeferredImport(legacy, segments, { timeZone: 'America/Jamaica' });
+
+  it('maps Bible studies with kind, status, priority and translation', () => {
+    expect(plan.bibleStudies).toEqual([
+      {
+        key: '1',
+        lifeSegmentId: 'seg-faith',
+        title: 'Genesis',
+        kind: 'study',
+        status: 'done',
+        priority: 'high',
+        translation: 'ESV',
+        prerequisiteKey: null,
+      },
+    ]);
+  });
+
+  it('turns studies into a subject per category and a course per study', () => {
+    const withStudies = legacyExport.parse({
+      ...fixture,
+      studies: [
+        {
+          id: 7,
+          title: 'TypeScript basics',
+          category: 'Coding',
+          deadline: '2026-04-01',
+          progress: 40,
+        },
+        {
+          id: 8,
+          title: 'Advanced types',
+          category: 'coding',
+          progress: 100,
+          notes: 'Finish the exercises',
+        },
+        { id: 9, title: 'Untitled', category: null },
+      ],
+    });
+    const p = planDeferredImport(withStudies, segments, { timeZone: 'America/Jamaica' });
+    expect(p.subjects.map((s) => s.name)).toEqual(['Coding', 'General']);
+    expect(p.courses).toHaveLength(3);
+    expect(p.courses[0]).toMatchObject({
+      key: '7',
+      lifeSegmentId: 'seg-learning',
+      subjectKey: 'subject:coding',
+      dueDate: '2026-04-01',
+      progress: 40,
+    });
+    expect(p.courses[1]).toMatchObject({
+      subjectKey: 'subject:coding',
+      progress: 100,
+      notes: 'Finish the exercises',
+    });
+    expect(p.courses[2]).toMatchObject({ subjectKey: 'subject:general', dueDate: null });
+  });
+
+  it('keeps journal days and quotes, and tolerates null sections', () => {
+    expect(plan.journal).toEqual([
+      {
+        key: '2026-03-01',
+        lifeSegmentId: 'seg-growth',
+        date: '2026-03-01',
+        content: 'A quiet day.',
+      },
+    ]);
+    expect(plan.quotes).toEqual([
+      {
+        key: '1',
+        lifeSegmentId: 'seg-growth',
+        content: 'Do small things with great love.',
+        author: 'St Teresa',
+        source: null,
+        title: 'Saint',
+      },
+    ]);
+    expect(plan.subjects).toEqual([]);
+    expect(plan.stillDeferred).toEqual({ recipes: 1, mealPlan: 2 });
+    expect(plan.problems).toEqual([]);
+  });
+
+  it('resolves prerequisite keys and skips unreadable records', () => {
+    const p = planDeferredImport(
+      legacyExport.parse({
+        ...fixture,
+        bibleStudies: [
+          { id: 1, name: 'Genesis', status: 'In Progress', priority: 'Low', type: 'Reading plan' },
+          { id: 2, name: 'Exodus', prereqId: 1, type: 'Devotional', status: 'Not Started' },
+          { nope: true },
+        ],
+      }),
+      segments,
+      { timeZone: 'America/Jamaica' }
+    );
+    expect(p.bibleStudies.map((b) => [b.kind, b.status, b.priority, b.prerequisiteKey])).toEqual([
+      ['reading', 'in_progress', 'low', null],
+      ['devotional', 'not_started', 'medium', '1'],
+    ]);
+    expect(p.problems).toHaveLength(1);
   });
 });

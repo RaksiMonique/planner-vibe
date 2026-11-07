@@ -13,6 +13,8 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? [['github'], ['html']] : 'list',
   timeout: 60_000,
+  // Dev-mode compiles make first paints slow under parallel load.
+  expect: { timeout: 15_000 },
   use: {
     baseURL,
     trace: 'on-first-retry',

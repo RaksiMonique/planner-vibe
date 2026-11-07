@@ -4,7 +4,10 @@ import { DownloadIcon } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
+import { format } from 'date-fns';
+import { ImportDeferredForm } from '@/features/import/components/import-deferred-form';
 import { ImportForm } from '@/features/import/components/import-form';
+import { getLatestImportFile } from '@/features/import/service';
 import { DeleteDataDialog } from '@/features/settings/components/delete-data-dialog';
 import { requireUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
@@ -13,7 +16,8 @@ export const metadata: Metadata = { title: 'Your data' };
 export const dynamic = 'force-dynamic';
 
 export default async function DataPage() {
-  await requireUser();
+  const user = await requireUser();
+  const latest = await getLatestImportFile(user.id);
   return (
     <>
       <PageHeader
@@ -31,6 +35,33 @@ export default async function DataPage() {
           </CardHeader>
           <CardContent>
             <ImportForm />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-heading text-lg">
+              Import the rest of the old planner
+            </CardTitle>
+            <CardDescription>
+              Exports uploaded before Release 3 kept Bible studies, studies, journal entries and
+              quotes aside. Bring them in from the stored file without uploading it again.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {latest ? (
+              <ImportDeferredForm
+                file={{
+                  fileName: latest.fileName,
+                  importedAt: format(latest.importedAt, 'd MMM yyyy, HH:mm'),
+                  alreadyDone: Boolean(latest.summary?.deferredImportedAt),
+                }}
+              />
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                No stored export yet. Import the JSON file above first.
+              </p>
+            )}
           </CardContent>
         </Card>
 

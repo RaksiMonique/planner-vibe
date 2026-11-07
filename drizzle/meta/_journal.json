@@ -29,6 +29,20 @@
       "when": 1794081191263,
       "tag": "0003_reminders",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794092650245,
+      "tag": "0004_personal_growth",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794092651366,
+      "tag": "0005_bible_books_seed",
+      "breakpoints": true
     }
   ]
 }

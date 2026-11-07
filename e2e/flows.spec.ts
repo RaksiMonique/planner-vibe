@@ -51,7 +51,7 @@ test('import the legacy JSON export', async ({ page }) => {
   await page
     .getByLabel('JSON export from the old planner')
     .setInputFiles(process.env.LEGACY_EXPORT_FILE ?? 'e2e/fixtures/legacy-export.json');
-  await page.getByRole('button', { name: /import/i }).click();
+  await page.getByRole('button', { name: 'Import', exact: true }).click();
   const table = page.getByRole('table');
   await expect(table).toBeVisible({ timeout: 30_000 });
   const tasksRow = table.locator('tr', {

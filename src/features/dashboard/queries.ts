@@ -20,6 +20,7 @@ import {
   type DueStatus,
   type WeekStartsOn,
 } from '@/lib/dates';
+import { listQuotes } from '@/features/notes/queries';
 import { quoteForDay } from './quotes';
 
 export type DayCell = {
@@ -143,6 +144,19 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     appointments,
     captures,
     segments: segments.map((s) => ({ ...s, openTasks: openCounts[s.id] ?? 0 })),
-    quote: quoteForDay(getDayOfYear(today)),
+    quote: await pickQuote(userId, getDayOfYear(today)),
   };
+}
+
+/** The user's own quotes rotate by day (pinned ones first); the built-in list fills in until they add some. */
+async function pickQuote(
+  userId: string,
+  dayOfYear: number
+): Promise<{ quote: string; author: string }> {
+  const own = await listQuotes(userId).catch(() => []);
+  if (own.length === 0) return quoteForDay(dayOfYear);
+  const pinned = own.filter((q) => q.isPinned);
+  const pool = pinned.length > 0 ? pinned : own;
+  const q = pool[dayOfYear % pool.length];
+  return { quote: q.content, author: q.author ?? q.source ?? '' };
 }

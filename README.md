@@ -31,7 +31,7 @@ npm run e2e                       # signs in owner@planner.test through a minted
 
 `supabase/config.toml` already allows the `http://localhost:3100/auth/callback` redirect the tests use.
 
-## What exists (Releases 1 and 2)
+## What exists (Releases 1 to 3)
 
 | Route                           | What it does                                                                                                                            |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
@@ -49,6 +49,13 @@ npm run e2e                       # signs in owner@planner.test through a minted
 | `/routines`                     | Morning, evening and custom routines with step checklists, weekday schedules, templates and history                                     |
 | `/time`                         | Weekly and daily time blocking with presets, templates, drag and resize, sticky notes, logged time and a planned-versus-actual analysis |
 | `/notifications`                | In-app reminders for tasks, events and habits; the bell in the header shows unread ones                                                 |
+| `/bible`, `/bible/[id]`         | Reading plans with today's chapters, devotionals, studies with notes and references, favourite verses                                   |
+| `/prayer`                       | Prayer intentions with answered toggles and a prayer journal                                                                            |
+| `/study`, `/study/courses/[id]` | Subjects, courses with lessons and progress, assignments mirrored as tasks, notes, resources, Pomodoro sessions logged as time          |
+| `/media/reading`, `/media`      | Reading list by status with logs and lists; all media kinds in one table                                                                |
+| `/journal`                      | Daily journal and gratitude by date with an optional mood                                                                               |
+| `/reviews`, `/reviews/[id]`     | Weekly reset, monthly, quarterly, annual and goal reviews with prompts and prefilled stats                                              |
+| `/notes`, `/notes/quotes`       | Notes and quotes by segment; quotes feed the dashboard inspiration card                                                                 |
 
 ## Scripts
 

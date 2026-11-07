@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import {
-  BookOpenIcon,
   BriefcaseIcon,
   CalendarDaysIcon,
   ChartPieIcon,
@@ -26,7 +25,9 @@ import { ACCENT_BG } from '@/lib/accents';
 import { ProgressBar } from '@/components/shared/progress-bar';
 import { cn } from '@/lib/utils';
 import type { DashboardData } from '../queries';
+import { BibleDashboardCard } from '@/features/faith/components/bible-dashboard-card';
 import { HabitsDashboardCard } from '@/features/habits/components/habits-dashboard-card';
+import { JournalDashboardCard } from '@/features/journal/components/journal-dashboard-card';
 import { RoutinesDashboardCard } from '@/features/routines/components/routines-dashboard-card';
 import { TimeDashboardCard } from '@/features/time/components/time-dashboard-card';
 import { DashboardCard, EmptyNote } from './dashboard-card';
@@ -41,7 +42,6 @@ const HORIZON_LABEL = {
 
 const LATER_MODULES = [
   { label: 'Mood and energy', icon: SmileIcon, release: 4 },
-  { label: 'Bible study', icon: BookOpenIcon, release: 3 },
   { label: 'Job schedule', icon: BriefcaseIcon, release: 5 },
 ];
 
@@ -130,6 +130,12 @@ export function Dashboard({
             weekStartsOn={data.weekStartsOn}
             timeZone={timeZone}
           />
+        </div>
+        <div className="lg:col-span-6">
+          <BibleDashboardCard userId={userId} todayKey={data.todayKey} />
+        </div>
+        <div className="lg:col-span-6">
+          <JournalDashboardCard userId={userId} todayKey={data.todayKey} />
         </div>
 
         <div className="lg:col-span-12">

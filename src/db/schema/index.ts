@@ -14,10 +14,15 @@ import {
   timeEntries,
 } from './tracking';
 
+export * from './faith';
+export * from './learning';
 export * from './legacy';
+export * from './media';
+export * from './notes';
 export * from './organisation';
 export * from './planning';
 export * from './profiles';
+export * from './reflection';
 export * from './reminders';
 export * from './scheduling';
 export * from './system';

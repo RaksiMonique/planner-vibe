@@ -17,6 +17,16 @@ const ROUTES: Array<[string, RegExp]> = [
   ['/routines', /routines/i],
   ['/time', /time/i],
   ['/notifications', /notifications/i],
+  // Release 3
+  ['/bible', /bible/i],
+  ['/prayer', /prayer/i],
+  ['/study', /study/i],
+  ['/media/reading', /reading/i],
+  ['/media', /media/i],
+  ['/journal', /journal/i],
+  ['/reviews', /reviews/i],
+  ['/notes', /notes/i],
+  ['/notes/quotes', /quotes/i],
 ];
 
 for (const [route, heading] of ROUTES) {

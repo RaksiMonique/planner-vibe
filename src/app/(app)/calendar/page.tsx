@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { and, eq, isNull } from 'drizzle-orm';
-import { addDays, endOfMonth, startOfMonth } from 'date-fns';
+import { addDays, endOfMonth, isValid, parseISO, startOfMonth } from 'date-fns';
 import { db } from '@/db';
 import { captures } from '@/db/schema';
 import { PageHeader } from '@/components/shared/page-header';
@@ -25,10 +25,14 @@ export default async function CalendarRoute({ searchParams }: { searchParams: Se
     listCalendars(user.id),
   ]);
 
-  // Generous first window so the month view (up to six weeks) needs no extra fetch.
+  // `?date=` opens the calendar on that day (dashboard and notification links).
   const today = todayInZone(prefs.timeZone);
-  const from = addDays(startOfMonth(today), -7);
-  const to = addDays(endOfMonth(today), 14);
+  const requested = typeof params.date === 'string' ? parseISO(params.date) : null;
+  const anchor = requested && isValid(requested) ? requested : today;
+  const initialDate = requested && isValid(requested) ? params.date : undefined;
+  // Generous first window so the month view (up to six weeks) needs no extra fetch.
+  const from = addDays(startOfMonth(anchor), -7);
+  const to = addDays(endOfMonth(anchor), 14);
   const items = await buildCalendarItems(user.id, from, to);
 
   const captureId = typeof params.capture === 'string' ? params.capture : null;
@@ -62,6 +66,7 @@ export default async function CalendarRoute({ searchParams }: { searchParams: Se
         weekStartsOn={prefs.weekStartsOn}
         openNew={params.new === '1'}
         capture={capture}
+        initialDate={initialDate as string | undefined}
       />
     </>
   );

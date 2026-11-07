@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { captures } from '@/db/schema';
+import { clearReminder, syncReminder } from '@/features/reminders/service';
 import { getPreferences } from '@/features/settings/service';
 import { requireUser } from '@/lib/auth';
 import {
@@ -43,6 +44,13 @@ export async function saveEvent(
     const row = id
       ? await updateEvent(user.id, id, parsed.data, timeZone)
       : await createEvent(user.id, { ...input }, timeZone);
+    await syncReminder(
+      user.id,
+      'event',
+      row.id,
+      { reminder: parsed.data.reminder, reminderAt: parsed.data.reminderAt },
+      { dueAt: row.isAllDay ? null : row.startsAt, dueDateKey: row.allDayDate, timeZone }
+    );
     revalidate();
     return ok({ id: row.id });
   } catch (e) {
@@ -54,6 +62,7 @@ export async function deleteEvent(id: string): Promise<ActionResult> {
   try {
     const user = await requireUser();
     await removeEvent(user.id, id);
+    await clearReminder(user.id, 'event', id);
     revalidate();
     return ok(undefined);
   } catch (e) {

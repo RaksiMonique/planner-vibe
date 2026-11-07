@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import {
-  ActivityIcon,
   BookOpenIcon,
   BriefcaseIcon,
   CalendarDaysIcon,
@@ -12,7 +11,6 @@ import {
   ListChecksIcon,
   PlusIcon,
   QuoteIcon,
-  RepeatIcon,
   SmileIcon,
   TargetIcon,
   TriangleAlertIcon,
@@ -28,6 +26,9 @@ import { ACCENT_BG } from '@/lib/accents';
 import { ProgressBar } from '@/components/shared/progress-bar';
 import { cn } from '@/lib/utils';
 import type { DashboardData } from '../queries';
+import { HabitsDashboardCard } from '@/features/habits/components/habits-dashboard-card';
+import { RoutinesDashboardCard } from '@/features/routines/components/routines-dashboard-card';
+import { TimeDashboardCard } from '@/features/time/components/time-dashboard-card';
 import { DashboardCard, EmptyNote } from './dashboard-card';
 
 const HORIZON_LABEL = {
@@ -39,14 +40,20 @@ const HORIZON_LABEL = {
 } as const;
 
 const LATER_MODULES = [
-  { label: 'Routines', icon: RepeatIcon, release: 2 },
-  { label: 'Habits', icon: ActivityIcon, release: 2 },
   { label: 'Mood and energy', icon: SmileIcon, release: 4 },
   { label: 'Bible study', icon: BookOpenIcon, release: 3 },
   { label: 'Job schedule', icon: BriefcaseIcon, release: 5 },
 ];
 
-export function Dashboard({ data, timeZone }: { data: DashboardData; timeZone: string }) {
+export function Dashboard({
+  data,
+  timeZone,
+  userId,
+}: {
+  data: DashboardData;
+  timeZone: string;
+  userId: string;
+}) {
   const editHref = (id: string) => `/tasks?task=${id}`;
   const timeOf = (startsAt: Date | null) =>
     startsAt ? format(toZonedTime(startsAt, timeZone), 'HH:mm') : '';
@@ -108,6 +115,21 @@ export function Dashboard({ data, timeZone }: { data: DashboardData; timeZone: s
             </ul>
             <EmptyNote>These cards fill in as their modules ship.</EmptyNote>
           </DashboardCard>
+        </div>
+
+        <div className="lg:col-span-4">
+          <RoutinesDashboardCard userId={userId} todayKey={data.todayKey} />
+        </div>
+        <div className="lg:col-span-4">
+          <HabitsDashboardCard userId={userId} todayKey={data.todayKey} />
+        </div>
+        <div className="lg:col-span-4">
+          <TimeDashboardCard
+            userId={userId}
+            todayKey={data.todayKey}
+            weekStartsOn={data.weekStartsOn}
+            timeZone={timeZone}
+          />
         </div>
 
         <div className="lg:col-span-12">

@@ -6,7 +6,7 @@ export default async function AppLayout({ children }: LayoutProps<'/'>) {
   const user = await requireUser();
   const prefs = await getPreferences(user.id);
   return (
-    <AppShell user={{ email: user.email ?? '' }} enabledModules={prefs.enabledModules}>
+    <AppShell user={{ id: user.id, email: user.email ?? '' }} enabledModules={prefs.enabledModules}>
       {children}
     </AppShell>
   );

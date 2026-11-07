@@ -28,6 +28,7 @@ import {
 } from '@/components/ui/sheet';
 import { Textarea } from '@/components/ui/textarea';
 import { SubmitButton } from '@/components/shared/submit-button';
+import { ReminderField } from '@/features/reminders/components/reminder-field';
 import type { GoalOption, Milestone } from '@/features/goals/queries';
 import type { LifeSegment } from '@/features/life-segments/service';
 import type { ProjectOption } from '@/features/projects/queries';
@@ -212,6 +213,7 @@ export function TaskSheet(props: TaskSheetProps) {
                 ))}
               </NativeSelect>
             </Field>
+            <ReminderField entityType="task" entityId={task?.id} idPrefix="task" />
             <Field>
               <FieldLabel htmlFor="task-project">Project</FieldLabel>
               <NativeSelect

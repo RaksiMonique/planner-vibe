@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { reminderFields } from '@/features/reminders/schema';
 
 export const RECURRENCE_PRESETS = ['none', 'daily', 'weekly', 'monthly', 'yearly'] as const;
 export type RecurrencePreset = (typeof RECURRENCE_PRESETS)[number];
@@ -42,8 +43,16 @@ export const eventInput = z
     recurrence: z.enum(RECURRENCE_PRESETS).default('none'),
     /** Capture this event was filed from; marked converted on save. */
     captureId: z.uuid().optional(),
+    ...reminderFields,
   })
   .superRefine((v, ctx) => {
+    if (v.reminder === 'custom' && !v.reminderAt) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['reminderAt'],
+        message: 'Choose when to be reminded.',
+      });
+    }
     if (v.isAllDay) {
       if (!v.allDayDate)
         ctx.addIssue({ code: 'custom', path: ['allDayDate'], message: 'Choose a date.' });

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { reminderFields } from '@/features/reminders/schema';
 import { RECURRENCE_PRESETS } from './recurrence';
 
 export const TASK_STATUSES = ['todo', 'in_progress', 'done'] as const;
@@ -33,6 +34,11 @@ export const taskInput = z
     dueDate: dateKey.optional(),
     dueTime: timeKey.optional(),
     recurrence: z.enum(RECURRENCE_PRESETS).default('none'),
+    ...reminderFields,
+  })
+  .refine((d) => !(d.reminder === 'custom' && !d.reminderAt), {
+    message: 'Choose when to be reminded.',
+    path: ['reminderAt'],
   })
   .refine((d) => !(d.recurrence !== 'none' && !d.dueDate), {
     message: 'Repeating tasks need a due date.',

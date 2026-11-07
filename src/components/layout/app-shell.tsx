@@ -5,11 +5,12 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { signOut } from '@/features/auth/actions';
 import { cn } from '@/lib/utils';
+import { NotificationsBell } from '@/features/reminders/components/notifications-bell';
 import { MobileNav } from './mobile-nav';
 import { RouteTitle } from './route-title';
 import { SidebarNav } from './sidebar-nav';
 
-export type ShellUser = { email: string };
+export type ShellUser = { id: string; email: string };
 
 export function AppShell({
   user,
@@ -52,12 +53,15 @@ export function AppShell({
           {title ? <h1 className="font-heading text-xl">{title}</h1> : <RouteTitle />}
           <div className="ml-auto flex items-center gap-2">
             {user ? (
-              <form action={signOut}>
-                <Button type="submit" variant="ghost" size="sm">
-                  <LogOutIcon data-icon="inline-start" />
-                  Sign out
-                </Button>
-              </form>
+              <>
+                <NotificationsBell userId={user.id} />
+                <form action={signOut}>
+                  <Button type="submit" variant="ghost" size="sm">
+                    <LogOutIcon data-icon="inline-start" />
+                    Sign out
+                  </Button>
+                </form>
+              </>
             ) : (
               <>
                 <Badge variant="secondary">Wireframe</Badge>

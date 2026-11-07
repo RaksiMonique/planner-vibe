@@ -10,6 +10,13 @@ const ROUTES: Array<[string, RegExp]> = [
   ['/calendar', /calendar/i],
   ['/settings', /settings/i],
   ['/settings/data', /data/i],
+  // Release 2
+  ['/week', /week/i],
+  ['/month', /month|overview/i],
+  ['/habits', /habits/i],
+  ['/routines', /routines/i],
+  ['/time', /time/i],
+  ['/notifications', /notifications/i],
 ];
 
 for (const [route, heading] of ROUTES) {

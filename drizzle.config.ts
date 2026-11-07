@@ -16,6 +16,7 @@ export default defineConfig({
     './src/db/schema/tracking.ts',
     './src/db/schema/system.ts',
     './src/db/schema/legacy.ts',
+    './src/db/schema/reminders.ts',
   ],
   out: './drizzle',
   // The planner shares the finance app's Supabase projects. Only the

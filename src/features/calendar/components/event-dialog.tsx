@@ -34,6 +34,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { Textarea } from '@/components/ui/textarea';
 import { SubmitButton } from '@/components/shared/submit-button';
+import { ReminderField } from '@/features/reminders/components/reminder-field';
 import { SegmentDot } from '@/components/shared/segment-badge';
 import type { Accent } from '@/lib/accents';
 import type { ActionResult } from '@/lib/action-result';
@@ -274,6 +275,7 @@ function EventForm({
           </Field>
         </div>
 
+        <ReminderField entityType="event" entityId={values.id} idPrefix="event" />
         <Field>
           <FieldLabel htmlFor="event-location">Location</FieldLabel>
           <Input id="event-location" name="location" defaultValue={values.location ?? ''} />

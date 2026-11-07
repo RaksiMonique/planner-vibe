@@ -31,18 +31,24 @@ npm run e2e                       # signs in owner@planner.test through a minted
 
 `supabase/config.toml` already allows the `http://localhost:3100/auth/callback` redirect the tests use.
 
-## What exists (Release 1)
+## What exists (Releases 1 and 2)
 
-| Route                           | What it does                                                                                                           |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `/dashboard`                    | Today and this week: priorities, due and overdue tasks, weekly strip, goals, appointments, Inbox, quick capture        |
-| `/tasks`                        | List, board and Eisenhower matrix views, task sheet with subtasks and recurrence, filters by segment, project and goal |
-| `/goals`, `/goals/[id]`         | Goals by horizon with the parent chain, milestones, linked projects and computed progress                              |
-| `/projects`, `/projects/[id]`   | Project workspaces with tasks, milestones and linked goals                                                             |
-| `/segments`, `/segments/[slug]` | Life Segments with per-segment goals, projects and tasks                                                               |
-| `/calendar`                     | Month, week, day and list views of events, task due dates and milestones; drag to reschedule                           |
-| `/settings`, `/settings/data`   | Profile, preferences, module switches, legacy JSON import, JSON export, delete planner data                            |
-| `GET /api/export/json`          | Download every planner row for the signed-in user                                                                      |
+| Route                           | What it does                                                                                                                            |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `/dashboard`                    | Today and this week: priorities, due and overdue tasks, weekly strip, goals, appointments, Inbox, quick capture                         |
+| `/tasks`                        | List, board and Eisenhower matrix views, task sheet with subtasks and recurrence, filters by segment, project and goal                  |
+| `/goals`, `/goals/[id]`         | Goals by horizon with the parent chain, milestones, linked projects and computed progress                                               |
+| `/projects`, `/projects/[id]`   | Project workspaces with tasks, milestones and linked goals                                                                              |
+| `/segments`, `/segments/[slug]` | Life Segments with per-segment goals, projects and tasks                                                                                |
+| `/calendar`                     | Month, week, day and list views of events, task due dates and milestones; drag to reschedule                                            |
+| `/settings`, `/settings/data`   | Profile, preferences, module switches, legacy JSON import, JSON export, delete planner data                                             |
+| `GET /api/export/json`          | Download every planner row for the signed-in user                                                                                       |
+| `/week`                         | The week at a glance: priorities, goals in play, and per day events, time blocks, tasks, milestones, routines and habits with toggles   |
+| `/month`                        | Month grid with per-day counts, monthly goals, milestones, tasks by week and a habit summary                                            |
+| `/habits`                       | Habits with streaks, a 7-day toggle row, a monthly calendar and archive                                                                 |
+| `/routines`                     | Morning, evening and custom routines with step checklists, weekday schedules, templates and history                                     |
+| `/time`                         | Weekly and daily time blocking with presets, templates, drag and resize, sticky notes, logged time and a planned-versus-actual analysis |
+| `/notifications`                | In-app reminders for tasks, events and habits; the bell in the header shows unread ones                                                 |
 
 ## Scripts
 

@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { clearReminder, syncReminder } from '@/features/reminders/service';
 import { getPreferences } from '@/features/settings/service';
 import { requireUser } from '@/lib/auth';
 import {
@@ -43,7 +44,15 @@ export async function createTaskAction(
     const user = await requireUser();
     const parsed = taskInput.safeParse(formValues(formData));
     if (!parsed.success) return fromZodError(parsed.error);
-    const task = await createTask(user.id, parsed.data, await context(user.id));
+    const ctx = await context(user.id);
+    const task = await createTask(user.id, parsed.data, ctx);
+    await syncReminder(
+      user.id,
+      'task',
+      task.id,
+      { reminder: parsed.data.reminder, reminderAt: parsed.data.reminderAt },
+      { dueAt: task.dueAt, dueDateKey: task.dueDate, timeZone: ctx.timeZone }
+    );
     refresh();
     return ok({ id: task.id });
   } catch (e) {
@@ -61,7 +70,15 @@ export async function updateTaskAction(
     if (typeof id !== 'string' || !id) return fail('Which task?');
     const parsed = taskInput.safeParse(formValues(formData));
     if (!parsed.success) return fromZodError(parsed.error);
-    const task = await updateTask(user.id, id, parsed.data, await context(user.id));
+    const ctx = await context(user.id);
+    const task = await updateTask(user.id, id, parsed.data, ctx);
+    await syncReminder(
+      user.id,
+      'task',
+      task.id,
+      { reminder: parsed.data.reminder, reminderAt: parsed.data.reminderAt },
+      { dueAt: task.dueAt, dueDateKey: task.dueDate, timeZone: ctx.timeZone }
+    );
     refresh();
     return ok({ id: task.id });
   } catch (e) {
@@ -104,6 +121,7 @@ export async function deleteTaskAction(id: string): Promise<ActionResult<undefin
   try {
     const user = await requireUser();
     await removeTask(user.id, id);
+    await clearReminder(user.id, 'task', id);
     refresh();
     return ok(undefined);
   } catch (e) {

@@ -47,6 +47,7 @@ export function CalendarPage({
   weekStartsOn,
   openNew,
   capture,
+  initialDate,
 }: {
   calendars: (CalendarOption & { isEnabled: boolean })[];
   segments: SegmentOption[];
@@ -54,6 +55,8 @@ export function CalendarPage({
   weekStartsOn: number;
   openNew: boolean;
   capture: { id: string; text: string } | null;
+  /** yyyy-MM-dd from `?date=`. */
+  initialDate?: string;
 }) {
   const router = useRouter();
   const [ranges, setRanges] = useState<Range[]>([initialRange]);
@@ -221,7 +224,9 @@ export function CalendarPage({
         onCreate={openNewEvent}
         onOpenEvent={(id) => void openExisting(id)}
         onOpenTask={(id) => router.push(`/tasks?task=${id}`)}
+        onOpenTimeBlock={() => router.push('/time')}
         onMove={handleMove}
+        initialDate={initialDate}
       />
 
       <EventDialog

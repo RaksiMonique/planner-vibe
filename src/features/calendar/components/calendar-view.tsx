@@ -51,7 +51,9 @@ export function toFullCalendarEvent(item: CalendarItem): EventInput {
       ? ACCENT_VARS[item.accent]
       : item.type === 'task'
         ? { bg: 'var(--blush)', fg: 'var(--charcoal)' }
-        : { bg: 'var(--beige)', fg: 'var(--charcoal)' };
+        : item.type === 'time_block'
+          ? { bg: 'var(--ivory)', fg: 'var(--warm-grey)' }
+          : { bg: 'var(--beige)', fg: 'var(--charcoal)' };
   return {
     id: item.id,
     title:
@@ -59,7 +61,9 @@ export function toFullCalendarEvent(item: CalendarItem): EventInput {
         ? `◆ ${item.title}`
         : item.type === 'task'
           ? `☐ ${item.title}`
-          : item.title,
+          : item.type === 'time_block'
+            ? `⏱ ${item.title}`
+            : item.title,
     start: item.start,
     end: item.end ?? undefined,
     allDay: item.allDay,
@@ -93,7 +97,9 @@ export function CalendarView({
   onCreate,
   onOpenEvent,
   onOpenTask,
+  onOpenTimeBlock,
   onMove,
+  initialDate,
 }: {
   items: CalendarItem[];
   weekStartsOn: number;
@@ -102,6 +108,9 @@ export function CalendarView({
   onCreate: (defaults: { allDay: boolean; start: Date; end: Date | null }) => void;
   onOpenEvent: (sourceId: string, recurring: boolean) => void;
   onOpenTask: (id: string) => void;
+  onOpenTimeBlock?: (id: string) => void;
+  /** yyyy-MM-dd to open on; defaults to today. */
+  initialDate?: string;
   /** Resolves false when the move was rejected, so the drag is reverted. */
   onMove: (input: MoveInput) => Promise<boolean>;
 }) {
@@ -131,6 +140,7 @@ export function CalendarView({
       recurring: boolean;
     };
     if (type === 'task') onOpenTask(sourceId);
+    else if (type === 'time_block') onOpenTimeBlock?.(sourceId);
     else if (type === 'event') onOpenEvent(sourceId, recurring);
   }
 
@@ -205,6 +215,7 @@ export function CalendarView({
             classicThemePlugin,
           ]}
           initialView={initialView}
+          initialDate={initialDate}
           headerToolbar={false}
           height="auto"
           firstDay={weekStartsOn}

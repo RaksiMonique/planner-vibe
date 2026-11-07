@@ -5,6 +5,8 @@ import { db } from '@/db';
 import { calendars, captures, events, lifeSegments } from '@/db/schema';
 import { listMilestones } from '@/features/goals/queries';
 import { listTasks } from '@/features/tasks/queries';
+import { expandTimeBlocks } from '@/features/time/expand';
+import { listTimeBlocksBetween } from '@/features/time/queries';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { toDateKey } from '@/lib/dates';
 import { expandEvents, type CalendarItem } from './expand';
@@ -213,7 +215,8 @@ export async function buildCalendarItems(
   to: Date
 ): Promise<CalendarItem[]> {
   await listCalendars(userId);
-  const [eventRows, taskRows, milestoneRows] = await Promise.all([
+  const [blockRows, eventRows, taskRows, milestoneRows] = await Promise.all([
+    listTimeBlocksBetween(userId, from, to).catch(() => []),
     listEventsBetween(userId, from, to),
     listTasks(userId, {
       dueFrom: toDateKey(from),
@@ -253,6 +256,24 @@ export async function buildCalendarItems(
       calendarId: null,
       segmentId: null,
       recurring: false,
+    });
+  }
+  // Planned time blocks, muted and read-only here; the time page edits them.
+  // Recurring definitions are expanded into occurrences for the range.
+  const segmentAccent = new Map(blockRows.map((b) => [b.lifeSegmentId, b.segment.accent]));
+  for (const b of expandTimeBlocks(blockRows, from, to)) {
+    items.push({
+      id: `block:${b.id}`,
+      sourceId: b.sourceId,
+      type: 'time_block',
+      title: b.title,
+      allDay: false,
+      start: b.start,
+      end: b.end,
+      accent: segmentAccent.get(b.segmentId) ?? b.accent,
+      calendarId: null,
+      segmentId: b.segmentId,
+      recurring: b.recurring,
     });
   }
   return items;

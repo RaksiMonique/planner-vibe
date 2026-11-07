@@ -6,7 +6,7 @@ export type CalendarItem = {
   /** Unique per occurrence: `<sourceId>` or `<sourceId>:<date>` for recurring ones. */
   id: string;
   sourceId: string;
-  type: 'event' | 'task' | 'milestone';
+  type: 'event' | 'task' | 'milestone' | 'time_block';
   title: string;
   allDay: boolean;
   /** ISO instant, or yyyy-MM-dd when all-day. */

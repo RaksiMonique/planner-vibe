@@ -2,6 +2,8 @@ import type { LucideIcon } from 'lucide-react';
 import type { ModuleKey } from '@/db/schema';
 import {
   Activity,
+  Calendar,
+  CalendarRange,
   BookMarked,
   BookOpen,
   Briefcase,
@@ -33,7 +35,7 @@ import {
 } from 'lucide-react';
 
 /** The release that is currently being built. Items from later releases render as "soon". */
-export const CURRENT_RELEASE = 1;
+export const CURRENT_RELEASE = 2;
 
 export type NavItem = {
   label: string;
@@ -53,7 +55,9 @@ export const navGroups: NavGroup[] = [
   {
     label: 'Dashboard',
     items: [
-      { label: 'Today and this week', href: '/dashboard', icon: LayoutDashboard, release: 0 },
+      { label: 'Today', href: '/dashboard', icon: LayoutDashboard, release: 0 },
+      { label: 'This week', href: '/week', icon: CalendarRange, release: 2, module: 'planning' },
+      { label: 'Monthly overview', href: '/month', icon: Calendar, release: 2, module: 'planning' },
     ],
   },
   {

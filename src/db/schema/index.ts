@@ -18,6 +18,7 @@ export * from './legacy';
 export * from './organisation';
 export * from './planning';
 export * from './profiles';
+export * from './reminders';
 export * from './scheduling';
 export * from './system';
 export * from './tracking';

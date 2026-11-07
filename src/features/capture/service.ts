@@ -64,10 +64,34 @@ export async function convertCaptureToTask(
       isImportant: false,
       status: 'todo',
       recurrence: 'none',
+      reminder: 'none',
       dueDate: capture.pinnedDate ?? undefined,
     },
     ctx
   );
   await markCaptureConverted(userId, id, 'task', task.id);
   return task;
+}
+
+/** Sticky notes are captures pinned to a day (instructions.md 7.6). */
+export async function addPinnedCapture(
+  userId: string,
+  text: string,
+  pinnedDate: string
+): Promise<Capture> {
+  const [row] = await db.insert(captures).values({ userId, text, pinnedDate }).returning();
+  return row;
+}
+
+/** Unpins a sticky note; it stays in the Inbox as an ordinary capture. */
+export async function setCapturePinnedDate(
+  userId: string,
+  id: string,
+  pinnedDate: string | null
+): Promise<void> {
+  await getCaptureOrThrow(userId, id);
+  await db
+    .update(captures)
+    .set({ pinnedDate })
+    .where(and(eq(captures.userId, userId), eq(captures.id, id)));
 }

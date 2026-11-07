@@ -13,6 +13,11 @@ for (const route of [
   '/segments',
   '/calendar',
   '/settings',
+  '/week',
+  '/month',
+  '/habits',
+  '/routines',
+  '/time',
 ]) {
   test(`screenshot ${route}`, async ({ page }, testInfo) => {
     await page.goto(route);

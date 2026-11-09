@@ -79,7 +79,7 @@ npm run e2e                       # signs in owner@planner.test through a minted
 
 ## Deployment
 
-Vercel, `dev` branch to a preview environment on the dev Supabase project, `main` to production behind Cloudflare. Set every variable from `.env.example` in Vercel. Sentry reports errors in production when `NEXT_PUBLIC_SENTRY_DSN` is set.
+Vercel, with `master` deployed to production behind Cloudflare and every pull request to a preview environment. Set every variable from `.env.example` in Vercel. Sentry reports errors in production when `NEXT_PUBLIC_SENTRY_DSN` is set.
 
 ## Docs
 

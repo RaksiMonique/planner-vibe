@@ -21,8 +21,8 @@ export const SECTION_LABELS: Record<string, string> = {
   courses: 'Studies (as courses)',
   journal: 'Journal entries',
   quotes: 'Quotes',
-  recipes: 'Recipes (Release 4)',
-  mealPlan: 'Meal plan days (Release 4)',
+  recipes: 'Recipes',
+  mealDays: 'Meal plan days (as dinners)',
 };
 
 export function ImportSummaryTable({ summary }: { summary: ImportSummary }) {

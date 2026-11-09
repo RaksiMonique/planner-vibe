@@ -10,7 +10,8 @@ export default defineConfig({
   globalSetup: './e2e/global.setup.ts',
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  // One retry absorbs dev-mode compile stalls under parallel load.
+  retries: 1,
   reporter: process.env.CI ? [['github'], ['html']] : 'list',
   timeout: 60_000,
   // Dev-mode compiles make first paints slow under parallel load.
@@ -37,10 +38,20 @@ export default defineConfig({
       use: { ...devices['Pixel 7'], storageState: 'e2e/.auth/owner.json' },
     },
     {
+      // Tablet width sits on the boundary between the stacked and desktop layouts.
+      name: 'app-tablet',
+      testMatch: /(pages|screenshots)\.spec\.ts/,
+      use: {
+        ...devices['iPad Mini'],
+        browserName: 'chromium',
+        storageState: 'e2e/.auth/owner.json',
+      },
+    },
+    {
       // Signing out revokes the shared session, so this runs after the others.
       name: 'signout',
       testMatch: /signout\.spec\.ts/,
-      dependencies: ['app', 'app-mobile'],
+      dependencies: ['app', 'app-mobile', 'app-tablet'],
       use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/owner.json' },
     },
   ],

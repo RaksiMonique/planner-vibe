@@ -222,6 +222,16 @@ erDiagram
 - Media: `media_items` (segment optional, a library record), `media_logs` (segment required), `media_lists`, `media_list_items`.
 - Resources: `notes` (kind note or quote).
 
+## Release 4 tables
+
+- Wellness: `wellness_entries` (sleep, water, skincare, haircare, treatment, fitness, self-care, cycle), `products` (inventory, favourites, wishlist). Private by default: excluded from exports unless asked for.
+- Food: `recipes`, `ingredients`, `meal_templates`, `meal_plans` (segment required), `meal_plan_entries`, `grocery_lists`, `grocery_items`.
+- Gifts: `gift_recipients`, `gifts` (segment required), `wishlist_items`.
+- Vision: `vision_boards` (segment required), `vision_board_items` (image, quote or link).
+- Resources: `important_records` (structured by kind, never credentials).
+- Storage: migration 0007 creates the private `planner` bucket. Objects are stored under `<userId>/<folder>/…`; uploads and signed URLs go through `src/lib/storage.ts` with the service role, so no object policies are needed and nothing is public.
+- `user_preferences.currency` holds the ISO code used for prices and budgets.
+
 ## Working with the schema
 
 First time on a project: run `db:migrate` before any `db:push`. drizzle-kit's `schemaFilter` keeps the `planner` schema itself out of its snapshot, so `push` does not create it; the first migration does (`CREATE SCHEMA IF NOT EXISTS "planner"`), as does the migrator for its journal. If you must start with `push`, create the schema once in the SQL editor: `create schema if not exists planner;`.

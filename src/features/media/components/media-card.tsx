@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { format } from 'date-fns';
 import { HeartIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -24,21 +25,26 @@ export function MediaCard({
   segments,
   lists,
   todayKey,
+  coverSrc,
 }: {
   item: MediaItemRow;
   segments: SegmentRef[];
   lists: MediaListRow[];
   todayKey: string;
+  /** Resolved cover (signed URL for uploads), see covers.ts. */
+  coverSrc?: string | null;
 }) {
+  const cover =
+    coverSrc ?? (item.coverUrl && !item.coverUrl.startsWith('storage:') ? item.coverUrl : null);
   const labels = item.kind === 'book' ? BOOK_STATUS_LABELS : STATUS_LABELS;
   const candidateLists = lists.filter((l) => !l.items.some((i) => i.id === item.id));
   return (
     <Card size="sm" className="h-full">
       <CardContent className="flex h-full gap-3">
         <div className="bg-blush text-muted-foreground flex h-20 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md text-[10px]">
-          {item.coverUrl ? (
+          {cover ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={item.coverUrl} alt="" className="h-full w-full object-cover" />
+            <img src={cover} alt="" className="h-full w-full object-cover" />
           ) : (
             MEDIA_KIND_LABELS[item.kind]
           )}
@@ -46,7 +52,12 @@ export function MediaCard({
         <div className="flex min-w-0 flex-1 flex-col gap-1.5">
           <div className="flex items-start gap-2">
             <div className="min-w-0 flex-1">
-              <p className="font-heading truncate text-base leading-snug">{item.title}</p>
+              <Link
+                href={`/media/${item.id}`}
+                className="font-heading block truncate text-base leading-snug hover:underline"
+              >
+                {item.title}
+              </Link>
               {item.creator && (
                 <p className="text-muted-foreground truncate text-xs">{item.creator}</p>
               )}

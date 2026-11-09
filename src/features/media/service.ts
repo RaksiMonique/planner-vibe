@@ -3,6 +3,8 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db';
 import { lifeSegments, mediaItems, mediaListItems, mediaLists, mediaLogs } from '@/db/schema';
 import { NotFoundError, ValidationError } from '@/lib/errors';
+import { removeImage, uploadImage } from '@/lib/storage';
+import { STORAGE_PREFIX, storedPath } from './covers';
 import type { MediaItem, MediaList } from './queries';
 import type { MediaItemInput, MediaListInput, MediaLogInput } from './schema';
 
@@ -164,4 +166,37 @@ export async function removeFromList(userId: string, listId: string, mediaItemId
         eq(mediaListItems.mediaItemId, mediaItemId)
       )
     );
+}
+
+export async function renameMediaList(userId: string, id: string, name: string) {
+  await getListOrThrow(userId, id);
+  const clash = await db.$count(
+    mediaLists,
+    and(eq(mediaLists.userId, userId), eq(mediaLists.name, name))
+  );
+  if (clash > 0) throw new ValidationError('You already have a list with that name.');
+  await db
+    .update(mediaLists)
+    .set({ name })
+    .where(and(eq(mediaLists.userId, userId), eq(mediaLists.id, id)));
+}
+
+/** Uploads a cover and points `cover_url` at the stored object, replacing a previous upload. */
+export async function setCoverUpload(userId: string, id: string, file: File) {
+  const item = await getMediaItemOrThrow(userId, id);
+  const path = await uploadImage(userId, 'media', file);
+  await removeImage(userId, storedPath(item.coverUrl));
+  await db
+    .update(mediaItems)
+    .set({ coverUrl: `${STORAGE_PREFIX}${path}` })
+    .where(and(eq(mediaItems.userId, userId), eq(mediaItems.id, id)));
+}
+
+export async function clearCover(userId: string, id: string) {
+  const item = await getMediaItemOrThrow(userId, id);
+  await removeImage(userId, storedPath(item.coverUrl));
+  await db
+    .update(mediaItems)
+    .set({ coverUrl: null })
+    .where(and(eq(mediaItems.userId, userId), eq(mediaItems.id, id)));
 }

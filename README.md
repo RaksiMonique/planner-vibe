@@ -31,31 +31,37 @@ npm run e2e                       # signs in owner@planner.test through a minted
 
 `supabase/config.toml` already allows the `http://localhost:3100/auth/callback` redirect the tests use.
 
-## What exists (Releases 1 to 3)
+## What exists (Releases 1 to 4)
 
-| Route                           | What it does                                                                                                                            |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `/dashboard`                    | Today and this week: priorities, due and overdue tasks, weekly strip, goals, appointments, Inbox, quick capture                         |
-| `/tasks`                        | List, board and Eisenhower matrix views, task sheet with subtasks and recurrence, filters by segment, project and goal                  |
-| `/goals`, `/goals/[id]`         | Goals by horizon with the parent chain, milestones, linked projects and computed progress                                               |
-| `/projects`, `/projects/[id]`   | Project workspaces with tasks, milestones and linked goals                                                                              |
-| `/segments`, `/segments/[slug]` | Life Segments with per-segment goals, projects and tasks                                                                                |
-| `/calendar`                     | Month, week, day and list views of events, task due dates and milestones; drag to reschedule                                            |
-| `/settings`, `/settings/data`   | Profile, preferences, module switches, legacy JSON import, JSON export, delete planner data                                             |
-| `GET /api/export/json`          | Download every planner row for the signed-in user                                                                                       |
-| `/week`                         | The week at a glance: priorities, goals in play, and per day events, time blocks, tasks, milestones, routines and habits with toggles   |
-| `/month`                        | Month grid with per-day counts, monthly goals, milestones, tasks by week and a habit summary                                            |
-| `/habits`                       | Habits with streaks, a 7-day toggle row, a monthly calendar and archive                                                                 |
-| `/routines`                     | Morning, evening and custom routines with step checklists, weekday schedules, templates and history                                     |
-| `/time`                         | Weekly and daily time blocking with presets, templates, drag and resize, sticky notes, logged time and a planned-versus-actual analysis |
-| `/notifications`                | In-app reminders for tasks, events and habits; the bell in the header shows unread ones                                                 |
-| `/bible`, `/bible/[id]`         | Reading plans with today's chapters, devotionals, studies with notes and references, favourite verses                                   |
-| `/prayer`                       | Prayer intentions with answered toggles and a prayer journal                                                                            |
-| `/study`, `/study/courses/[id]` | Subjects, courses with lessons and progress, assignments mirrored as tasks, notes, resources, Pomodoro sessions logged as time          |
-| `/media/reading`, `/media`      | Reading list by status with logs and lists; all media kinds in one table                                                                |
-| `/journal`                      | Daily journal and gratitude by date with an optional mood                                                                               |
-| `/reviews`, `/reviews/[id]`     | Weekly reset, monthly, quarterly, annual and goal reviews with prompts and prefilled stats                                              |
-| `/notes`, `/notes/quotes`       | Notes and quotes by segment; quotes feed the dashboard inspiration card                                                                 |
+| Route                                                                             | What it does                                                                                                                                    |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/dashboard`                                                                      | Today and this week: priorities, due and overdue tasks, weekly strip, goals, appointments, Inbox, quick capture                                 |
+| `/tasks`                                                                          | List, board and Eisenhower matrix views, task sheet with subtasks and recurrence, filters by segment, project and goal                          |
+| `/goals`, `/goals/[id]`                                                           | Goals by horizon with the parent chain, milestones, linked projects and computed progress                                                       |
+| `/projects`, `/projects/[id]`                                                     | Project workspaces with tasks, milestones and linked goals                                                                                      |
+| `/segments`, `/segments/[slug]`                                                   | Life Segments with per-segment goals, projects and tasks                                                                                        |
+| `/calendar`                                                                       | Month, week, day and list views of events, task due dates and milestones; drag to reschedule                                                    |
+| `/settings`, `/settings/data`                                                     | Profile, preferences, module switches, legacy JSON import, JSON export, delete planner data                                                     |
+| `GET /api/export/json`                                                            | Download every planner row for the signed-in user                                                                                               |
+| `/week`                                                                           | The week at a glance: priorities, goals in play, and per day events, time blocks, tasks, milestones, routines and habits with toggles           |
+| `/month`                                                                          | Month grid with per-day counts, monthly goals, milestones, tasks by week and a habit summary                                                    |
+| `/habits`                                                                         | Habits with streaks, a 7-day toggle row, a monthly calendar and archive                                                                         |
+| `/routines`                                                                       | Morning, evening and custom routines with step checklists, weekday schedules, templates and history                                             |
+| `/time`                                                                           | Weekly and daily time blocking with presets, templates, drag and resize, sticky notes, logged time and a planned-versus-actual analysis         |
+| `/notifications`                                                                  | In-app reminders for tasks, events and habits; the bell in the header shows unread ones                                                         |
+| `/bible`, `/bible/[id]`                                                           | Reading plans with today's chapters, devotionals, studies with notes and references, favourite verses                                           |
+| `/prayer`                                                                         | Prayer intentions with answered toggles and a prayer journal                                                                                    |
+| `/study`, `/study/courses/[id]`                                                   | Subjects, courses with lessons and progress, assignments mirrored as tasks, notes, resources, Pomodoro sessions logged as time                  |
+| `/media/reading`, `/media`                                                        | Reading list by status with logs and lists; all media kinds in one table                                                                        |
+| `/journal`                                                                        | Daily journal and gratitude by date with an optional mood                                                                                       |
+| `/reviews`, `/reviews/[id]`                                                       | Weekly reset, monthly, quarterly, annual and goal reviews with prompts and prefilled stats                                                      |
+| `/notes`, `/notes/quotes`                                                         | Notes and quotes by segment; quotes feed the dashboard inspiration card                                                                         |
+| `/wellness/mood`, `/wellness/self-care`, `/wellness/fitness`, `/wellness/journal` | Mood and energy trends, skincare and haircare, treatments, products, fitness, sleep and water logs, wellness journal, optional cycle tracking   |
+| `/meals`, `/meals/recipes`, `/groceries`                                          | Recipes with scaling, a weekly meal planner with templates, grocery lists generated from the plan with consolidated quantities and a print view |
+| `/gifts`                                                                          | Recipients, gifts by occasion with budgets and status, and a wishlist                                                                           |
+| `/vision-boards`                                                                  | Boards of uploaded images, quotes and links linked to goals and projects                                                                        |
+| `/media`                                                                          | Books, movies, series and songs in gallery, table and list views with logs and custom lists                                                     |
+| `/important`                                                                      | Emergency contacts, important dates, insurance, medical and household records, kept out of exports by default                                   |
 
 ## Scripts
 

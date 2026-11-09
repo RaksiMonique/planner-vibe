@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, ilike, inArray, isNull, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { lifeSegments, mediaItems, mediaListItems, mediaLists, mediaLogs } from '@/db/schema';
 import { segmentRefColumns } from '@/features/life-segments/queries';
@@ -36,14 +36,30 @@ export type MediaItemRow = MediaItem & { segment: SegmentRef | null; logCount: n
 export type MediaListRow = MediaList & { items: MediaItem[] };
 
 /** Items with their segment and how many logs they have. */
+export type MediaFilters = {
+  kind?: MediaItem['kind'];
+  status?: MediaItem['status'];
+  lifeSegmentId?: string;
+  favourite?: boolean;
+  category?: string;
+  /** Matches title or creator. */
+  q?: string;
+};
+
 export async function listMediaRows(
   userId: string,
-  filters: { kind?: MediaItem['kind']; status?: MediaItem['status']; lifeSegmentId?: string } = {}
+  filters: MediaFilters = {}
 ): Promise<MediaItemRow[]> {
   const conds = [eq(mediaItems.userId, userId), isNull(mediaItems.deletedAt)];
   if (filters.kind) conds.push(eq(mediaItems.kind, filters.kind));
   if (filters.status) conds.push(eq(mediaItems.status, filters.status));
   if (filters.lifeSegmentId) conds.push(eq(mediaItems.lifeSegmentId, filters.lifeSegmentId));
+  if (filters.favourite) conds.push(eq(mediaItems.isFavourite, true));
+  if (filters.category) conds.push(eq(mediaItems.category, filters.category));
+  if (filters.q) {
+    const like = `%${filters.q.replace(/[%_]/g, '')}%`;
+    conds.push(or(ilike(mediaItems.title, like), ilike(mediaItems.creator, like))!);
+  }
   const rows = await db
     .select({ item: mediaItems, segment: segmentRefColumns })
     .from(mediaItems)
@@ -102,4 +118,33 @@ export async function listMediaLists(userId: string): Promise<MediaListRow[]> {
     ...l,
     items: members.filter((m) => m.listId === l.id).map((m) => m.item),
   }));
+}
+
+export async function getMediaItemRow(userId: string, id: string): Promise<MediaItemRow | null> {
+  const [row] = await db
+    .select({ item: mediaItems, segment: segmentRefColumns })
+    .from(mediaItems)
+    .leftJoin(lifeSegments, eq(mediaItems.lifeSegmentId, lifeSegments.id))
+    .where(and(eq(mediaItems.userId, userId), eq(mediaItems.id, id), isNull(mediaItems.deletedAt)))
+    .limit(1);
+  if (!row) return null;
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(mediaLogs)
+    .where(and(eq(mediaLogs.userId, userId), eq(mediaLogs.mediaItemId, id)));
+  return {
+    ...row.item,
+    segment: row.segment?.id ? (row.segment as SegmentRef) : null,
+    logCount: count,
+  };
+}
+
+/** Distinct categories in use, for the filter select. */
+export async function listMediaCategories(userId: string): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ category: mediaItems.category })
+    .from(mediaItems)
+    .where(and(eq(mediaItems.userId, userId), isNull(mediaItems.deletedAt)))
+    .orderBy(asc(mediaItems.category));
+  return rows.map((r) => r.category).filter((c): c is string => !!c);
 }

@@ -10,7 +10,6 @@ import {
   ListChecksIcon,
   PlusIcon,
   QuoteIcon,
-  SmileIcon,
   TargetIcon,
   TriangleAlertIcon,
 } from 'lucide-react';
@@ -28,6 +27,7 @@ import type { DashboardData } from '../queries';
 import { BibleDashboardCard } from '@/features/faith/components/bible-dashboard-card';
 import { HabitsDashboardCard } from '@/features/habits/components/habits-dashboard-card';
 import { JournalDashboardCard } from '@/features/journal/components/journal-dashboard-card';
+import { MoodDashboardCard } from '@/features/wellness/components/mood-dashboard-card';
 import { RoutinesDashboardCard } from '@/features/routines/components/routines-dashboard-card';
 import { TimeDashboardCard } from '@/features/time/components/time-dashboard-card';
 import { DashboardCard, EmptyNote } from './dashboard-card';
@@ -40,10 +40,7 @@ const HORIZON_LABEL = {
   weekly: 'Weekly',
 } as const;
 
-const LATER_MODULES = [
-  { label: 'Mood and energy', icon: SmileIcon, release: 4 },
-  { label: 'Job schedule', icon: BriefcaseIcon, release: 5 },
-];
+const LATER_MODULES = [{ label: 'Job schedule', icon: BriefcaseIcon, release: 5 }];
 
 export function Dashboard({
   data,
@@ -136,6 +133,9 @@ export function Dashboard({
         </div>
         <div className="lg:col-span-6">
           <JournalDashboardCard userId={userId} todayKey={data.todayKey} />
+        </div>
+        <div className="lg:col-span-4">
+          <MoodDashboardCard userId={userId} todayKey={data.todayKey} />
         </div>
 
         <div className="lg:col-span-12">

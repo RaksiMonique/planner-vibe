@@ -40,6 +40,22 @@ export const legacyStudy = z.looseObject({
   notes: z.string().nullish(),
 });
 
+export const legacyIngredient = z.looseObject({
+  name: z.string(),
+  qty: z.coerce.number().nullish(),
+  unit: z.string().nullish(),
+});
+
+export const legacyRecipe = z.looseObject({
+  id: legacyId,
+  name: z.string(),
+  instructions: z.string().nullish(),
+  ingredients: z
+    .array(legacyIngredient)
+    .nullish()
+    .transform((v) => v ?? []),
+});
+
 export const legacyQuote = z.looseObject({
   id: legacyId,
   text: z.string(),

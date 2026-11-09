@@ -1,5 +1,12 @@
+import { addDays, format, parseISO, startOfWeek } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
-import { legacyBibleStudy, legacyQuote, legacyStudy, type LegacyExport } from './schema';
+import {
+  legacyBibleStudy,
+  legacyQuote,
+  legacyRecipe,
+  legacyStudy,
+  type LegacyExport,
+} from './schema';
 
 /** Old segment names to new default slugs (instructions.md, Starting point). */
 export const SEGMENT_MAP: Record<string, string> = {
@@ -13,11 +20,13 @@ export const SEGMENT_MAP: Record<string, string> = {
   recreation: 'recreation',
 };
 
-/** Sections that still wait for a later release (recipes and meal plans arrive in Release 4). */
-export const DEFERRED_SECTIONS = ['recipes', 'mealPlan'] as const;
+/** Nothing waits for a later release any more: Release 4 imports recipes and the meal plan. */
+export const DEFERRED_SECTIONS = [] as const;
 
 /** Sections Release 3 imports from the stored raw file. */
 export const RELEASE3_SECTIONS = ['bibleStudies', 'studies', 'journal', 'quotes'] as const;
+/** Sections Release 4 imports from the stored raw file. */
+export const RELEASE4_SECTIONS = ['recipes', 'mealPlan'] as const;
 
 /** Legacy habits carry no segment; guess one from the name, else Personal Development. */
 export function guessHabitSegment(name: string): string {
@@ -68,7 +77,7 @@ export type ImportPlan = {
   habits: PlannedHabit[];
   goals: PlannedGoal[];
   routines: PlannedRoutine[];
-  deferred: Record<(typeof DEFERRED_SECTIONS)[number], number>;
+  deferred: Record<string, number>;
   problems: string[];
 };
 
@@ -120,7 +129,7 @@ export function planImport(
     habits: [],
     goals: [],
     routines: [],
-    deferred: { recipes: 0, mealPlan: 0 },
+    deferred: {},
     problems,
   };
 
@@ -195,10 +204,6 @@ export function planImport(
     });
   }
 
-  plan.deferred = {
-    recipes: legacy.recipes.length,
-    mealPlan: Object.keys(legacy.mealPlan).length,
-  };
   return plan;
 }
 
@@ -238,13 +243,31 @@ export type PlannedQuote = {
   title: string | null;
 };
 
+export type PlannedRecipe = {
+  key: string;
+  title: string;
+  instructions: string | null;
+  ingredients: { name: string; quantity: number | null; unit: string | null; sortOrder: number }[];
+};
+export type PlannedMealWeek = {
+  /** Week start date key, also the legacy_map key. */
+  key: string;
+  lifeSegmentId: string;
+  startDate: string;
+  endDate: string;
+  /** One dinner per day; `recipeKey` resolves through legacy_map after recipes are in. */
+  entries: { key: string; date: string; recipeKey: string }[];
+};
+
 export type DeferredPlan = {
   bibleStudies: PlannedBibleStudy[];
   subjects: PlannedSubject[];
   courses: PlannedCourse[];
   journal: PlannedJournalEntry[];
   quotes: PlannedQuote[];
-  stillDeferred: Record<(typeof DEFERRED_SECTIONS)[number], number>;
+  recipes: PlannedRecipe[];
+  mealWeeks: PlannedMealWeek[];
+  stillDeferred: Record<string, number>;
   problems: string[];
 };
 
@@ -277,7 +300,7 @@ function wordPriority(priority: string | null | undefined): PlannedBibleStudy['p
 export function planDeferredImport(
   legacy: LegacyExport,
   segmentsBySlug: Record<string, string>,
-  opts: { timeZone: string; fallbackSlug?: string }
+  opts: { timeZone: string; fallbackSlug?: string; weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6 }
 ): DeferredPlan {
   const fallbackSlug = opts.fallbackSlug ?? 'growth';
   const problems: string[] = [];
@@ -293,10 +316,9 @@ export function planDeferredImport(
     courses: [],
     journal: [],
     quotes: [],
-    stillDeferred: {
-      recipes: legacy.recipes.length,
-      mealPlan: Object.keys(legacy.mealPlan).length,
-    },
+    recipes: [],
+    mealWeeks: [],
+    stillDeferred: {},
     problems,
   };
 
@@ -385,6 +407,62 @@ export function planDeferredImport(
       title: q.type?.trim() || null,
     });
   }
+
+  for (const raw of legacy.recipes) {
+    const parsed = legacyRecipe.safeParse(raw);
+    if (!parsed.success) {
+      problems.push('A recipe in the export could not be read and was skipped.');
+      continue;
+    }
+    const r = parsed.data;
+    const title = r.name.trim();
+    if (!title) continue;
+    plan.recipes.push({
+      key: String(r.id),
+      title,
+      instructions: r.instructions?.trim() || null,
+      ingredients: r.ingredients
+        .map((i, sortOrder) => ({
+          name: i.name.trim(),
+          quantity:
+            i.qty === null || i.qty === undefined || !Number.isFinite(i.qty) || i.qty <= 0
+              ? null
+              : i.qty,
+          unit: i.unit?.trim() || null,
+          sortOrder,
+        }))
+        .filter((i) => i.name.length > 0),
+    });
+  }
+
+  // The old app kept one recipe per day; each becomes dinner in a week-long plan.
+  const home = segmentId('home');
+  const weekStartsOn = opts.weekStartsOn ?? 1;
+  const weeks = new Map<string, PlannedMealWeek>();
+  for (const [rawDate, value] of Object.entries(legacy.mealPlan)) {
+    const date = toDateKey(rawDate, opts.timeZone);
+    if (!date || !home) continue;
+    if (value === null || value === undefined || value === '') continue;
+    const recipeKey = String(
+      typeof value === 'object' && 'recipeId' in (value as object)
+        ? (value as { recipeId: unknown }).recipeId
+        : value
+    );
+    const start = startOfWeek(parseISO(date), { weekStartsOn });
+    const startKey = format(start, 'yyyy-MM-dd');
+    const week =
+      weeks.get(startKey) ??
+      ({
+        key: startKey,
+        lifeSegmentId: home,
+        startDate: startKey,
+        endDate: format(addDays(start, 6), 'yyyy-MM-dd'),
+        entries: [],
+      } satisfies PlannedMealWeek);
+    week.entries.push({ key: date, date, recipeKey });
+    weeks.set(startKey, week);
+  }
+  plan.mealWeeks = [...weeks.values()].sort((a, b) => a.key.localeCompare(b.key));
 
   return plan;
 }

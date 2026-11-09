@@ -12,6 +12,8 @@ import type { WeekStartsOn } from '@/lib/dates';
 export type Preferences = {
   timeZone: string;
   weekStartsOn: WeekStartsOn;
+  /** ISO 4217 code for prices and budgets. */
+  currency: string;
   enabledModules: EnabledModules;
 };
 
@@ -26,6 +28,7 @@ export async function getPreferences(userId: string): Promise<Preferences> {
     return {
       timeZone: row.timeZone,
       weekStartsOn: row.weekStartsOn as WeekStartsOn,
+      currency: row.currency,
       enabledModules: { ...DEFAULT_ENABLED_MODULES, ...row.enabledModules },
     };
   }
@@ -37,6 +40,7 @@ export async function getPreferences(userId: string): Promise<Preferences> {
   return {
     timeZone: created?.timeZone ?? 'America/Jamaica',
     weekStartsOn: (created?.weekStartsOn ?? 1) as WeekStartsOn,
+    currency: created?.currency ?? 'USD',
     enabledModules: DEFAULT_ENABLED_MODULES,
   };
 }

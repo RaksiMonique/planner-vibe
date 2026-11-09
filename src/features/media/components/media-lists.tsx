@@ -1,12 +1,17 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { PlusIcon, Trash2Icon, XIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SubmitButton } from '@/components/shared/submit-button';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
-import { createMediaListAction, deleteMediaListAction, removeFromListAction } from '../actions';
+import {
+  createMediaListAction,
+  deleteMediaListAction,
+  removeFromListAction,
+  renameMediaListAction,
+} from '../actions';
 import type { MediaListRow } from '../queries';
 
 export function MediaLists({ lists }: { lists: MediaListRow[] }) {
@@ -42,7 +47,7 @@ export function MediaLists({ lists }: { lists: MediaListRow[] }) {
           {lists.map((l) => (
             <li key={l.id} className="bg-card rounded-lg border p-3">
               <div className="flex items-center gap-2">
-                <span className="font-heading flex-1 text-base">{l.name}</span>
+                <RenameableName id={l.id} name={l.name} />
                 <span className="text-muted-foreground text-xs">{l.items.length}</span>
                 <ConfirmActionButton
                   action={deleteMediaListAction}
@@ -90,5 +95,53 @@ export function MediaLists({ lists }: { lists: MediaListRow[] }) {
         </ul>
       )}
     </div>
+  );
+}
+
+function RenameableName({ id, name }: { id: string; name: string }) {
+  const [editing, setEditing] = useState(false);
+  const [state, formAction] = useActionState(
+    async (prev: Parameters<typeof renameMediaListAction>[0], fd: FormData) => {
+      const result = await renameMediaListAction(prev, fd);
+      if (result.ok) setEditing(false);
+      return result;
+    },
+    null
+  );
+  if (!editing) {
+    return (
+      <button
+        type="button"
+        className="font-heading flex-1 text-left text-base hover:underline"
+        onClick={() => setEditing(true)}
+        title="Rename"
+      >
+        {name}
+      </button>
+    );
+  }
+  return (
+    <form action={formAction} className="flex flex-1 items-center gap-1.5">
+      <input type="hidden" name="id" value={id} />
+      <Input
+        name="name"
+        defaultValue={name}
+        maxLength={80}
+        aria-label="List name"
+        autoFocus
+        required
+      />
+      <SubmitButton size="xs" pendingLabel="…">
+        Save
+      </SubmitButton>
+      <Button type="button" size="xs" variant="ghost" onClick={() => setEditing(false)}>
+        Cancel
+      </Button>
+      {state && !state.ok && (
+        <span role="alert" className="text-destructive text-xs">
+          {state.error}
+        </span>
+      )}
+    </form>
   );
 }

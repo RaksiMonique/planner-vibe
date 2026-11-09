@@ -8,10 +8,14 @@ import {
   goals,
   habitCheckIns,
   habits,
+  ingredients,
   journalEntries,
   legacyImportFiles,
   legacyMap,
+  mealPlanEntries,
+  mealPlans,
   notes,
+  recipes,
   routineSteps,
   routines,
   subjects,
@@ -34,8 +38,9 @@ type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 type Counters = { imported: Record<string, number>; skipped: Record<string, number> };
 
 /**
- * Inserts the Release 3 sections (Bible studies, subjects and courses, journal
- * entries, quotes), skipping anything already in `legacy_map`.
+ * Inserts the Release 3 and 4 sections (Bible studies, subjects and courses,
+ * journal entries, quotes, recipes and meal plan days), skipping anything
+ * already in `legacy_map`.
  */
 async function applyDeferredPlan(
   tx: Tx,
@@ -52,7 +57,15 @@ async function applyDeferredPlan(
     seen.set(`${entityType}:${legacyKey}`, newId);
   };
   const { imported, skipped } = counters;
-  for (const k of ['bibleStudies', 'subjects', 'courses', 'journal', 'quotes']) {
+  for (const k of [
+    'bibleStudies',
+    'subjects',
+    'courses',
+    'journal',
+    'quotes',
+    'recipes',
+    'mealDays',
+  ]) {
     imported[k] ??= 0;
     skipped[k] ??= 0;
   }
@@ -160,6 +173,69 @@ async function applyDeferredPlan(
     await remember('quote', q.key, row.id);
     imported.quotes++;
   }
+
+  for (const r of plan.recipes) {
+    if (seen.has(`recipe:${r.key}`)) {
+      skipped.recipes++;
+      continue;
+    }
+    const [row] = await tx
+      .insert(recipes)
+      .values({ userId, title: r.title, instructions: r.instructions, servings: 2 })
+      .returning({ id: recipes.id });
+    if (r.ingredients.length > 0) {
+      await tx.insert(ingredients).values(
+        r.ingredients.map((i) => ({
+          userId,
+          recipeId: row.id,
+          name: i.name,
+          quantity: i.quantity === null ? null : String(i.quantity),
+          unit: i.unit,
+          sortOrder: i.sortOrder,
+        }))
+      );
+    }
+    await remember('recipe', r.key, row.id);
+    imported.recipes++;
+  }
+
+  for (const week of plan.mealWeeks) {
+    let planId = seen.get(`meal_plan:${week.key}`);
+    if (!planId) {
+      const [row] = await tx
+        .insert(mealPlans)
+        .values({
+          userId,
+          lifeSegmentId: week.lifeSegmentId,
+          name: `Week of ${week.startDate}`,
+          startDate: week.startDate,
+          endDate: week.endDate,
+        })
+        .returning({ id: mealPlans.id });
+      planId = row.id;
+      await remember('meal_plan', week.key, planId);
+    }
+    for (const entry of week.entries) {
+      if (seen.has(`meal_entry:${entry.key}`)) {
+        skipped.mealDays++;
+        continue;
+      }
+      const recipeId = seen.get(`recipe:${entry.recipeKey}`);
+      if (!recipeId) {
+        plan.problems.push(
+          `No recipe for the meal on ${entry.date} (old recipe ${entry.recipeKey}).`
+        );
+        skipped.mealDays++;
+        continue;
+      }
+      const [row] = await tx
+        .insert(mealPlanEntries)
+        .values({ userId, planId, date: entry.date, slot: 'dinner', recipeId, servings: 2 })
+        .returning({ id: mealPlanEntries.id });
+      await remember('meal_entry', entry.key, row.id);
+      imported.mealDays++;
+    }
+  }
 }
 
 async function loadSeen(userId: string): Promise<Map<string, string>> {
@@ -197,7 +273,7 @@ export async function getLatestImportFile(userId: string): Promise<StoredImportF
   return row ?? null;
 }
 
-/** Imports the Release 3 sections from the latest stored export. */
+/** Imports the Release 3 and 4 sections from the latest stored export. */
 export async function importDeferred(userId: string): Promise<ImportSummary> {
   const [latest] = await db
     .select()
@@ -214,7 +290,10 @@ export async function importDeferred(userId: string): Promise<ImportSummary> {
     getPreferences(userId),
   ]);
   const bySlug = Object.fromEntries(segments.map((s) => [s.slug, s.id]));
-  const plan = planDeferredImport(parsed.data, bySlug, { timeZone: prefs.timeZone });
+  const plan = planDeferredImport(parsed.data, bySlug, {
+    timeZone: prefs.timeZone,
+    weekStartsOn: prefs.weekStartsOn,
+  });
   const seen = await loadSeen(userId);
   const counters: Counters = { imported: {}, skipped: {} };
 
@@ -251,7 +330,10 @@ export async function importLegacy(
   ]);
   const bySlug = Object.fromEntries(segments.map((s) => [s.slug, s.id]));
   const plan = planImport(parsed.data, bySlug, { now: new Date(), timeZone: prefs.timeZone });
-  const deferredPlan = planDeferredImport(parsed.data, bySlug, { timeZone: prefs.timeZone });
+  const deferredPlan = planDeferredImport(parsed.data, bySlug, {
+    timeZone: prefs.timeZone,
+    weekStartsOn: prefs.weekStartsOn,
+  });
   const seen = await loadSeen(userId);
 
   const imported: Record<string, number> = {

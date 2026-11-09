@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -22,6 +23,7 @@ export function MediaTable({ items, segments }: { items: MediaItemRow[]; segment
         <TableRow>
           <TableHead>Title</TableHead>
           <TableHead className="hidden sm:table-cell">Kind</TableHead>
+          <TableHead className="hidden lg:table-cell">Category</TableHead>
           <TableHead>Status</TableHead>
           <TableHead className="hidden md:table-cell">Rating</TableHead>
           <TableHead className="hidden md:table-cell">Finished</TableHead>
@@ -34,12 +36,17 @@ export function MediaTable({ items, segments }: { items: MediaItemRow[]; segment
             <TableCell>
               <div className="flex items-center gap-2">
                 {item.segment && <SegmentDot accent={item.segment.accent} />}
-                <span className="min-w-0 truncate">{item.title}</span>
+                <Link href={`/media/${item.id}`} className="min-w-0 truncate hover:underline">
+                  {item.title}
+                </Link>
                 {item.isFavourite && <Badge variant="secondary">Favourite</Badge>}
               </div>
               {item.creator && <p className="text-muted-foreground text-xs">{item.creator}</p>}
             </TableCell>
             <TableCell className="hidden sm:table-cell">{MEDIA_KIND_LABELS[item.kind]}</TableCell>
+            <TableCell className="text-muted-foreground hidden text-xs lg:table-cell">
+              {item.category ?? ''}
+            </TableCell>
             <TableCell>
               <Badge variant={item.status === 'in_progress' ? 'secondary' : 'outline'}>
                 {STATUS_LABELS[item.status]}

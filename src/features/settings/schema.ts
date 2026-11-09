@@ -50,6 +50,7 @@ export const MODULE_LABELS: Record<(typeof MODULE_KEYS)[number], string> = {
   notes: 'Notes and quotes',
   'important-info': 'Important information',
   finance: 'Financial snapshot',
+  'cycle-tracking': 'Cycle tracking (private, off by default)',
 };
 
 export const deleteInput = z.object({

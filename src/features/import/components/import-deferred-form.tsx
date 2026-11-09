@@ -6,7 +6,7 @@ import { SubmitButton } from '@/components/shared/submit-button';
 import { importDeferredAction } from '../actions';
 import { ImportSummaryTable } from './import-summary';
 
-/** Imports the sections Release 1 kept raw, from the stored export. */
+/** Imports the sections earlier releases kept raw, from the stored export. */
 export function ImportDeferredForm({
   file,
 }: {

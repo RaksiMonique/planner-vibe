@@ -86,3 +86,11 @@ export const mediaListInput = z.object({
 export type MediaListInput = z.infer<typeof mediaListInput>;
 
 export const listItemInput = z.object({ listId: z.uuid(), mediaItemId: z.uuid() });
+
+export const MEDIA_VIEWS = ['gallery', 'table', 'list'] as const;
+export type MediaView = (typeof MEDIA_VIEWS)[number];
+
+export const listRenameInput = z.object({
+  id: z.uuid(),
+  name: z.string().trim().min(1, 'Name the list.').max(80),
+});

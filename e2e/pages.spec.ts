@@ -27,6 +27,17 @@ const ROUTES: Array<[string, RegExp]> = [
   ['/reviews', /reviews/i],
   ['/notes', /notes/i],
   ['/notes/quotes', /quotes/i],
+  // Release 4
+  ['/wellness/mood', /mood/i],
+  ['/wellness/self-care', /self-care/i],
+  ['/wellness/fitness', /fitness|movement/i],
+  ['/wellness/journal', /journal/i],
+  ['/important', /important/i],
+  ['/meals', /meal/i],
+  ['/meals/recipes', /recipes/i],
+  ['/groceries', /grocer/i],
+  ['/gifts', /gifts/i],
+  ['/vision-boards', /vision/i],
 ];
 
 for (const [route, heading] of ROUTES) {

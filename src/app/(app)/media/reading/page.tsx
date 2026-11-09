@@ -7,6 +7,7 @@ import { listSegments } from '@/features/life-segments/service';
 import { MediaCard } from '@/features/media/components/media-card';
 import { MediaItemFormDialog } from '@/features/media/components/media-forms';
 import { MediaLists } from '@/features/media/components/media-lists';
+import { resolveCoverSrcs } from '@/features/media/covers';
 import { listMediaLists, listMediaRows } from '@/features/media/queries';
 import { BOOK_STATUS_LABELS, MEDIA_STATUSES, type MediaStatus } from '@/features/media/schema';
 import { getPreferences } from '@/features/settings/service';
@@ -31,6 +32,7 @@ export default async function ReadingPage({ searchParams }: { searchParams: Prom
     listMediaLists(user.id),
   ]);
   const bookLists = lists.filter((l) => !l.kind || l.kind === 'book');
+  const coverSrcs = await resolveCoverSrcs(books);
 
   const addDialog = (
     <MediaItemFormDialog
@@ -82,6 +84,7 @@ export default async function ReadingPage({ searchParams }: { searchParams: Prom
                         segments={segments}
                         lists={bookLists}
                         todayKey={todayKey}
+                        coverSrc={coverSrcs[b.id] ?? null}
                       />
                     ))}
                   </div>

@@ -7,7 +7,12 @@ import * as s from '@/db/schema';
 type UserOwnedTable = PgTable & { userId: PgColumn };
 
 /** Every planner table's rows for one user, keyed by table name. */
-export async function exportPlannerData(userId: string) {
+export type ExportOptions = {
+  /** Mood, wellness, products and important records are private by default (instructions.md 8.19, 8.23). */
+  includeSensitive?: boolean;
+};
+
+export async function exportPlannerData(userId: string, options: ExportOptions = {}) {
   const byUser = (table: UserOwnedTable) => db.select().from(table).where(eq(table.userId, userId));
 
   const [profile] = await db.select().from(s.profiles).where(eq(s.profiles.id, userId));
@@ -34,10 +39,16 @@ export async function exportPlannerData(userId: string) {
     routines: await byUser(s.routines),
     routineSteps: await byUser(s.routineSteps),
     routineCompletions: await byUser(s.routineCompletions),
-    moodEntries: await byUser(s.moodEntries),
     timeEntries: await byUser(s.timeEntries),
     captures: await byUser(s.captures),
     legacyMap: await byUser(s.legacyMap),
   };
-  return data;
+  if (!options.includeSensitive) return data;
+  return {
+    ...data,
+    moodEntries: await byUser(s.moodEntries),
+    wellnessEntries: await byUser(s.wellnessEntries),
+    products: await byUser(s.products),
+    importantRecords: await byUser(s.importantRecords),
+  };
 }

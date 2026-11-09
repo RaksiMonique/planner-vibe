@@ -24,12 +24,14 @@ export const MODULE_KEYS = [
   'notes',
   'important-info',
   'finance',
+  /** Off by default (instructions.md 8.19). */
+  'cycle-tracking',
 ] as const;
 export type ModuleKey = (typeof MODULE_KEYS)[number];
 export type EnabledModules = Record<ModuleKey, boolean>;
 
 export const DEFAULT_ENABLED_MODULES: EnabledModules = Object.fromEntries(
-  MODULE_KEYS.map((key) => [key, true])
+  MODULE_KEYS.map((key) => [key, key !== 'cycle-tracking'])
 ) as EnabledModules;
 
 /**
@@ -72,6 +74,8 @@ export const userPreferences = planner.table(
     timeZone: text('time_zone').notNull().default('America/Jamaica'),
     // 0 = Sunday … 6 = Saturday, matching date-fns `weekStartsOn`.
     weekStartsOn: smallint('week_starts_on').notNull().default(1),
+    /** ISO 4217 code used for prices and budgets. */
+    currency: text('currency').notNull().default('USD'),
     enabledModules: jsonb('enabled_modules')
       .$type<EnabledModules>()
       .notNull()

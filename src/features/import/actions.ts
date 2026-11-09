@@ -46,13 +46,16 @@ function refreshAll() {
     '/journal',
     '/notes',
     '/notes/quotes',
+    '/meals',
+    '/meals/recipes',
+    '/groceries',
     '/settings/data',
   ]) {
     revalidatePath(path);
   }
 }
 
-/** Imports Bible studies, studies, journal entries and quotes from the latest stored export. */
+/** Imports Bible studies, studies, journal entries, quotes, recipes and meal plans from the latest stored export. */
 export async function importDeferredAction(
   _prev: ActionResult<ImportSummary> | null
 ): Promise<ActionResult<ImportSummary>> {

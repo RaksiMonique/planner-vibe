@@ -15,6 +15,9 @@ import {
 } from './tracking';
 
 export * from './faith';
+export * from './food';
+export * from './gifts';
+export * from './important';
 export * from './learning';
 export * from './legacy';
 export * from './media';
@@ -27,6 +30,8 @@ export * from './reminders';
 export * from './scheduling';
 export * from './system';
 export * from './tracking';
+export * from './vision';
+export * from './wellness';
 
 export const profilesRelations = relations(profiles, ({ one, many }) => ({
   preferences: one(userPreferences, {

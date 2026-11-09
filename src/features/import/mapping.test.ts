@@ -61,8 +61,8 @@ describe('planImport', () => {
     expect(plan.routines[0].steps[2]).toMatchObject({ key: 'morning:2', sortOrder: 2 });
   });
 
-  it('counts the sections still deferred to Release 4', () => {
-    expect(plan.deferred).toEqual({ recipes: 1, mealPlan: 2 });
+  it('defers nothing now that every section imports', () => {
+    expect(plan.deferred).toEqual({});
     expect(plan.problems).toEqual([]);
   });
 
@@ -159,7 +159,7 @@ describe('planDeferredImport', () => {
       },
     ]);
     expect(plan.subjects).toEqual([]);
-    expect(plan.stillDeferred).toEqual({ recipes: 1, mealPlan: 2 });
+    expect(plan.stillDeferred).toEqual({});
     expect(plan.problems).toEqual([]);
   });
 
@@ -181,5 +181,77 @@ describe('planDeferredImport', () => {
       ['devotional', 'not_started', 'medium', '1'],
     ]);
     expect(p.problems).toHaveLength(1);
+  });
+});
+
+describe('planDeferredImport: recipes and meal plan', () => {
+  const legacy = legacyExport.parse(fixture);
+  const segmentsWithHome = { ...segments, home: 'seg-home' };
+
+  it('maps recipes with ordered ingredients', () => {
+    const plan = planDeferredImport(legacy, segmentsWithHome, { timeZone: 'America/Jamaica' });
+    expect(plan.recipes).toEqual([
+      {
+        key: '1',
+        title: 'Chicken Curry',
+        instructions: '1. Prep ingredients.\n2. Cook according to taste.\n3. Serve hot.',
+        ingredients: [
+          { name: 'Chicken', quantity: 500, unit: 'g', sortOrder: 0 },
+          { name: 'Curry Paste', quantity: 2, unit: 'tbsp', sortOrder: 1 },
+        ],
+      },
+    ]);
+  });
+
+  it('groups meal plan days into weeks by the week start and keeps the recipe key', () => {
+    const plan = planDeferredImport(legacy, segmentsWithHome, {
+      timeZone: 'America/Jamaica',
+      weekStartsOn: 1,
+    });
+    expect(plan.mealWeeks).toEqual([
+      {
+        key: '2026-03-02',
+        lifeSegmentId: 'seg-home',
+        startDate: '2026-03-02',
+        endDate: '2026-03-08',
+        entries: [
+          { key: '2026-03-06', date: '2026-03-06', recipeKey: '1' },
+          { key: '2026-03-07', date: '2026-03-07', recipeKey: '2' },
+        ],
+      },
+    ]);
+    const sunday = planDeferredImport(legacy, segmentsWithHome, {
+      timeZone: 'America/Jamaica',
+      weekStartsOn: 0,
+    });
+    expect(sunday.mealWeeks.map((w) => w.key)).toEqual(['2026-03-01']);
+  });
+
+  it('skips unreadable recipes, blank quantities and empty meal days', () => {
+    const plan = planDeferredImport(
+      legacyExport.parse({
+        ...fixture,
+        recipes: [
+          { id: 2, name: 'Toast', ingredients: [{ name: 'Bread', qty: 0 }, { name: ' ' }] },
+          { nope: 1 },
+        ],
+        mealPlan: { '2026-03-09': null, '2026-03-10': '2', 'not a date': 1 },
+      }),
+      segmentsWithHome,
+      { timeZone: 'America/Jamaica' }
+    );
+    expect(plan.recipes).toEqual([
+      {
+        key: '2',
+        title: 'Toast',
+        instructions: null,
+        ingredients: [{ name: 'Bread', quantity: null, unit: null, sortOrder: 0 }],
+      },
+    ]);
+    expect(plan.mealWeeks).toHaveLength(1);
+    expect(plan.mealWeeks[0].entries).toEqual([
+      { key: '2026-03-10', date: '2026-03-10', recipeKey: '2' },
+    ]);
+    expect(plan.problems).toHaveLength(1);
   });
 });

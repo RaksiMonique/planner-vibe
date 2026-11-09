@@ -1,13 +1,22 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { getPreferences } from '@/features/settings/service';
-import { formValues, fromError, fromZodError, ok, type ActionResult } from '@/lib/action-result';
+import {
+  fail,
+  formValues,
+  fromError,
+  fromZodError,
+  ok,
+  type ActionResult,
+} from '@/lib/action-result';
 import { requireUser } from '@/lib/auth';
 import { toDateKey, todayInZone } from '@/lib/dates';
 import {
   listItemInput,
+  listRenameInput,
   MEDIA_STATUSES,
   mediaItemInput,
   mediaListInput,
@@ -16,12 +25,15 @@ import {
 import {
   addMediaLog,
   addToList,
+  clearCover,
   createMediaItem,
   createMediaList,
   removeFromList,
   removeMediaItem,
   removeMediaList,
   removeMediaLog,
+  renameMediaList,
+  setCoverUpload,
   setMediaStatus,
   toggleFavourite,
   updateMediaItem,
@@ -150,4 +162,50 @@ export async function removeFromListAction(formData: FormData): Promise<void> {
   if (!parsed.success) return;
   await removeFromList(user.id, parsed.data.listId, parsed.data.mediaItemId);
   refresh();
+}
+
+export const renameMediaListAction: FormAction = async (_prev, formData) => {
+  try {
+    const user = await requireUser();
+    const parsed = listRenameInput.safeParse(formValues(formData));
+    if (!parsed.success) return fromZodError(parsed.error);
+    await renameMediaList(user.id, parsed.data.id, parsed.data.name);
+    refresh();
+    return ok(undefined);
+  } catch (e) {
+    return fromError(e);
+  }
+};
+
+export const uploadCoverAction: FormAction = async (_prev, formData) => {
+  try {
+    const user = await requireUser();
+    const parsed = withId.safeParse(formValues(formData));
+    if (!parsed.success) return fromZodError(parsed.error);
+    const file = formData.get('image');
+    if (!(file instanceof File) || file.size === 0) return fail('Choose an image to upload.');
+    await setCoverUpload(user.id, parsed.data.id, file);
+    refresh();
+    return ok(undefined);
+  } catch (e) {
+    return fromError(e);
+  }
+};
+
+export async function clearCoverAction(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const parsed = withId.safeParse(formValues(formData));
+  if (!parsed.success) return;
+  await clearCover(user.id, parsed.data.id);
+  refresh();
+}
+
+/** Delete from the detail page, then leave it. */
+export async function deleteMediaItemAndLeaveAction(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const parsed = withId.safeParse(formValues(formData));
+  if (!parsed.success) return;
+  await removeMediaItem(user.id, parsed.data.id);
+  refresh();
+  redirect('/media');
 }

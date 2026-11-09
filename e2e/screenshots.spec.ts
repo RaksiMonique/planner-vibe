@@ -25,6 +25,13 @@ for (const route of [
   '/journal',
   '/reviews',
   '/notes/quotes',
+  '/wellness/mood',
+  '/wellness/self-care',
+  '/meals',
+  '/meals/recipes',
+  '/gifts',
+  '/vision-boards',
+  '/important',
 ]) {
   test(`screenshot ${route}`, async ({ page }, testInfo) => {
     await page.goto(route);

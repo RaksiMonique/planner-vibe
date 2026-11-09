@@ -1,0 +1,135 @@
+name: Security Audit
+
+on:
+  schedule:
+    # Runs daily at 07:00 UTC — catches newly published CVEs between pushes
+    - cron: '0 7 * * *'
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      # Declaring any permission zeroes the rest — contents: read must be
+      # explicit or checkout fails on a private repo ("not found").
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run audit
+        id: audit
+        # Captures the full audit JSON for the issue body (used
+        # below), then runs it through audit-check.js which respects
+        # .githooks/audit-allowlist.txt. Exit code reflects only
+        # UNALLOWLISTED high/critical advisories — so the daily issue
+        # opens only when there's a genuinely new CVE to look at,
+        # not on already-tracked/deferred ones. Allowlisted
+        # advisories still appear in audit.json for reference.
+        run: |
+          set +e
+          npm audit --json > audit.json 2>&1
+          node .githooks/audit-check.js .githooks/audit-allowlist.txt --ci < audit.json
+          EXIT_CODE=$?
+          echo "exit_code=$EXIT_CODE" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Parse audit results
+        id: parse
+        run: |
+          TOTAL=$(node -e "
+            const r = require('./audit.json');
+            const v = r.vulnerabilities ?? {};
+            const counts = { critical:0, high:0, moderate:0, low:0 };
+            Object.values(v).forEach(d => { if (counts[d.severity] !== undefined) counts[d.severity]++; });
+            const total = Object.values(counts).reduce((a,b)=>a+b,0);
+            console.log(JSON.stringify({ ...counts, total }));
+          ")
+          echo "summary=$TOTAL" >> "$GITHUB_OUTPUT"
+
+      - name: Open or update issue on failure
+        if: steps.audit.outputs.exit_code != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const raw = JSON.parse(fs.readFileSync('audit.json', 'utf8'));
+            const vulns = raw.vulnerabilities ?? {};
+
+            const lines = Object.entries(vulns).map(([name, data]) => {
+              const sev = data.severity.toUpperCase();
+              const via = (data.via ?? [])
+                .filter(v => typeof v === 'object')
+                .map(v => `[${v.title ?? v.url}](${v.url})`)
+                .join(', ') || '—';
+              return `| \`${name}\` | ${sev} | ${via} |`;
+            });
+
+            const body = [
+              '## npm audit — vulnerabilities detected',
+              '',
+              `> Run on ${new Date().toISOString().slice(0, 10)}`,
+              '',
+              '| Package | Severity | Advisory |',
+              '|---------|----------|----------|',
+              ...lines,
+              '',
+              'Run `npm audit` locally to see full details, and `npm audit fix` to resolve where possible.',
+            ].join('\n');
+
+            const title = '🔒 Security: npm audit found vulnerabilities';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['security'],
+            });
+
+            const existing = issues.find(i => i.title === title);
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels: ['security'],
+              });
+            }
+
+      - name: Close security issue if audit passes
+        if: steps.audit.outputs.exit_code == '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = '🔒 Security: npm audit found vulnerabilities';
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['security'],
+            });
+            const existing = issues.find(i => i.title === title);
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                state: 'closed',
+              });
+            }

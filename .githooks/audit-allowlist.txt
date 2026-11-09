@@ -1,0 +1,9 @@
+# npm audit allowlist: advisories accepted for now without resolving.
+#
+# One GHSA id per line, optional # rationale after it. Anything high or
+# critical that is NOT listed here blocks `git push` and CI. Record the
+# plan to resolve each deferred advisory in docs/fixes.md so this file
+# does not rot. When resolved, delete the line here and the docs entry.
+#
+# `watch: <package> <minimum-safe-version>` lines make the pre-push hook
+# nudge when a deferred upgrade becomes available (cached 24h).

@@ -23,8 +23,8 @@ Docker runs the whole stack locally, so development never touches a hosted proje
 
 ```
 npx supabase start -x studio,imgproxy,logflare,vector,edge-runtime,realtime,storage-api,mailpit
-npx supabase status -o env        # URLs and keys for .env.local / .env.local.dev
-npx dotenv -e .env.local.dev -- npm run db:migrate
+npx supabase status -o env        # URLs and keys for .env.test.local
+npx dotenv -e .env.test.local -- npm run db:migrate
 npm run db:seed                   # needs SEED_USER_ID, an existing auth user
 npm run e2e                       # signs in owner@planner.test through a minted magic link
 ```

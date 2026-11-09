@@ -13,15 +13,15 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "e2e": "dotenv -e .env.local.dev -- playwright test",
-    "e2e:smoke": "dotenv -e .env.local.dev -- playwright test --grep @smoke",
+    "e2e": "dotenv -e .env.test.local -- playwright test",
+    "e2e:smoke": "dotenv -e .env.test.local -- playwright test --grep @smoke",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:push:dev": "drizzle-kit push --config=drizzle.config.dev.ts",
     "db:push:PROD-DANGEROUS": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:studio:dev": "drizzle-kit studio --config=drizzle.config.dev.ts",
-    "db:seed": "dotenv -e .env.local.dev -- tsx src/db/seed.ts",
+    "db:seed": "dotenv -e .env.test.local -- tsx src/db/seed.ts",
     "prepare": "git config core.hooksPath .githooks || true"
   },
   "dependencies": {

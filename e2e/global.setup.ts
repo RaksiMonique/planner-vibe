@@ -12,7 +12,10 @@ export default async function globalSetup(config: FullConfig) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   const email = process.env.E2E_EMAIL ?? 'owner@planner.test';
-  if (!url || !key) throw new Error('Supabase env vars are missing; load .env.local.dev first.');
+  if (!url || !key) throw new Error('Supabase env vars are missing; load .env.test.local first.');
+  if (!/127\.0\.0\.1|localhost/.test(url)) {
+    throw new Error('Refusing to run the test suite against a hosted Supabase project.');
+  }
 
   const admin = createClient(url, key, { auth: { persistSession: false } });
   const { data: users } = await admin.auth.admin.listUsers();

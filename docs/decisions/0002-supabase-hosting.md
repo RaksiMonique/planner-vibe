@@ -1,4 +1,4 @@
-# 0002: The planner shares no infrastructure with any other application
+# 0002: Production shares nothing; development shares a project but not a schema
 
 Date: 2026-11-07 (final revision of this decision)
 
@@ -9,7 +9,7 @@ The planner belongs to a different company from the owner's other application th
 ## Decision
 
 - **Separate everything, in every environment.** The planner has its own Supabase organisation and projects (production, and a dev project if a hosted one is wanted), its own Vercel project, its own domain, its own Sentry project, its own secrets and its own repository. Nothing is shared: no database, no auth users, no storage bucket, no API keys, no accounts where that can be avoided.
-- **Development runs on the local Docker stack** (`npx supabase start`). No development environment is shared with another application.
+- **Development** (decided 2026-11-08): the two teams share one development Supabase project, and the planner lives there in its own `planner` schema, with its own storage bucket and a trigger named for it. The schema filter, separate migration journal and guardrail test mean the planner's tooling cannot reach the other team's `public` tables. Logins are shared in development only. Automated tests and seeding never use that project: they run on the local Docker stack through `.env.test.local`, which refuses any hosted URL.
 - **Schema isolation stays as defence in depth.** Every table lives in `pgSchema('planner')`, drizzle-kit uses `schemaFilter: ['planner']`, and `src/db/guardrails.test.ts` fails on any reference to the `public` schema or to the other application, in code and in docs.
 
 ## Consequences

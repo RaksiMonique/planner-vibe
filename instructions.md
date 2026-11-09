@@ -134,7 +134,7 @@ Studying a subject is not automatically a project. A defined learning initiative
 
 ### 1.4 Decisions to make before Release 1
 
-- Supabase hosting is decided: the planner has its own Supabase organisation and projects, shared with nothing. Development uses the local Docker stack (docs/decisions/0002).
+- Supabase hosting is decided: production is the planner's own project, shared with nothing. Development uses a project shared with the other team, where the planner owns only the `planner` schema; tests run on the local Docker stack (docs/decisions/0002).
 - Sign-in methods: Google and email magic links are already enabled in the shared project. Nothing to decide unless passkeys are wanted.
 - The production domain, for example a subdomain of the company's domain.
 - The accent colour assigned to each default Life Segment (2.1).

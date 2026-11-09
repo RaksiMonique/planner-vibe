@@ -14,7 +14,6 @@ const eslintConfig = defineConfig([
     'next-env.d.ts',
     // Not application code
     '.githooks/**',
-    'legacy/**',
     'drizzle/**',
   ]),
 ]);

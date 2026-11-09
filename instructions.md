@@ -27,7 +27,7 @@ Decisions:
 
 1. The existing app is a **feature reference and a data source**, not the base of the new build. Do not continue the module refactor.
 2. **Export the existing data now** (sidebar, Export Data) and keep the JSON file outside the repository. Release 1 includes an importer for this format.
-3. When the Next.js app is scaffolded, move the old files into `legacy/`. Delete that folder once imported data has been verified.
+3. The old files are archived outside the repository in `../planner-site-legacy` (git tag `legacy-vanilla-app`). Export data from that copy and import it under Settings, then Data.
 4. Existing Life Segment names map to the new defaults: God → Faith, Finance → Finance, Health → Health & Wellness, Business → Career & Work, Leisure → Recreation.
 
 Shape of the existing export, for the importer:
@@ -219,7 +219,6 @@ Every component supports loading, empty, error and success states, keyboard navi
 ├── drizzle/                generated SQL migrations
 ├── drizzle.config.ts
 ├── docs/                   architecture, decisions/, design-references/
-├── legacy/                 the old vanilla JS app, until data import is verified
 ├── public/
 ├── e2e/                    Playwright tests
 └── src/

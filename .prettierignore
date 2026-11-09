@@ -1,7 +1,6 @@
 .next
 node_modules
 drizzle
-legacy
 playwright-report
 test-results
 package-lock.json

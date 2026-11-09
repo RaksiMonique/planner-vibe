@@ -86,4 +86,4 @@ Vercel, `dev` branch to a preview environment on the dev Supabase project, `main
 - `docs/architecture.md`: layers, folders, request flow.
 - `docs/schema.md`: database conventions and relationship diagram.
 - `docs/decisions/`: why things are the way they are.
-- `legacy/`: the previous vanilla JS app, kept as a reference until its data is imported in Release 1.
+- The previous vanilla JS app is archived outside this repository in `../planner-site-legacy` (git tag `legacy-vanilla-app`); open its `index.html` to export your data, then import it under Settings, then Data.

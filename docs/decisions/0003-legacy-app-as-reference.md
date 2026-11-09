@@ -8,8 +8,8 @@ The repository held a working single-page planner (vanilla JS, Bootstrap 5, loca
 
 ## Decision
 
-The old app moved to `legacy/` untouched. The module refactor is abandoned. Release 1 includes an importer for the app's JSON export so no data is lost. The folder is deleted once imported data is verified.
+The old app moved to `legacy/` untouched while the importer was built, and on 2026-11-08 it moved out of the repository to `../planner-site-legacy` (tag `legacy-vanilla-app` marks its last commit). The module refactor is abandoned. The importer covers every section of the app's JSON export.
 
 ## Consequences
 
-The new build starts clean on the chosen stack. The old app stays available for comparing features and for exporting data until Release 1 ships.
+The new build starts clean on the chosen stack. The archived copy stays available for exporting data until the import has been done on the real projects.

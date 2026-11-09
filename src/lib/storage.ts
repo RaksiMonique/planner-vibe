@@ -1,5 +1,6 @@
 import 'server-only';
 import { randomUUID } from 'node:crypto';
+import sharp from 'sharp';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { ValidationError } from '@/lib/errors';
 
@@ -7,21 +8,29 @@ import { ValidationError } from '@/lib/errors';
 export const BUCKET = 'planner';
 const MAX_BYTES = 10 * 1024 * 1024;
 const ALLOWED = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
-const EXT: Record<string, string> = {
-  'image/jpeg': 'jpg',
-  'image/png': 'png',
-  'image/webp': 'webp',
-  'image/gif': 'gif',
-};
 
-/** Uploads an image for a user under `<userId>/<folder>/<uuid>.<ext>` and returns the object path. */
+/** Longest side of a stored image. Keeps the 1 GB Free-plan bucket and 5 GB monthly egress comfortable. */
+const MAX_SIDE = 1600;
+/** A week, so browsers cache an image instead of fetching it again on every page view. */
+export const SIGNED_URL_SECONDS = 60 * 60 * 24 * 7;
+
+/**
+ * Uploads an image for a user under `<userId>/<folder>/<uuid>.webp` and returns
+ * the object path. Every image is resized to at most 1600px, rotated per its
+ * EXIF data and re-encoded as WebP, so storage and egress stay small.
+ */
 export async function uploadImage(userId: string, folder: string, file: File): Promise<string> {
   if (!ALLOWED.has(file.type)) throw new ValidationError('Only JPEG, PNG, WebP or GIF images.');
   if (file.size > MAX_BYTES) throw new ValidationError('Images must be 10 MB or smaller.');
-  const path = `${userId}/${folder.replace(/[^a-z0-9-]/gi, '')}/${randomUUID()}.${EXT[file.type]}`;
+  const body = await sharp(Buffer.from(await file.arrayBuffer()))
+    .rotate()
+    .resize({ width: MAX_SIDE, height: MAX_SIDE, fit: 'inside', withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toBuffer();
+  const path = `${userId}/${folder.replace(/[^a-z0-9-]/gi, '')}/${randomUUID()}.webp`;
   const { error } = await createAdminClient()
     .storage.from(BUCKET)
-    .upload(path, await file.arrayBuffer(), { contentType: file.type, upsert: false });
+    .upload(path, body, { contentType: 'image/webp', upsert: false, cacheControl: '604800' });
   if (error) throw new Error(`Upload failed: ${error.message}`);
   return path;
 }
@@ -29,7 +38,7 @@ export async function uploadImage(userId: string, folder: string, file: File): P
 /** A short-lived URL for a private object. Returns null for empty paths. */
 export async function signedImageUrl(
   path: string | null | undefined,
-  expiresInSeconds = 60 * 60
+  expiresInSeconds = SIGNED_URL_SECONDS
 ): Promise<string | null> {
   if (!path) return null;
   const { data, error } = await createAdminClient()
@@ -42,7 +51,7 @@ export async function signedImageUrl(
 /** Signed URLs for many paths at once, keyed by path. */
 export async function signedImageUrls(
   paths: Array<string | null | undefined>,
-  expiresInSeconds = 60 * 60
+  expiresInSeconds = SIGNED_URL_SECONDS
 ): Promise<Record<string, string>> {
   const unique = [...new Set(paths.filter((p): p is string => Boolean(p)))];
   if (unique.length === 0) return {};

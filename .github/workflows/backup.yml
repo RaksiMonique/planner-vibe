@@ -1,0 +1,33 @@
+name: Weekly database backup
+
+# The Supabase Free plan has no managed backups. This dumps the planner schema
+# every week and keeps it as a private workflow artifact for 90 days.
+# Enable it with the repository secret PRODUCTION_DIRECT_URL (the production
+# project's direct, non-pooled connection string) and the repository variable
+# BACKUPS_ENABLED set to "true".
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    if: ${{ vars.BACKUPS_ENABLED == 'true' }}
+    steps:
+      - name: Dump the planner schema
+        env:
+          DIRECT_URL: ${{ secrets.PRODUCTION_DIRECT_URL }}
+        run: |
+          mkdir -p dump
+          docker run --rm -e DIRECT_URL postgres:17 \
+            pg_dump --no-owner --no-privileges --schema=planner --format=custom "$DIRECT_URL" \
+            > "dump/planner-$(date -u +%Y-%m-%d).dump"
+          ls -la dump
+
+      - name: Keep the dump as an artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: planner-backup-${{ github.run_id }}
+          path: dump/
+          retention-days: 90

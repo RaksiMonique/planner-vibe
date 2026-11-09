@@ -81,6 +81,10 @@ npm run e2e                       # signs in owner@planner.test through a minted
 
 Vercel, with `master` deployed to production behind Cloudflare and every pull request to a preview environment. Set every variable from `.env.example` in Vercel. Sentry reports errors in production when `NEXT_PUBLIC_SENTRY_DSN` is set.
 
+## Backups
+
+The Supabase Free plan has no managed backups, so `.github/workflows/backup.yml` dumps the `planner` schema every Monday and keeps it as a private workflow artifact for 90 days. Enable it with the repository secret `PRODUCTION_DIRECT_URL` (the production project's direct connection string) and the repository variable `BACKUPS_ENABLED` set to `true`, then run it once by hand to test. Restore with `pg_restore --no-owner --schema=planner -d <direct url> <dump file>`.
+
 ## Docs
 
 - `docs/architecture.md`: layers, folders, request flow.

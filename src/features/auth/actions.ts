@@ -76,7 +76,16 @@ export async function signInWithPassword(
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error || !data.user) {
-    return { status: 'error', message: "That email and password don't match.", email: typedEmail };
+    const code = error?.code ?? '';
+    const message =
+      code === 'email_provider_disabled'
+        ? 'Password sign-in is switched off for this Supabase project. Enable the Email provider there.'
+        : code === 'email_not_confirmed'
+          ? 'This email is not confirmed yet.'
+          : code === 'invalid_credentials' || !error
+            ? "That email and password don't match."
+            : `Sign-in failed: ${error.message}`;
+    return { status: 'error', message, email: typedEmail };
   }
   let approved = false;
   try {

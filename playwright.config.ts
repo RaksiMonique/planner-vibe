@@ -24,17 +24,17 @@ export default defineConfig({
   projects: [
     {
       name: 'public',
-      testMatch: /public\.spec\.ts/,
+      testMatch: /(public|password)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
     {
       name: 'app',
-      testIgnore: /(public|signout)\.spec\.ts/,
+      testIgnore: /(public|password|signout)\.spec\.ts/,
       use: { ...devices['Desktop Chrome'], storageState: 'e2e/.auth/owner.json' },
     },
     {
       name: 'app-mobile',
-      testIgnore: /(public|signout)\.spec\.ts/,
+      testIgnore: /(public|password|signout)\.spec\.ts/,
       use: { ...devices['Pixel 7'], storageState: 'e2e/.auth/owner.json' },
     },
     {

@@ -5,6 +5,7 @@ import { Separator } from '@/components/ui/separator';
 import { signInWithGoogle } from '@/features/auth/actions';
 import { sanitizeNext } from '@/features/auth/schema';
 import { LoginForm } from './login-form';
+import { PasswordForm } from './password-form';
 
 export const metadata: Metadata = { title: 'Sign in' };
 
@@ -46,6 +47,12 @@ export default async function LoginPage({ searchParams }: PageProps<'/auth/login
           <Separator className="flex-1" />
         </div>
         <LoginForm next={next} />
+        <div className="text-muted-foreground flex items-center gap-3 text-xs">
+          <Separator className="flex-1" />
+          or
+          <Separator className="flex-1" />
+        </div>
+        <PasswordForm next={next} />
       </CardContent>
     </Card>
   );

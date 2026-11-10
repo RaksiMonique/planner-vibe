@@ -4,6 +4,11 @@ export const magicLinkSchema = z.object({
   email: z.email('Enter a valid email address.'),
 });
 
+export const passwordSchema = z.object({
+  email: z.email('Enter a valid email address.'),
+  password: z.string().min(1, 'Enter your password.').max(200),
+});
+
 /** Only same-origin relative paths are honoured as a post-login destination. */
 export function sanitizeNext(value: unknown, fallback = '/dashboard'): string {
   const s = typeof value === 'string' ? value : '';

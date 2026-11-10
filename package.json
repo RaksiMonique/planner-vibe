@@ -6,6 +6,7 @@
     "dev": "next dev",
     "dev:dev": "dotenv -e .env.local.dev -- next dev",
     "dev:login": "dotenv -e .env.local.dev -- node scripts/dev-login.mjs",
+    "dev:password": "dotenv -e .env.local.dev -- node scripts/set-password.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

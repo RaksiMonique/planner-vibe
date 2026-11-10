@@ -1,4 +1,5 @@
-import { expect, test, type Browser } from '@playwright/test';
+import type { Browser } from '@playwright/test';
+import { expect, test } from './test';
 import { createClient } from '@supabase/supabase-js';
 
 const GUEST = 'guest@planner.test';

@@ -56,7 +56,14 @@ export function NotificationRow({ item, compact }: { item: NotificationItem; com
       {item.body && (
         <span className="text-muted-foreground block truncate text-xs">{item.body}</span>
       )}
-      <span className="text-muted-foreground block text-[11px]">{age}</span>
+      {/* Relative to now, so the server and the hydrating client can disagree. */}
+      <time
+        dateTime={item.createdAt}
+        suppressHydrationWarning
+        className="text-muted-foreground block text-[11px]"
+      >
+        {age}
+      </time>
     </>
   );
   return (

@@ -1,10 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
 
-const port = process.env.PORT ?? '3100';
+// Tests get their own port and env file so they never reuse a dev server that
+// points at a hosted project.
+const port = process.env.PORT ?? '3101';
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? `http://localhost:${port}`;
 
-// Runs against a local Supabase stack (`npx supabase start`) with `.env.local`
-// pointing at it. The global setup signs the test user in once.
+// Runs against the local Supabase stack (`npx supabase start`) through
+// `.env.test.local`, which refuses hosted URLs. The global setup signs the test
+// user in once.
 export default defineConfig({
   testDir: './e2e',
   globalSetup: './e2e/global.setup.ts',
@@ -56,9 +59,11 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: process.env.CI ? `npm run start -- -p ${port}` : `npm run dev -- -p ${port}`,
+    // A production build: Next allows one `next dev` per folder, and the
+    // development server may already be running on 3100 against a hosted project.
+    command: `npx dotenv -e .env.test.local -- next build && npx dotenv -e .env.test.local -- next start -p ${port}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
+    timeout: 300_000,
   },
 });

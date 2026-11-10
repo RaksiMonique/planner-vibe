@@ -230,8 +230,7 @@ export function CalendarView({
           eventResize={handleMove}
           dayMaxEvents={4}
           nowIndicator
-          slotMinTime="05:00:00"
-          slotMaxTime="23:00:00"
+          scrollTime="06:00:00"
           eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}
           noEventsText="Nothing scheduled."
         />

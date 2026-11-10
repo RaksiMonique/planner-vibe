@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { COOKIE_OPTIONS } from '@/lib/supabase/cookie';
 
 // Pages that render without a session. Everything else requires one.
 const PUBLIC_PATHS = new Set(['/']);
@@ -35,7 +36,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isAuthRoute = pathname.startsWith('/auth');
   const isApiRoute = pathname.startsWith('/api');
-  const hasSessionCookie = request.cookies.getAll().some((c) => c.name.startsWith('sb-'));
+  const hasSessionCookie = request.cookies
+    .getAll()
+    .some((c) => c.name.startsWith(COOKIE_OPTIONS.name));
 
   // Public pages without a session cookie need no Supabase round trip.
   let user: { id: string } | null = null;
@@ -44,6 +47,7 @@ export async function proxy(request: NextRequest) {
       supabaseUrl,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
       {
+        cookieOptions: COOKIE_OPTIONS,
         cookies: {
           getAll: () => request.cookies.getAll(),
           setAll: (cookies) => {

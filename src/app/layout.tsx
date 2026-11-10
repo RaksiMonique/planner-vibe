@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { DM_Sans, Playfair_Display } from 'next/font/google';
+import { HydrationMarker } from '@/components/shared/hydration-marker';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import './globals.css';
 
@@ -24,6 +25,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="en" className={`${playfair.variable} ${dmSans.variable} h-full`}>
       <body className="flex min-h-full flex-col">
         <TooltipProvider>{children}</TooltipProvider>
+        <HydrationMarker />
       </body>
     </html>
   );

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 // Every Release 1 page renders for a signed-in user with seeded data.
 const ROUTES: Array<[string, RegExp]> = [

@@ -69,7 +69,10 @@ export function TimerPanel({
           aria-hidden
         />
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium">Timer running · {formatMinutes(elapsed)}</p>
+          {/* Elapsed time is relative to now, so the server and the hydrating client can disagree. */}
+          <p className="text-sm font-medium" suppressHydrationWarning>
+            Timer running · {formatMinutes(elapsed)}
+          </p>
           <p className="text-muted-foreground flex items-center gap-1.5 truncate text-xs">
             <SegmentDot accent={running.accent} />
             {running.segmentName}

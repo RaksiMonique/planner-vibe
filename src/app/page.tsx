@@ -4,6 +4,11 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 
+// Rendered per request so the Content Security Policy nonce in the proxy
+// matches the one on this page's scripts. A prerendered page would carry a
+// build-time nonce, and the browser would refuse to run its scripts.
+export const dynamic = 'force-dynamic';
+
 const SWATCHES = [
   ['Deep Burgundy', 'bg-burgundy'],
   ['Terracotta', 'bg-terracotta'],

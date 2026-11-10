@@ -2,6 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { env } from '@/env';
+import { COOKIE_OPTIONS } from '@/lib/supabase/cookie';
 import { resolveAccessOnSignIn } from '@/features/access/service';
 import { sanitizeNext } from '@/features/auth/schema';
 
@@ -19,6 +20,7 @@ export async function GET(request: NextRequest) {
     env.NEXT_PUBLIC_SUPABASE_URL,
     env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     {
+      cookieOptions: COOKIE_OPTIONS,
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (cookies) => {

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 import { createClient } from '@supabase/supabase-js';
 
 const EMAIL = 'password@planner.test';

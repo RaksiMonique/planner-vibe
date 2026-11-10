@@ -37,9 +37,14 @@ function InboxItem({ capture, segments }: { capture: Capture; segments: LifeSegm
     <li className="bg-card flex flex-col gap-2 rounded-lg border px-2.5 py-2">
       <div className="flex items-start gap-2">
         <p className="min-w-0 flex-1 text-sm">{capture.text}</p>
-        <span className="text-muted-foreground text-xs whitespace-nowrap">
+        {/* Relative to now, so the server and the hydrating client can disagree. */}
+        <time
+          dateTime={new Date(capture.createdAt).toISOString()}
+          suppressHydrationWarning
+          className="text-muted-foreground text-xs whitespace-nowrap"
+        >
           {formatDistanceToNowStrict(capture.createdAt, { addSuffix: true })}
-        </span>
+        </time>
       </div>
       {filing ? (
         <form action={action} className="flex flex-wrap items-center gap-2">

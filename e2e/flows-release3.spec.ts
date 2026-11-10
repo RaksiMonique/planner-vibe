@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 const stamp = Date.now().toString(36);
 
@@ -38,7 +38,7 @@ test("write today's journal entry and a gratitude line", async ({ page }) => {
   await expect(page.getByLabel('Gratitude 1')).toHaveValue(new RegExp(`Sunlight ${stamp}`));
 });
 
-test('a saved quote appears on the dashboard', async ({ page }) => {
+test('the dashboard shows one of my saved quotes', async ({ page }) => {
   const quote = `Act, and God will act ${stamp}`;
   await page.goto('/notes/quotes');
   await page
@@ -54,8 +54,13 @@ test('a saved quote appears on the dashboard', async ({ page }) => {
     .click();
   await expect(page.getByText(quote).first()).toBeVisible();
 
+  // Own quotes rotate by day, so the card shows one of them, not necessarily the newest.
   await page.goto('/dashboard');
-  await expect(page.getByText(/Act, and God will act/).first()).toBeVisible();
+  const shown = page.getByRole('figure', { name: 'Quote of the day' }).locator('blockquote');
+  await expect(shown).not.toBeEmpty();
+  const text = (await shown.innerText()).trim();
+  await page.goto('/notes/quotes');
+  await expect(page.getByText(text, { exact: true }).first()).toBeVisible();
 });
 
 test('create a course and a book on the reading list', async ({ page }) => {

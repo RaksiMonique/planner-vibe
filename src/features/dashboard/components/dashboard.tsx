@@ -310,12 +310,19 @@ export function Dashboard({
 
         <div className="lg:col-span-4">
           <Card className="bg-secondary h-full ring-0">
-            <CardContent className="flex h-full flex-col justify-center gap-3 py-4">
-              <QuoteIcon className="text-primary size-5" aria-hidden />
-              <p className="font-heading text-secondary-foreground text-lg leading-snug">
-                {data.quote.quote}
-              </p>
-              <p className="text-muted-foreground text-xs">{data.quote.author}</p>
+            <CardContent className="h-full py-4">
+              <figure
+                aria-label="Quote of the day"
+                className="flex h-full flex-col justify-center gap-3"
+              >
+                <QuoteIcon className="text-primary size-5" aria-hidden />
+                <blockquote className="font-heading text-secondary-foreground text-lg leading-snug">
+                  {data.quote.quote}
+                </blockquote>
+                <figcaption className="text-muted-foreground text-xs">
+                  {data.quote.author}
+                </figcaption>
+              </figure>
             </CardContent>
           </Card>
         </div>

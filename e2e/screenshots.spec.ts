@@ -1,4 +1,4 @@
-import { test } from '@playwright/test';
+import { test } from './test';
 
 // Visual check helper, not a test of behaviour: writes full-page screenshots
 // of the main pages when SCREENSHOT_DIR is set, otherwise skips.

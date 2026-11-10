@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './test';
 
 const stamp = Date.now().toString(36);
 
@@ -50,7 +50,9 @@ test('import the legacy JSON export', async ({ page }) => {
   await page.goto('/settings/data');
   await page
     .getByLabel('JSON export from the old planner')
-    .setInputFiles(process.env.LEGACY_EXPORT_FILE ?? 'e2e/fixtures/legacy-export.json');
+    .setInputFiles(
+      process.env.LEGACY_EXPORT_FILE ?? 'src/features/import/__fixtures__/legacy-sample.json'
+    );
   await page.getByRole('button', { name: 'Import', exact: true }).click();
   const table = page.getByRole('table');
   await expect(table).toBeVisible({ timeout: 30_000 });

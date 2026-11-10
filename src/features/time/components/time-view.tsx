@@ -222,9 +222,8 @@ export function TimeView({
           eventDrop={handleMove}
           eventResize={handleMove}
           nowIndicator
+          scrollTime="06:00:00"
           allDaySlot={false}
-          slotMinTime="05:00:00"
-          slotMaxTime="23:00:00"
           slotDuration="00:15:00"
           snapDuration="00:15:00"
           eventTimeFormat={{ hour: '2-digit', minute: '2-digit', hour12: false }}

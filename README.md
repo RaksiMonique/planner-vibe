@@ -27,9 +27,10 @@ npx supabase status -o env        # URLs and keys for .env.test.local
 npx dotenv -e .env.test.local -- npm run db:migrate
 npm run db:seed                   # needs SEED_USER_ID, an existing auth user
 npm run e2e                       # signs in owner@planner.test through a minted magic link
+LEGACY_EXPORT_FILE=~/my-export.json npm run e2e   # import test uses your real export instead of the sample
 ```
 
-`supabase/config.toml` already allows the `http://localhost:3100/auth/callback` redirect the tests use.
+Tests start their own server on port 3101 with `.env.test.local`, so they never touch the server you use on 3100 or any hosted project.
 
 ## What exists (Releases 1 to 4)
 

@@ -122,7 +122,12 @@ export function PomodoroTimer({
               <p className="tracking-eyebrow text-muted-foreground text-xs uppercase">
                 {PHASE_LABELS[state.phase]} · {session.label}
               </p>
-              <p className="font-heading text-4xl tabular-nums" aria-live="polite">
+              {/* Relative to now, so the server and the hydrating client can disagree. */}
+              <p
+                className="font-heading text-4xl tabular-nums"
+                aria-live="polite"
+                suppressHydrationWarning
+              >
                 {formatClock(remaining)}
               </p>
             </div>

@@ -11,7 +11,7 @@ One Next.js application (modular monolith). Four layers, each in its own place:
 
 ## Request flow
 
-1. `src/proxy.ts` runs on every request: sets a nonce-based CSP, refreshes the Supabase session cookie, and redirects signed-out users away from protected routes. Public routes are `/`, `/wireframe`, `/auth/*` and `/api/*`.
+1. `src/proxy.ts` runs on every request: sets a nonce-based CSP (so every page renders dynamically; a prerendered page would carry a build-time nonce and the browser would block its scripts), refreshes the Supabase session cookie (named `planner-auth`, see decision 0002), and redirects signed-out users away from protected routes. Public routes are `/`, `/wireframe`, `/auth/*` and `/api/*`.
 2. Pages in `src/app/(app)` call `requireUser()` from `src/lib/auth.ts` as a second check and render.
 3. Mutations are server actions in the feature folder. Route handlers under `src/app/api` exist only for external clients: exports, feeds, cron.
 
@@ -50,4 +50,4 @@ Pages under `src/app/(app)` are thin: `requireUser()`, load data through queries
 ## Testing layers
 
 - Vitest for pure logic (dates, recurrence, progress roll-up, import mapping).
-- Playwright against the local Supabase stack: `e2e/global.setup.ts` signs the test user in through the app's own `/auth/callback` with a token minted by the service role, then every page test runs with that session on desktop and phone viewports.
+- Playwright against the local Supabase stack: `e2e/global.setup.ts` signs the test user in through the app's own `/auth/callback` with a token minted by the service role, then every page test runs with that session on desktop, phone and tablet viewports. Specs import `test` from `e2e/test.ts`, whose `page.goto` waits for the `data-hydrated` mark the root layout sets after React hydrates, because a click or keypress sent before hydration is lost.

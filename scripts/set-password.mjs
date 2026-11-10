@@ -9,10 +9,11 @@ import { createClient } from '@supabase/supabase-js';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const email = process.argv[2];
+const email = process.argv[2] ?? (process.env.AUTH_ALLOWED_EMAILS ?? '').split(',')[0]?.trim();
 if (!url || !key || !email) {
   console.error(
-    'Usage: npm run dev:password -- you@example.com (needs the env file with the service role key)'
+    'Usage: npm run dev:password [-- you@example.com]. Without an address it uses the first one in ' +
+      'AUTH_ALLOWED_EMAILS. Needs the env file with the service role key.'
   );
   process.exit(1);
 }

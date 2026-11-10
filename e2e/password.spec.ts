@@ -22,13 +22,13 @@ test('sign in with an email and password', async ({ page }) => {
   }
 
   await page.goto('/auth/login');
-  await page.getByLabel('Email').last().fill(EMAIL);
+  await page.getByLabel('Email').first().fill(EMAIL);
   await page.getByLabel('Password').fill('not-the-password');
-  await page.getByRole('button', { name: /sign in with password/i }).click();
+  await page.getByRole('button', { name: /^sign in$/i }).click();
   await expect(page.getByRole('alert').filter({ hasText: /don't match/i })).toBeVisible();
 
   await page.getByLabel('Password').fill(PASSWORD);
-  await page.getByRole('button', { name: /sign in with password/i }).click();
+  await page.getByRole('button', { name: /^sign in$/i }).click();
   // Not allow-listed, so the sign-in works but waits for approval.
   await expect(page).toHaveURL(/\/pending/);
   await expect(page.getByRole('heading', { name: /waiting for approval/i })).toBeVisible();

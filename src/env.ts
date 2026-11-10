@@ -19,6 +19,8 @@ export const env = createEnv({
     SEED_USER_ID: z.uuid().optional(),
     // Comma-separated emails allowed to sign in. Unset = anyone (multi-user).
     AUTH_ALLOWED_EMAILS: z.string().optional(),
+    // 'true' shows the Google button; the provider must be configured in Supabase first.
+    AUTH_GOOGLE: z.enum(['true', 'false']).optional(),
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     // Set by Vercel per deployment target; NODE_ENV is 'production' in both
     VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
@@ -39,6 +41,7 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     SEED_USER_ID: process.env.SEED_USER_ID,
     AUTH_ALLOWED_EMAILS: process.env.AUTH_ALLOWED_EMAILS,
+    AUTH_GOOGLE: process.env.AUTH_GOOGLE,
     NODE_ENV: process.env.NODE_ENV,
     VERCEL_ENV: process.env.VERCEL_ENV,
     NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,

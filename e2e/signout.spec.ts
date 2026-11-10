@@ -26,8 +26,8 @@ test('set a password under Settings, sign out, and sign back in with it', async 
   await expect(page).toHaveURL(/\/$/);
 
   await page.goto('/auth/login');
-  await page.getByLabel('Email').last().fill(E2E_EMAIL);
+  await page.getByLabel('Email').first().fill(E2E_EMAIL);
   await page.getByLabel('Password').fill(password);
-  await page.getByRole('button', { name: /sign in with password/i }).click();
+  await page.getByRole('button', { name: /^sign in$/i }).click();
   await expect(page).toHaveURL(/\/dashboard/);
 });

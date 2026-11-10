@@ -42,9 +42,9 @@ export function PasswordForm({ next }: { next: string }) {
           {state.message}
         </p>
       )}
-      <Button type="submit" disabled={pending} variant="secondary" className="w-full">
+      <Button type="submit" disabled={pending} className="w-full">
         <KeyRoundIcon data-icon="inline-start" />
-        {pending ? 'Signing in…' : 'Sign in with password'}
+        {pending ? 'Signing in…' : 'Sign in'}
       </Button>
     </form>
   );

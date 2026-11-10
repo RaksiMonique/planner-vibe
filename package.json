@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "dev:dev": "dotenv -e .env.local.dev -- next dev",
+    "dev:login": "dotenv -e .env.local.dev -- node scripts/dev-login.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

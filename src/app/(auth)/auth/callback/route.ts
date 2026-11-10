@@ -2,8 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import type { EmailOtpType } from '@supabase/supabase-js';
 import { NextResponse, type NextRequest } from 'next/server';
 import { env } from '@/env';
-import { isEmailAllowed, sanitizeNext } from '@/features/auth/schema';
-import { ensureProfile } from '@/features/auth/service';
+import { resolveAccessOnSignIn } from '@/features/access/service';
+import { sanitizeNext } from '@/features/auth/schema';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -50,30 +50,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/auth/login?error=callback`);
   }
 
-  // Optional allow-list: a single-owner deployment rejects everyone else
-  // right after the provider round trip, before any page renders.
+  // Access is granted by the owner (docs/decisions/0005). Allow-listed
+  // emails enter at once; everyone else lands on the waiting page.
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!isEmailAllowed(user?.email, env.AUTH_ALLOWED_EMAILS)) {
-    await supabase.auth.signOut();
-    return withCookies(NextResponse.redirect(`${origin}/auth/login?error=not_allowed`));
-  }
-
+  let approved = false;
   if (user) {
     try {
       const meta = user.user_metadata ?? {};
-      await ensureProfile({
+      const decision = await resolveAccessOnSignIn({
         id: user.id,
         email: user.email,
         displayName: meta.full_name ?? meta.name ?? null,
       });
+      approved = decision.status === 'approved';
     } catch (e) {
       // Sign-in must not fail because the planner schema is unreachable;
-      // the dashboard shows an empty state and Sentry gets the error.
-      console.error('[auth/callback] ensureProfile failed', e);
+      // the signed-in layout re-checks access on every page.
+      console.error('[auth/callback] resolveAccessOnSignIn failed', e);
     }
   }
+  if (!approved) return withCookies(NextResponse.redirect(`${origin}/pending`));
 
   return withCookies(NextResponse.redirect(`${origin}${next}`));
 }

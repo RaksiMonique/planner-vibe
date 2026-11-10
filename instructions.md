@@ -374,7 +374,7 @@ Recurrence is a set of columns on Event, Task, Habit, Routine and TimeBlock (5.4
 
 Supabase Auth through `@supabase/ssr`: browser, server and middleware clients in `src/lib/supabase/`, sessions in cookies, refreshed in `src/proxy.ts`.
 
-**Recommendation:** enable Google sign-in as the primary method and email magic links (sent through Resend) as the fallback. No passwords are stored and there is no reset flow to build. Keep sign-up restricted to the owner's email until multi-user is wanted.
+**Recommendation:** enable Google sign-in as the primary method and email magic links (sent through Resend) as the fallback. No passwords are stored and there is no reset flow to build. New sign-ins wait on a holding page until the owner approves them under Settings, then Members; `AUTH_ALLOWED_EMAILS` auto-approves listed addresses (docs/decisions/0005).
 
 Requirements:
 

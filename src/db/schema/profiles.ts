@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { jsonb, pgPolicy, smallint, text, uuid } from 'drizzle-orm/pg-core';
+import { jsonb, pgPolicy, smallint, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { planner } from './_schema';
 import { timestamps } from './_columns';
 import { ownerPolicies } from './_policies';
@@ -34,6 +34,9 @@ export const DEFAULT_ENABLED_MODULES: EnabledModules = Object.fromEntries(
   MODULE_KEYS.map((key) => [key, key !== 'cycle-tracking'])
 ) as EnabledModules;
 
+export const accessStatusEnum = planner.enum('access_status', ['pending', 'approved', 'blocked']);
+export const profileRoleEnum = planner.enum('profile_role', ['owner', 'member']);
+
 /**
  * Mirrors Supabase `auth.users`. The id is written by the `handle_new_user`
  * trigger on signup (drizzle/…_auth_profile_trigger.sql), never generated here.
@@ -44,6 +47,12 @@ export const profiles = planner.table(
     id: uuid('id').primaryKey(),
     email: text('email').notNull().unique(),
     displayName: text('display_name'),
+    /** Entry is granted by the owner (docs/decisions/0005); data isolation does not depend on it. */
+    accessStatus: accessStatusEnum('access_status').notNull().default('pending'),
+    role: profileRoleEnum('role').notNull().default('member'),
+    requestedAt: timestamp('requested_at', { withTimezone: true }).defaultNow().notNull(),
+    approvedAt: timestamp('approved_at', { withTimezone: true }),
+    approvedBy: uuid('approved_by'),
     ...timestamps(),
   },
   () => [

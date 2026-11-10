@@ -8,6 +8,7 @@ import { ModulesForm } from '@/features/settings/components/modules-form';
 import { PreferencesForm } from '@/features/settings/components/preferences-form';
 import { ProfileForm } from '@/features/settings/components/profile-form';
 import { getPreferences, getProfile } from '@/features/settings/service';
+import { getAccess } from '@/features/access/service';
 import { requireUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
@@ -16,6 +17,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
   const user = await requireUser();
+  const access = await getAccess(user.id);
   const [profile, prefs] = await Promise.all([getProfile(user.id), getPreferences(user.id)]);
 
   return (
@@ -24,13 +26,23 @@ export default async function SettingsPage() {
         title="Settings"
         description="Profile, preferences and the modules you use."
         actions={
-          <Link
-            href="/settings/data"
-            className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
-          >
-            <DatabaseIcon data-icon="inline-start" />
-            Import, export and delete data
-          </Link>
+          <>
+            {access.role === 'owner' && (
+              <Link
+                href="/settings/members"
+                className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+              >
+                Members
+              </Link>
+            )}
+            <Link
+              href="/settings/data"
+              className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+            >
+              <DatabaseIcon data-icon="inline-start" />
+              Import, export and delete data
+            </Link>
+          </>
         }
       />
       <div className="grid gap-4 lg:grid-cols-2">

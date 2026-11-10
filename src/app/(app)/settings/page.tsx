@@ -5,6 +5,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
 import { ModulesForm } from '@/features/settings/components/modules-form';
+import { PasswordForm } from '@/features/settings/components/password-form';
 import { PreferencesForm } from '@/features/settings/components/preferences-form';
 import { ProfileForm } from '@/features/settings/components/profile-form';
 import { getPreferences, getProfile } from '@/features/settings/service';
@@ -56,6 +57,17 @@ export default async function SettingsPage() {
               email={profile?.email ?? user.email ?? ''}
               displayName={profile?.displayName ?? null}
             />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-heading text-lg">Password</CardTitle>
+            <CardDescription>
+              Optional. With a password you can sign in without a link or Google.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PasswordForm />
           </CardContent>
         </Card>
         <Card>

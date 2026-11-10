@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation';
 import { env } from '@/env';
 import { createClient } from '@/lib/supabase/server';
 import { resolveAccessOnSignIn } from '@/features/access/service';
-import { magicLinkSchema, passwordSchema, sanitizeNext } from './schema';
+import { magicLinkSchema, newPasswordSchema, passwordSchema, sanitizeNext } from './schema';
 
 export type MagicLinkState =
   | { status: 'idle'; email?: string }
@@ -100,4 +100,25 @@ export async function signInWithPassword(
     console.error('[auth/password] resolveAccessOnSignIn failed', e);
   }
   redirect(approved ? next : '/pending');
+}
+
+export type NewPasswordState =
+  { status: 'idle' } | { status: 'saved' } | { status: 'error'; message: string };
+
+/** Sets or changes the signed-in user's password; used from Settings. */
+export async function updatePassword(
+  _prev: NewPasswordState,
+  formData: FormData
+): Promise<NewPasswordState> {
+  const parsed = newPasswordSchema.safeParse({
+    password: formData.get('password'),
+    confirm: formData.get('confirm'),
+  });
+  if (!parsed.success) {
+    return { status: 'error', message: parsed.error.issues[0]?.message ?? 'Check the password.' };
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) return { status: 'error', message: `Could not save the password: ${error.message}` };
+  return { status: 'saved' };
 }

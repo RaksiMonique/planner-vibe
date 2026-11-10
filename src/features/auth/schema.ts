@@ -24,3 +24,13 @@ export function isEmailAllowed(email: string | undefined, allowList: string | un
     .filter(Boolean);
   return allowed.includes(email.toLowerCase());
 }
+
+export const newPasswordSchema = z
+  .object({
+    password: z.string().min(10, 'Use at least 10 characters.').max(200),
+    confirm: z.string(),
+  })
+  .refine((v) => v.password === v.confirm, {
+    message: 'The two passwords differ.',
+    path: ['confirm'],
+  });

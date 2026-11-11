@@ -41,7 +41,7 @@ import {
 } from 'lucide-react';
 
 /** The release that is currently being built. Items from later releases render as "soon". */
-export const CURRENT_RELEASE = 5;
+export const CURRENT_RELEASE = 6;
 
 export type NavItem = {
   label: string;

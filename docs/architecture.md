@@ -55,3 +55,7 @@ Pages under `src/app/(app)` are thin: `requireUser()`, load data through queries
 ## Integrations
 
 `src/features/integrations` holds the ICS feed, the Google Calendar connection (`google.ts` is the API client, `google-sync.ts` the ownership-based sync) and the settings page's actions; `src/features/reminders` holds delivery (`email.ts`, `push.ts`), the digest renderer and the scheduled jobs (`cron.ts`) behind `/api/cron/*`. All of it is off until its keys exist (decision 0007).
+
+## Dashboard
+
+`src/features/dashboard/layout.ts` is the card registry (keys, labels, owning module) and the pure rules for order and hidden cards; `user_preferences.dashboard_layout` stores the user's choice and Settings edits it. `dashboard.tsx` builds every card once and renders the visible ones in order, so a new card is one registry entry plus one render branch.

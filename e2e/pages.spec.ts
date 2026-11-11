@@ -48,6 +48,7 @@ const ROUTES: Array<[string, RegExp]> = [
   ['/time/analytics', /time analytics/i],
   // Release 6
   ['/settings/integrations', /integrations/i],
+  ['/analytics', /analytics/i],
 ];
 
 for (const [route, heading] of ROUTES) {

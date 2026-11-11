@@ -1,10 +1,8 @@
 import 'server-only';
 import { eq } from 'drizzle-orm';
-import type { PgColumn, PgTable } from 'drizzle-orm/pg-core';
 import { db } from '@/db';
 import * as s from '@/db/schema';
-
-type UserOwnedTable = PgTable & { userId: PgColumn };
+import { EXCLUDED_FROM_EXPORT, plannerTables } from './tables';
 
 /** Every planner table's rows for one user, keyed by table name. */
 export type ExportOptions = {
@@ -13,42 +11,21 @@ export type ExportOptions = {
 };
 
 export async function exportPlannerData(userId: string, options: ExportOptions = {}) {
-  const byUser = (table: UserOwnedTable) => db.select().from(table).where(eq(table.userId, userId));
-
   const [profile] = await db.select().from(s.profiles).where(eq(s.profiles.id, userId));
-  const data = {
+  const entries = plannerTables().filter(
+    (t) => !EXCLUDED_FROM_EXPORT.has(t.key) && (options.includeSensitive || !t.sensitive)
+  );
+  const rows = await Promise.all(
+    entries.map((t) => db.select().from(t.table).where(eq(t.userId, userId)))
+  );
+  const data: Record<string, unknown> = {
     exportedAt: new Date().toISOString(),
-    format: 'planner-v1',
+    // v2: every user-owned table, discovered from the schema (src/features/export/tables.ts).
+    format: 'planner-v2',
     profile: profile ?? null,
-    userPreferences: await byUser(s.userPreferences),
-    lifeSegments: await byUser(s.lifeSegments),
-    tags: await byUser(s.tags),
-    tagAssignments: await byUser(s.tagAssignments),
-    goals: await byUser(s.goals),
-    goalProjects: await byUser(s.goalProjects),
-    projects: await byUser(s.projects),
-    milestones: await byUser(s.milestones),
-    tasks: await byUser(s.tasks),
-    taskDependencies: await byUser(s.taskDependencies),
-    calendars: await byUser(s.calendars),
-    events: await byUser(s.events),
-    timeBlocks: await byUser(s.timeBlocks),
-    timeBlockTemplates: await byUser(s.timeBlockTemplates),
-    habits: await byUser(s.habits),
-    habitCheckIns: await byUser(s.habitCheckIns),
-    routines: await byUser(s.routines),
-    routineSteps: await byUser(s.routineSteps),
-    routineCompletions: await byUser(s.routineCompletions),
-    timeEntries: await byUser(s.timeEntries),
-    captures: await byUser(s.captures),
-    legacyMap: await byUser(s.legacyMap),
   };
-  if (!options.includeSensitive) return data;
-  return {
-    ...data,
-    moodEntries: await byUser(s.moodEntries),
-    wellnessEntries: await byUser(s.wellnessEntries),
-    products: await byUser(s.products),
-    importantRecords: await byUser(s.importantRecords),
-  };
+  entries.forEach((t, i) => {
+    data[t.key] = rows[i];
+  });
+  return data;
 }

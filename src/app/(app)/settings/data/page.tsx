@@ -7,6 +7,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { format } from 'date-fns';
 import { ImportDeferredForm } from '@/features/import/components/import-deferred-form';
 import { ImportForm } from '@/features/import/components/import-form';
+import { PlannerImportForm } from '@/features/import/components/planner-import-form';
 import { getLatestImportFile } from '@/features/import/service';
 import { DeleteDataDialog } from '@/features/settings/components/delete-data-dialog';
 import { requireUser } from '@/lib/auth';
@@ -79,6 +80,20 @@ export default async function DataPage() {
               <DownloadIcon data-icon="inline-start" />
               Download JSON export
             </Link>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="font-heading text-lg">Import a planner export</CardTitle>
+            <CardDescription>
+              Move your data in from another planner project, for example from development to
+              production: upload the file from Export everything on that project. Rows already
+              imported are skipped, so running it twice is safe.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <PlannerImportForm />
           </CardContent>
         </Card>
 

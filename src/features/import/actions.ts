@@ -3,9 +3,15 @@
 import { revalidatePath } from 'next/cache';
 import { requireUser } from '@/lib/auth';
 import { fail, fromError, ok, type ActionResult } from '@/lib/action-result';
+import {
+  importPlannerExport,
+  parsePlannerExport,
+  type PlannerImportSummary,
+} from './planner-import';
 import { importDeferred, importLegacy, type ImportSummary } from './service';
 
 const MAX_BYTES = 5 * 1024 * 1024;
+const MAX_PLANNER_BYTES = 25 * 1024 * 1024;
 
 export async function importLegacyAction(
   _prev: ActionResult<ImportSummary> | null,
@@ -63,6 +69,41 @@ export async function importDeferredAction(
   try {
     const user = await requireUser();
     const summary = await importDeferred(user.id);
+    refreshAll();
+    return ok(summary);
+  } catch (e) {
+    return fromError(e);
+  }
+}
+
+/** Imports this planner's own JSON export from another project (instructions.md 9.3). */
+export async function importPlannerAction(
+  _prev: ActionResult<PlannerImportSummary> | null,
+  formData: FormData
+): Promise<ActionResult<PlannerImportSummary>> {
+  try {
+    const user = await requireUser();
+    const file = formData.get('file');
+    if (!(file instanceof File) || file.size === 0) return fail('Choose a planner export (JSON).');
+    if (file.size > MAX_PLANNER_BYTES) {
+      return fail(
+        'That file is larger than 25 MB. Export without the raw legacy upload, or import in parts.'
+      );
+    }
+    let raw: unknown;
+    try {
+      raw = JSON.parse(await file.text());
+    } catch {
+      return fail('That file is not valid JSON.');
+    }
+    const data = parsePlannerExport(raw);
+    const profile = data.profile as { id?: unknown } | null | undefined;
+    if (profile && profile.id === user.id) {
+      return fail(
+        'This export came from this account; importing it here would duplicate everything. Use it in a different project.'
+      );
+    }
+    const summary = await importPlannerExport(user.id, data);
     refreshAll();
     return ok(summary);
   } catch (e) {

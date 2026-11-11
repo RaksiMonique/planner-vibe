@@ -66,6 +66,10 @@ Tests start their own server on port 3101 with `.env.test.local`, so they never 
 | `/quarter`, `/year`, `/lifelong`                                                  | Quarterly objectives with month-by-month breakdown and retrospective; annual objectives, year at a glance and quarterly breakdown; lifelong aspirations with next steps, milestone timeline and horizons          |
 | `/goals/[id]/mandala`                                                             | Mandala view: the goal in the middle, up to eight supporting goals around it, each opening its own grid; goal and segment pages show every horizon on one timeline                                                |
 | `/work/calendar`, `/work/projects`                                                | Job calendar: rotating shift patterns, one-off shifts, leave and public holidays with availability derived from them, work appointments, shifts shown in the Life Calendar; projects in the Career & Work segment |
+| `/finance`                                                                        | Financial snapshot: financial goals with progress updates, budgets at a glance with recorded spending, upcoming financial actions; all entered by hand                                                            |
+| `/time/analytics`                                                                 | Planned versus logged time by segment, project, activity type and day, with top tasks, for a week or month                                                                                                        |
+| `/settings/integrations`                                                          | Calendar subscription (ICS) address, email and push reminder channels, Google Calendar connection                                                                                                                 |
+| `GET /api/calendar/feed.ics?token=…`, `GET /api/export/csv?entity=…`              | Read-only calendar subscription; one table as CSV                                                                                                                                                                 |
 
 ## Scripts
 
@@ -95,3 +99,13 @@ The Supabase Free plan has no managed backups, so `.github/workflows/backup.yml`
 - `docs/schema.md`: database conventions and relationship diagram.
 - `docs/decisions/`: why things are the way they are.
 - The previous vanilla JS app is archived outside this repository in `../planner-site-legacy` (git tag `legacy-vanilla-app`); open its `index.html` to export your data, then import it under Settings, then Data.
+
+## Integrations (Release 6)
+
+Every integration is optional and switches itself on when its keys are present (see `.env.example`).
+
+- **Calendar subscription (ICS)**: no setup. Settings, Integrations gives a private address that Apple Calendar, Google Calendar and Outlook can subscribe to; rotate it there if it leaks.
+- **Email reminders and the daily digest**: `RESEND_API_KEY` and `EMAIL_FROM` (a sender on a domain verified in Resend). Users opt in under Settings, Integrations.
+- **Scheduled jobs**: `vercel.json` runs `/api/cron/daily` once a day (Vercel's free plan allows daily jobs). It keeps the database awake, prunes old notifications, sends due reminders and the digest. For reminders closer to their time, point an external scheduler at `/api/cron/reminders` every 10 to 15 minutes with the header `Authorization: Bearer <CRON_SECRET>`.
+- **Google Calendar**: a Google Cloud OAuth client (Web application) with redirect URI `<NEXT_PUBLIC_SITE_URL>/api/google/callback`, the Google Calendar API enabled, and `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `TOKEN_ENCRYPTION_KEY` set. Planner events are written to the chosen Google calendar; that calendar's own events appear read-only in the Life Calendar.
+- **Browser push**: `npx web-push generate-vapid-keys` once; set `NEXT_PUBLIC_VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT`. Each device subscribes from Settings, Integrations.

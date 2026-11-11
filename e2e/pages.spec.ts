@@ -44,6 +44,10 @@ const ROUTES: Array<[string, RegExp]> = [
   ['/lifelong', /lifelong/i],
   ['/work/calendar', /job calendar/i],
   ['/work/projects', /work projects/i],
+  ['/finance', /financial snapshot/i],
+  ['/time/analytics', /time analytics/i],
+  // Release 6
+  ['/settings/integrations', /integrations/i],
 ];
 
 for (const [route, heading] of ROUTES) {

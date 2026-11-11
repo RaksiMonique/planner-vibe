@@ -43,6 +43,13 @@ export default async function SettingsPage() {
               <DatabaseIcon data-icon="inline-start" />
               Import, export and delete data
             </Link>
+            <Link
+              href="/settings/integrations"
+              className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+            >
+              <DatabaseIcon data-icon="inline-start" />
+              Import, export and delete data
+            </Link>
           </>
         }
       />

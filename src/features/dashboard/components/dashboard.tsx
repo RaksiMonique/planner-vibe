@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import {
-  BriefcaseIcon,
   CalendarDaysIcon,
   ChartPieIcon,
   ClockIcon,
@@ -19,6 +18,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { SegmentDot } from '@/components/shared/segment-badge';
 import { Inbox } from '@/features/capture/components/inbox';
 import { QuickCapture } from '@/features/capture/components/quick-capture';
+import { JobScheduleCard } from '@/features/work/components/job-schedule-card';
 import { TaskRow } from '@/features/tasks/components/task-row';
 import { ACCENT_BG } from '@/lib/accents';
 import { ProgressBar } from '@/components/shared/progress-bar';
@@ -39,8 +39,6 @@ const HORIZON_LABEL = {
   monthly: 'Monthly',
   weekly: 'Weekly',
 } as const;
-
-const LATER_MODULES = [{ label: 'Job schedule', icon: BriefcaseIcon, release: 5 }];
 
 export function Dashboard({
   data,
@@ -94,25 +92,11 @@ export function Dashboard({
           </CardContent>
         </Card>
 
-        <div className="lg:col-span-5">
-          <DashboardCard
-            title="Arriving in later releases"
-            icon={ChartPieIcon}
-            href="/reviews"
-            release={3}
-          >
-            <ul className="flex flex-col gap-1.5">
-              {LATER_MODULES.map((m) => (
-                <li key={m.label} className="flex items-center gap-2 text-sm">
-                  <m.icon className="text-muted-foreground size-4" aria-hidden />
-                  <span className="flex-1">{m.label}</span>
-                  <Badge variant="outline">Release {m.release}</Badge>
-                </li>
-              ))}
-            </ul>
-            <EmptyNote>These cards fill in as their modules ship.</EmptyNote>
-          </DashboardCard>
-        </div>
+        {data.workDays && (
+          <div className="lg:col-span-5">
+            <JobScheduleCard days={data.workDays} />
+          </div>
+        )}
 
         <div className="lg:col-span-4">
           <RoutinesDashboardCard userId={userId} todayKey={data.todayKey} />

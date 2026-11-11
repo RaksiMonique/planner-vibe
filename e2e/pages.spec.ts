@@ -42,6 +42,8 @@ const ROUTES: Array<[string, RegExp]> = [
   ['/quarter', /quarter/i],
   ['/year', /year/i],
   ['/lifelong', /lifelong/i],
+  ['/work/calendar', /job calendar/i],
+  ['/work/projects', /work projects/i],
 ];
 
 for (const [route, heading] of ROUTES) {

@@ -10,6 +10,8 @@ import { listGoals, listMilestones, type GoalRow, type Milestone } from '@/featu
 import { listSegments, type LifeSegment } from '@/features/life-segments/service';
 import { getPreferences } from '@/features/settings/service';
 import { countOpenTasksBySegment, listTasks, type TaskRow } from '@/features/tasks/queries';
+import type { WorkDay } from '@/features/work/availability';
+import { listWorkDays } from '@/features/work/queries';
 import {
   dueStatus,
   formatLongDate,
@@ -49,6 +51,8 @@ export type DashboardData = {
   captures: Capture[];
   segments: Array<LifeSegment & { openTasks: number }>;
   quote: { quote: string; author: string };
+  /** Today plus six days of shifts and leave; null when the Work module is off. */
+  workDays: WorkDay[] | null;
 };
 
 const PRIORITY_RANK = { high: 0, medium: 1, low: 2 } as const;
@@ -70,17 +74,29 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     .where(eq(profiles.id, userId))
     .limit(1);
 
-  const [segments, openCounts, openTasks, doneTasks, events, milestones, goals, captures] =
-    await Promise.all([
-      listSegments(userId),
-      countOpenTasksBySegment(userId),
-      listTasks(userId, { status: 'open', parentTaskId: null }),
-      listTasks(userId, { status: 'done' }),
-      listEventsBetween(userId, rangeStart, rangeEnd),
-      listMilestones(userId, { dueFrom: weekKeys[0], dueTo: weekKeys[6], open: true }),
-      listGoals(userId),
-      listCaptures(userId),
-    ]);
+  const [
+    segments,
+    openCounts,
+    openTasks,
+    doneTasks,
+    events,
+    milestones,
+    goals,
+    captures,
+    workDays,
+  ] = await Promise.all([
+    listSegments(userId),
+    countOpenTasksBySegment(userId),
+    listTasks(userId, { status: 'open', parentTaskId: null }),
+    listTasks(userId, { status: 'done' }),
+    listEventsBetween(userId, rangeStart, rangeEnd),
+    listMilestones(userId, { dueFrom: weekKeys[0], dueTo: weekKeys[6], open: true }),
+    listGoals(userId),
+    listCaptures(userId),
+    prefs.enabledModules.work
+      ? listWorkDays(userId, todayKey, toDateKey(addDays(today, 6))).catch(() => [])
+      : Promise.resolve(null),
+  ]);
 
   const classified = openTasks.map((t) => ({
     ...t,
@@ -145,6 +161,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     captures,
     segments: segments.map((s) => ({ ...s, openTasks: openCounts[s.id] ?? 0 })),
     quote: await pickQuote(userId, getDayOfYear(today)),
+    workDays,
   };
 }
 

@@ -16,3 +16,4 @@ Release 5 added tables. `drizzle-kit push` against the shared development projec
 
 - Schema changes are reviewable as files and apply identically in Docker, dev and production.
 - Drift fixed by hand on a database (as the access approval fix once was) must be followed by the matching migration file, or the next migrate run fails on an object that already exists.
+- Found on 2026-11-11: `drizzle.config.dev.ts` imported the base config, which had already loaded `.env.local`, and `process.loadEnvFile` never overrides a set variable, so `db:migrate:dev` had been running against the local database while reporting success. The dev config now applies `.env.local.dev` by hand and overrides. After any migrate, check `select count(*) from planner.__drizzle_migrations` on the target before trusting the output.

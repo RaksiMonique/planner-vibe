@@ -28,9 +28,25 @@ test('the calendar feed switches on, serves iCalendar at its address, and switch
 
 test('reminder channel settings save', async ({ page }) => {
   await page.goto('/settings/integrations');
+  await expect(page.getByText(/Google credentials are not configured/)).toBeVisible();
   await page.getByLabel('Daily digest at').selectOption('8');
   await page.getByRole('button', { name: /save reminder settings/i }).click();
   await expect(page.getByText('Saved.')).toBeVisible();
   await page.reload();
   await expect(page.getByLabel('Daily digest at')).toHaveValue('8');
+});
+
+test('the scheduled-job routes need the secret and report what they did', async ({ page }) => {
+  const secret = process.env.CRON_SECRET;
+  test.skip(!secret, 'CRON_SECRET is not set for the test run');
+  const denied = await page.request.get('/api/cron/daily', { headers: { cookie: '' } });
+  expect(denied.status()).toBe(401);
+  const run = await page.request.get('/api/cron/daily', {
+    headers: { cookie: '', authorization: `Bearer ${secret}` },
+  });
+  expect(run.status()).toBe(200);
+  const summary = await run.json();
+  expect(summary).toMatchObject({ errors: [] });
+  expect(summary.users).toBeGreaterThan(0);
+  expect(typeof summary.prunedNotifications).toBe('number');
 });

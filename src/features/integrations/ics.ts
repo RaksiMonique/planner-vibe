@@ -12,6 +12,7 @@ const TYPE_LABEL: Record<CalendarItem['type'], string> = {
   milestone: 'Milestone',
   time_block: 'Time block',
   shift: 'Shift',
+  external: 'External',
 };
 
 export function buildIcs(input: {

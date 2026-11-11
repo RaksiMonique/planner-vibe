@@ -8,6 +8,7 @@ import { getPreferences } from '@/features/settings/service';
 import { listTasks } from '@/features/tasks/queries';
 import { expandTimeBlocks } from '@/features/time/expand';
 import { listTimeBlocksBetween } from '@/features/time/queries';
+import { listExternalEventsBetween } from '@/features/integrations/google-sync';
 import { listShiftCalendarItems } from '@/features/work/queries';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { toDateKey } from '@/lib/dates';
@@ -217,22 +218,43 @@ export async function buildCalendarItems(
   to: Date
 ): Promise<CalendarItem[]> {
   const [, prefs] = await Promise.all([listCalendars(userId), getPreferences(userId)]);
-  const [blockRows, eventRows, taskRows, milestoneRows, shiftItems] = await Promise.all([
-    listTimeBlocksBetween(userId, from, to).catch(() => []),
-    listEventsBetween(userId, from, to),
-    listTasks(userId, {
-      dueFrom: toDateKey(from),
-      dueTo: toDateKey(to),
-      onlyWithDueDate: true,
-      status: 'open',
-    }),
-    listMilestones(userId, { dueFrom: toDateKey(from), dueTo: toDateKey(to), open: true }),
-    // Shifts from the job calendar, read-only here, only while the work module is on.
-    prefs.enabledModules.work === false
-      ? Promise.resolve([] as CalendarItem[])
-      : listShiftCalendarItems(userId, from, to, prefs.timeZone).catch(() => [] as CalendarItem[]),
-  ]);
+  const [blockRows, eventRows, taskRows, milestoneRows, shiftItems, externalRows] =
+    await Promise.all([
+      listTimeBlocksBetween(userId, from, to).catch(() => []),
+      listEventsBetween(userId, from, to),
+      listTasks(userId, {
+        dueFrom: toDateKey(from),
+        dueTo: toDateKey(to),
+        onlyWithDueDate: true,
+        status: 'open',
+      }),
+      listMilestones(userId, { dueFrom: toDateKey(from), dueTo: toDateKey(to), open: true }),
+      // Shifts from the job calendar, read-only here, only while the work module is on.
+      prefs.enabledModules.work === false
+        ? Promise.resolve([] as CalendarItem[])
+        : listShiftCalendarItems(userId, from, to, prefs.timeZone).catch(
+            () => [] as CalendarItem[]
+          ),
+      // Events of the connected Google calendar, read-only here.
+      listExternalEventsBetween(userId, from, to).catch(() => []),
+    ]);
   const items = expandEvents(eventRows, from, to);
+  for (const x of externalRows) {
+    items.push({
+      id: `external:${x.id}`,
+      sourceId: x.id,
+      type: 'external',
+      title: x.title,
+      allDay: x.isAllDay,
+      start: x.isAllDay ? (x.allDayDate ?? '') : (x.startsAt?.toISOString() ?? ''),
+      end: x.isAllDay ? x.allDayEnd : (x.endsAt?.toISOString() ?? null),
+      accent: 'sage',
+      calendarId: null,
+      segmentId: null,
+      recurring: false,
+      url: x.htmlLink,
+    });
+  }
   for (const t of taskRows) {
     items.push({
       id: `task:${t.id}`,

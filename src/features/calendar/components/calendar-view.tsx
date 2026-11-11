@@ -47,7 +47,7 @@ const ACCENT_VARS: Record<Accent, { bg: string; fg: string }> = {
 
 export function toFullCalendarEvent(item: CalendarItem): EventInput {
   const colours =
-    item.type === 'event' || item.type === 'shift'
+    item.type === 'event' || item.type === 'shift' || item.type === 'external'
       ? ACCENT_VARS[item.accent]
       : item.type === 'task'
         ? { bg: 'var(--blush)', fg: 'var(--charcoal)' }
@@ -65,7 +65,9 @@ export function toFullCalendarEvent(item: CalendarItem): EventInput {
             ? `⏱ ${item.title}`
             : item.type === 'shift'
               ? `⚒ ${item.title}`
-              : item.title,
+              : item.type === 'external'
+                ? `↗ ${item.title}`
+                : item.title,
     start: item.start,
     end: item.end ?? undefined,
     allDay: item.allDay,
@@ -73,6 +75,7 @@ export function toFullCalendarEvent(item: CalendarItem): EventInput {
     contrastColor: colours.fg,
     editable: item.type === 'event' && !item.recurring,
     className: `planner-${item.type}`,
+    url: item.url ?? undefined,
     extendedProps: { type: item.type, sourceId: item.sourceId, recurring: item.recurring },
   };
 }
@@ -147,7 +150,10 @@ export function CalendarView({
     if (type === 'task') onOpenTask(sourceId);
     else if (type === 'time_block') onOpenTimeBlock?.(sourceId);
     else if (type === 'shift') onOpenShift?.(sourceId);
-    else if (type === 'event') onOpenEvent(sourceId, recurring);
+    else if (type === 'external') {
+      const url = info.event.url;
+      if (url) window.open(url, '_blank', 'noopener');
+    } else if (type === 'event') onOpenEvent(sourceId, recurring);
   }
 
   async function handleMove(info: EventDropInfo | EventResizeDoneInfo) {

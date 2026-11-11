@@ -51,3 +51,7 @@ Pages under `src/app/(app)` are thin: `requireUser()`, load data through queries
 
 - Vitest for pure logic (dates, recurrence, progress roll-up, import mapping).
 - Playwright against the local Supabase stack: `e2e/global.setup.ts` signs the test user in through the app's own `/auth/callback` with a token minted by the service role, then every page test runs with that session on desktop, phone and tablet viewports. Specs import `test` from `e2e/test.ts`, whose `page.goto` waits for the `data-hydrated` mark the root layout sets after React hydrates, because a click or keypress sent before hydration is lost.
+
+## Integrations
+
+`src/features/integrations` holds the ICS feed, the Google Calendar connection (`google.ts` is the API client, `google-sync.ts` the ownership-based sync) and the settings page's actions; `src/features/reminders` holds delivery (`email.ts`, `push.ts`), the digest renderer and the scheduled jobs (`cron.ts`) behind `/api/cron/*`. All of it is off until its keys exist (decision 0007).

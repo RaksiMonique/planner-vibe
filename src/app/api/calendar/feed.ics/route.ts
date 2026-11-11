@@ -17,7 +17,9 @@ export async function GET(request: NextRequest) {
   const userId = await findUserIdByIcsToken(token);
   if (!userId) return new Response('Not found', { status: 404 });
   const now = new Date();
-  const items = await buildCalendarItems(userId, addDays(now, -30), addDays(now, 365));
+  const items = (await buildCalendarItems(userId, addDays(now, -30), addDays(now, 365))).filter(
+    (i) => i.type !== 'external'
+  );
   const body = buildIcs({ name: 'Life Planner', items, now, siteUrl: env.NEXT_PUBLIC_SITE_URL });
   return new Response(body, {
     headers: {

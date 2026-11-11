@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireUser } from '@/lib/auth';
 import { formValues, fromError, fromZodError, ok, type ActionResult } from '@/lib/action-result';
 import { reminderChannelsInput } from './schema';
+import { disconnectGoogle, setTargetCalendar, syncGoogle } from './google-sync';
 import { disableIcsFeed, rotateIcsToken, updateReminderChannels } from './service';
 
 const PAGE = '/settings/integrations';
@@ -45,4 +46,30 @@ export async function updateReminderChannelsAction(
   } catch (e) {
     return fromError(e);
   }
+}
+
+export async function syncGoogleAction(): Promise<void> {
+  const user = await requireUser();
+  await syncGoogle(user.id);
+  revalidatePath(PAGE);
+  revalidatePath('/calendar');
+}
+
+export async function disconnectGoogleAction(): Promise<void> {
+  const user = await requireUser();
+  await disconnectGoogle(user.id);
+  revalidatePath(PAGE);
+  revalidatePath('/calendar');
+}
+
+/** The select's value is `<calendarId>\t<name>`. */
+export async function setGoogleCalendarAction(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const value = String(formData.get('calendar') ?? '');
+  const [calendarId, name] = value.split('\t');
+  if (!calendarId) return;
+  await setTargetCalendar(user.id, calendarId, name || calendarId);
+  await syncGoogle(user.id, { full: true });
+  revalidatePath(PAGE);
+  revalidatePath('/calendar');
 }

@@ -2,7 +2,11 @@ import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
 import { env } from '@/env';
+import { GoogleCalendarCard } from '@/features/integrations/components/google-calendar-card';
+import { googleConfigured } from '@/features/integrations/google';
+import { getConnection, listGoogleCalendars } from '@/features/integrations/google-sync';
 import { IcsFeedCard } from '@/features/integrations/components/ics-feed-card';
+import { PushSubscribeButton } from '@/features/integrations/components/push-subscribe-button';
 import { ReminderChannelsForm } from '@/features/integrations/components/reminder-channels-form';
 import { getIntegrationSettings, icsFeedUrl } from '@/features/integrations/service';
 import { requireUser } from '@/lib/auth';
@@ -10,9 +14,26 @@ import { requireUser } from '@/lib/auth';
 export const metadata: Metadata = { title: 'Integrations' };
 export const dynamic = 'force-dynamic';
 
-export default async function IntegrationsPage() {
-  const user = await requireUser();
+const NOTICES: Record<string, string> = {
+  connected: 'Google Calendar is connected and the first sync has run.',
+  google_failed: "Google didn't complete the connection. Try again.",
+  google_not_configured: 'Google credentials are not configured on this deployment.',
+};
+
+export default async function IntegrationsPage({
+  searchParams,
+}: PageProps<'/settings/integrations'>) {
+  const [user, params] = await Promise.all([requireUser(), searchParams]);
   const settings = await getIntegrationSettings(user.id);
+  const configured = googleConfigured() && Boolean(env.TOKEN_ENCRYPTION_KEY);
+  const connection = configured ? await getConnection(user.id) : null;
+  const calendars = connection ? await listGoogleCalendars(user.id).catch(() => []) : [];
+  const noticeKey =
+    typeof params.google === 'string'
+      ? params.google
+      : typeof params.error === 'string'
+        ? params.error
+        : null;
   const feedUrl = settings.icsToken
     ? icsFeedUrl(env.NEXT_PUBLIC_SITE_URL, settings.icsToken)
     : null;
@@ -55,9 +76,14 @@ export default async function IntegrationsPage() {
               pushReminders={settings.pushReminders}
               digestHour={settings.digestHour}
               emailConfigured={Boolean(env.RESEND_API_KEY)}
-              pushConfigured={Boolean(process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)}
+              pushConfigured={Boolean(env.NEXT_PUBLIC_VAPID_PUBLIC_KEY)}
               pushDevices={settings.pushDevices}
             />
+            {env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && (
+              <div className="mt-4 border-t pt-4">
+                <PushSubscribeButton publicKey={env.NEXT_PUBLIC_VAPID_PUBLIC_KEY} />
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -72,18 +98,13 @@ export default async function IntegrationsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {settings.connection ? (
-              <p className="text-sm">
-                Connected as {settings.connection.accountEmail ?? 'a Google account'}
-                {settings.connection.calendarName && ` (${settings.connection.calendarName})`}.
-              </p>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                {process.env.GOOGLE_CLIENT_ID
-                  ? 'Not connected yet.'
-                  : 'Google sign-in credentials are not configured on this deployment yet, so there is nothing to connect.'}
-              </p>
-            )}
+            <GoogleCalendarCard
+              configured={configured}
+              connection={settings.connection}
+              calendars={calendars}
+              currentCalendarId={connection?.calendarId ?? null}
+              notice={noticeKey ? (NOTICES[noticeKey] ?? null) : null}
+            />
           </CardContent>
         </Card>
       </div>

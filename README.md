@@ -70,6 +70,8 @@ Tests start their own server on port 3101 with `.env.test.local`, so they never 
 | `/time/analytics`                                                                 | Planned versus logged time by segment, project, activity type and day, with top tasks, for a week or month                                                                                                        |
 | `/settings/integrations`                                                          | Calendar subscription (ICS) address, email and push reminder channels, Google Calendar connection                                                                                                                 |
 | `GET /api/calendar/feed.ics?token=…`, `GET /api/export/csv?entity=…`              | Read-only calendar subscription; one table as CSV                                                                                                                                                                 |
+| `GET /api/cron/daily`, `GET /api/cron/reminders`                                  | Scheduled jobs (bearer `CRON_SECRET`): due reminders to app, email and push; the daily digest; pruning; Google sync                                                                                               |
+| `GET /api/google/connect`, `GET /api/google/callback`, `POST /api/push/subscribe` | Google Calendar OAuth start and return; browser push subscription for this device                                                                                                                                 |
 
 ## Scripts
 

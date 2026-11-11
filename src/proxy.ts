@@ -19,6 +19,7 @@ export async function proxy(request: NextRequest) {
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
+    "worker-src 'self'",
     `connect-src 'self' ${supabaseUrl} https://*.ingest.sentry.io https://*.ingest.us.sentry.io`,
     "img-src 'self' data: blob: https://*.supabase.co",
     "font-src 'self'",

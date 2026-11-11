@@ -238,6 +238,13 @@ erDiagram
 - Finance (8.22): `budgets` (segment required; `limit_amount`, `spent_amount` entered by hand, `period` monthly or annual). Financial goals are goals in the Finance segment with measurable fields; upcoming financial actions are tasks and events in that segment. Nothing connects to any other application.
 - The quarterly, annual and lifelong views, goal timelines and the Mandala view read the existing `goals`, `milestones`, `tasks`, `projects`, `events`, `reviews` and `vision_boards` tables; no new storage.
 
+## Release 6 tables
+
+- Search: seventeen tables carry a stored `search` tsvector (generated from their title and text columns through `searchColumn()` in `_columns.ts`) with a GIN index. Generated columns are never exported or imported.
+- `user_preferences` gains `dashboard_layout` (card order and hidden cards), `ics_token` (the feed secret; null while the feed is off), `email_reminders`, `push_reminders`, `digest_hour` and `digest_sent_on`.
+- `events` gains `external_id` and `external_synced_at`: the copy of the event in the connected Google calendar.
+- Integrations: `push_subscriptions` (one row per browser), `calendar_connections` (one per provider per user; tokens encrypted with `TOKEN_ENCRYPTION_KEY`), `external_events` (read-only copies of the connected calendar's own events, replaced on every full sync).
+
 ## Working with the schema
 
 First time on a project: run `db:migrate` before any `db:push`. drizzle-kit's `schemaFilter` keeps the `planner` schema itself out of its snapshot, so `push` does not create it; the first migration does (`CREATE SCHEMA IF NOT EXISTS "planner"`), as does the migrator for its journal. If you must start with `push`, create the schema once in the SQL editor: `create schema if not exists planner;`.

@@ -254,10 +254,17 @@ async function ensureHabitReminders(userId: string, now: Date, timeZone: string)
  * notification's reminder_id is unique and the reminder is marked sent.
  * Returns how many notifications were created.
  */
+export type CreatedNotification = {
+  id: string;
+  title: string;
+  body: string | null;
+  href: string | null;
+};
+
 export async function generateDueNotifications(
   userId: string,
   now: Date = new Date()
-): Promise<number> {
+): Promise<CreatedNotification[]> {
   const { timeZone } = await getPreferences(userId);
   await ensureHabitReminders(userId, now, timeZone);
   const due = await db
@@ -266,7 +273,7 @@ export async function generateDueNotifications(
     .where(
       and(eq(reminders.userId, userId), isNull(reminders.sentAt), lte(reminders.remindAt, now))
     );
-  let created = 0;
+  const created: CreatedNotification[] = [];
   for (const r of due) {
     const info = await describeEntity(userId, r, timeZone);
     if (info) {
@@ -274,8 +281,13 @@ export async function generateDueNotifications(
         .insert(notifications)
         .values({ userId, kind: 'reminder', reminderId: r.id, ...info })
         .onConflictDoNothing()
-        .returning({ id: notifications.id });
-      created += inserted.length;
+        .returning({
+          id: notifications.id,
+          title: notifications.title,
+          body: notifications.body,
+          href: notifications.href,
+        });
+      created.push(...inserted);
     }
     await db.update(reminders).set({ sentAt: now }).where(eq(reminders.id, r.id));
   }

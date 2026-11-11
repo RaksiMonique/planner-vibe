@@ -6,7 +6,7 @@ export type CalendarItem = {
   /** Unique per occurrence: `<sourceId>` or `<sourceId>:<date>` for recurring ones. */
   id: string;
   sourceId: string;
-  type: 'event' | 'task' | 'milestone' | 'time_block' | 'shift';
+  type: 'event' | 'task' | 'milestone' | 'time_block' | 'shift' | 'external';
   title: string;
   allDay: boolean;
   /** ISO instant, or yyyy-MM-dd when all-day. */
@@ -16,6 +16,8 @@ export type CalendarItem = {
   calendarId: string | null;
   segmentId: string | null;
   recurring: boolean;
+  /** Where a read-only external item lives, when it has a page of its own. */
+  url?: string | null;
 };
 
 /** The columns expansion needs; the full EventRow satisfies it. */

@@ -1,6 +1,8 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
+import { pushEventSoon } from '@/features/integrations/google-sync';
 import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { captures } from '@/db/schema';
@@ -51,6 +53,7 @@ export async function saveEvent(
       { reminder: parsed.data.reminder, reminderAt: parsed.data.reminderAt },
       { dueAt: row.isAllDay ? null : row.startsAt, dueDateKey: row.allDayDate, timeZone }
     );
+    after(() => pushEventSoon(user.id, row.id));
     revalidate();
     return ok({ id: row.id });
   } catch (e) {
@@ -63,6 +66,7 @@ export async function deleteEvent(id: string): Promise<ActionResult> {
     const user = await requireUser();
     await removeEvent(user.id, id);
     await clearReminder(user.id, 'event', id);
+    after(() => pushEventSoon(user.id, id));
     revalidate();
     return ok(undefined);
   } catch (e) {
@@ -75,7 +79,8 @@ export async function moveEventAction(input: unknown): Promise<ActionResult> {
     const user = await requireUser();
     const parsed = moveInput.safeParse(input);
     if (!parsed.success) return fail('That move is not valid.');
-    await moveEvent(user.id, parsed.data);
+    const moved = await moveEvent(user.id, parsed.data);
+    after(() => pushEventSoon(user.id, moved.id));
     revalidate();
     return ok(undefined);
   } catch (e) {

@@ -15,6 +15,8 @@ const eslintConfig = defineConfig([
     // Not application code
     '.githooks/**',
     'drizzle/**',
+    // Agent worktrees checked out inside the repo
+    '.claude/**',
   ]),
 ]);
 

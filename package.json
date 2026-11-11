@@ -19,7 +19,7 @@
     "e2e:smoke": "dotenv -e .env.test.local -- playwright test --grep @smoke",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push:dev": "drizzle-kit push --config=drizzle.config.dev.ts",
+    "db:migrate:dev": "drizzle-kit migrate --config=drizzle.config.dev.ts",
     "db:push:PROD-DANGEROUS": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:studio:dev": "drizzle-kit studio --config=drizzle.config.dev.ts",

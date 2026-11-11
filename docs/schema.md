@@ -232,19 +232,25 @@ erDiagram
 - Storage: migration 0007 creates the private `planner` bucket. Objects are stored under `<userId>/<folder>/…`; uploads and signed URLs go through `src/lib/storage.ts` with the service role, so no object policies are needed and nothing is public.
 - `user_preferences.currency` holds the ISO code used for prices and budgets.
 
+## Release 5 tables
+
+- Work (job calendar, 8.18): `shift_patterns` (a repeating `cycle` of days from an `anchor_date`), `shifts` (hand-placed days that replace the pattern for that date; kind `off` is a day off), `leave_periods`, `public_holidays` (reference records, no segment). Availability is derived from all four in `src/features/work/availability.ts`, never stored. Work appointments are events on a calendar of kind `work`.
+- Finance (8.22): `budgets` (segment required; `limit_amount`, `spent_amount` entered by hand, `period` monthly or annual). Financial goals are goals in the Finance segment with measurable fields; upcoming financial actions are tasks and events in that segment. Nothing connects to any other application.
+- The quarterly, annual and lifelong views, goal timelines and the Mandala view read the existing `goals`, `milestones`, `tasks`, `projects`, `events`, `reviews` and `vision_boards` tables; no new storage.
+
 ## Working with the schema
 
 First time on a project: run `db:migrate` before any `db:push`. drizzle-kit's `schemaFilter` keeps the `planner` schema itself out of its snapshot, so `push` does not create it; the first migration does (`CREATE SCHEMA IF NOT EXISTS "planner"`), as does the migrator for its journal. If you must start with `push`, create the schema once in the SQL editor: `create schema if not exists planner;`.
 
-| Task                             | Command                                             | Notes                                                                    |
-| -------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------ |
-| Change the schema                | edit `src/db/schema/*.ts`                           | add new domain files to the `schema` list in `drizzle.config.ts`         |
-| Push to the dev project          | `npm run db:push:dev`                               | reads `DIRECT_URL` from `.env.local.dev`; dev only (instructions.md 5.4) |
-| Generate a migration             | `npm run db:generate -- --name=<change>`            | offline; commit `drizzle/*.sql` and `drizzle/meta/`                      |
-| Custom SQL (triggers, functions) | `npx drizzle-kit generate --custom --name=<change>` | then fill the empty file                                                 |
-| Apply migrations to prod         | `npm run db:migrate`                                | reads `DIRECT_URL` from `.env.local`; run from CI                        |
-| Browse data                      | `npm run db:studio` / `npm run db:studio:dev`       |                                                                          |
-| Seed development data            | `SEED_USER_ID=<auth user uuid> npm run db:seed`     | idempotent; the user must have signed in once                            |
+| Task                             | Command                                             | Notes                                                                                                                                                                     |
+| -------------------------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Change the schema                | edit `src/db/schema/*.ts`                           | add new domain files to the `schema` list in `drizzle.config.ts`                                                                                                          |
+| Migrate the dev project          | `npm run db:migrate:dev`                            | applies pending files from `drizzle/` to the shared dev project's `planner` schema; `drizzle-kit push` is not used there, it would try to drop the schema (decision 0006) |
+| Generate a migration             | `npm run db:generate -- --name=<change>`            | offline; commit `drizzle/*.sql` and `drizzle/meta/`                                                                                                                       |
+| Custom SQL (triggers, functions) | `npx drizzle-kit generate --custom --name=<change>` | then fill the empty file                                                                                                                                                  |
+| Apply migrations to prod         | `npm run db:migrate`                                | reads `DIRECT_URL` from `.env.local`; run from CI                                                                                                                         |
+| Browse data                      | `npm run db:studio` / `npm run db:studio:dev`       |                                                                                                                                                                           |
+| Seed development data            | `SEED_USER_ID=<auth user uuid> npm run db:seed`     | idempotent; the user must have signed in once                                                                                                                             |
 
 Never edit an applied migration. The two shipped migrations are
 `drizzle/0000_init.sql` (all tables, enums, indexes, RLS policies) and

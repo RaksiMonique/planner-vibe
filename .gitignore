@@ -51,3 +51,6 @@ supabase/.temp/
 
 # Playwright saved sessions
 e2e/.auth/
+
+# Agent worktrees
+.claude/worktrees/

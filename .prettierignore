@@ -4,3 +4,4 @@ drizzle
 playwright-report
 test-results
 package-lock.json
+.claude

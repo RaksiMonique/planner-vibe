@@ -27,11 +27,13 @@ export default defineConfig({
     './src/db/schema/gifts.ts',
     './src/db/schema/vision.ts',
     './src/db/schema/important.ts',
+    './src/db/schema/work.ts',
+    './src/db/schema/finance.ts',
   ],
   out: './drizzle',
-  // The planner shares the finance app's Supabase projects. Only the
-  // `planner` schema is managed here; without this filter `push` would try
-  // to drop every finance-app table in `public`.
+  // In development the planner shares a Supabase project with another team
+  // (docs/decisions/0002). Only the `planner` schema is managed here; without
+  // this filter `push` would try to drop every table in `public`.
   schemaFilter: ['planner'],
   migrations: { table: '__drizzle_migrations', schema: 'planner' },
   // DIRECT_URL (not the pooler) for migrations: bypasses pgBouncer.

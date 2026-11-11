@@ -3,7 +3,9 @@ import type { ModuleKey } from '@/db/schema';
 import {
   Activity,
   Calendar,
+  CalendarFold,
   CalendarRange,
+  ChartColumn,
   BookMarked,
   BookOpen,
   Briefcase,
@@ -21,7 +23,10 @@ import {
   Images,
   LayoutDashboard,
   ListChecks,
+  Mountain,
   NotebookPen,
+  Orbit,
+  PiggyBank,
   Quote,
   Repeat,
   RotateCcw,
@@ -58,6 +63,9 @@ export const navGroups: NavGroup[] = [
       { label: 'Today', href: '/dashboard', icon: LayoutDashboard, release: 0 },
       { label: 'This week', href: '/week', icon: CalendarRange, release: 2, module: 'planning' },
       { label: 'Monthly overview', href: '/month', icon: Calendar, release: 2, module: 'planning' },
+      { label: 'Quarter', href: '/quarter', icon: CalendarFold, release: 5, module: 'planning' },
+      { label: 'Year', href: '/year', icon: Orbit, release: 5, module: 'planning' },
+      { label: 'Lifelong', href: '/lifelong', icon: Mountain, release: 5, module: 'life-segments' },
     ],
   },
   {
@@ -65,6 +73,13 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: 'Calendar', href: '/calendar', icon: CalendarDays, release: 1, module: 'planning' },
       { label: 'Time blocking', href: '/time', icon: Clock, release: 2, module: 'time' },
+      {
+        label: 'Time analytics',
+        href: '/time/analytics',
+        icon: ChartColumn,
+        release: 5,
+        module: 'time',
+      },
       { label: 'Routines', href: '/routines', icon: Repeat, release: 2, module: 'routines' },
       { label: 'Tasks', href: '/tasks', icon: ListChecks, release: 1, module: 'planning' },
     ],
@@ -173,6 +188,13 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: 'Notes', href: '/notes', icon: FileText, release: 3, module: 'notes' },
       { label: 'Quotes', href: '/notes/quotes', icon: Quote, release: 3, module: 'notes' },
+      {
+        label: 'Financial snapshot',
+        href: '/finance',
+        icon: PiggyBank,
+        release: 5,
+        module: 'finance',
+      },
       {
         label: 'Important information',
         href: '/important',

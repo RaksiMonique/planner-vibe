@@ -15,6 +15,7 @@ import {
 } from './tracking';
 
 export * from './faith';
+export * from './finance';
 export * from './food';
 export * from './gifts';
 export * from './important';
@@ -32,6 +33,7 @@ export * from './system';
 export * from './tracking';
 export * from './vision';
 export * from './wellness';
+export * from './work';
 
 export const profilesRelations = relations(profiles, ({ one, many }) => ({
   preferences: one(userPreferences, {

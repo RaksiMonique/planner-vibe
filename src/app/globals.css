@@ -134,3 +134,46 @@
     @apply font-heading tracking-heading;
   }
 }
+
+/* Print and "Save as PDF" (instructions.md 9.3): the page content alone, in ink-friendly colours. */
+@media print {
+  @page {
+    margin: 14mm;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  aside,
+  header,
+  nav,
+  button,
+  form,
+  [data-print='hide'],
+  [role='dialog'],
+  [data-slot='sidebar'] {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+  }
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+  [data-slot='card'],
+  section,
+  li {
+    break-inside: avoid;
+  }
+  .overflow-x-auto,
+  .overflow-y-auto {
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  * {
+    box-shadow: none !important;
+  }
+}

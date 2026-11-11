@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/shared/page-header';
+import { PrintButton } from '@/components/shared/print-button';
 import { WeekView } from '@/features/week/components/week-view';
 import { getWeekData } from '@/features/week/queries';
 import { requireUser } from '@/lib/auth';
@@ -20,6 +21,7 @@ export default async function WeekPage({ searchParams }: { searchParams: SearchP
       <PageHeader
         title="This week"
         description="Everything the week holds: events, time blocks, what is due, routines and habits, day by day."
+        actions={<PrintButton />}
       />
       <WeekView data={data} />
     </>

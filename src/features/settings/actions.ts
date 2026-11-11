@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { moveCard, normaliseLayout, toggleCard } from '@/features/dashboard/layout';
 import { redirect } from 'next/navigation';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
@@ -10,7 +11,7 @@ import { requireUser } from '@/lib/auth';
 import { formValues, fromError, fromZodError, ok, type ActionResult } from '@/lib/action-result';
 import type { WeekStartsOn } from '@/lib/dates';
 import { deleteInput, modulesFromForm, preferencesInput, profileInput } from './schema';
-import { updatePreferences, updateProfile } from './service';
+import { getPreferences, updateDashboardLayout, updatePreferences, updateProfile } from './service';
 
 export async function updateProfileAction(
   _prev: ActionResult | null,
@@ -87,4 +88,37 @@ export async function deleteAllDataAction(
     return fromError(e);
   }
   redirect('/dashboard');
+}
+
+export async function moveDashboardCardAction(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const key = String(formData.get('key') ?? '');
+  const direction = formData.get('direction') === '-1' ? -1 : 1;
+  const prefs = await getPreferences(user.id);
+  await updateDashboardLayout(
+    user.id,
+    moveCard(normaliseLayout(prefs.dashboardLayout), key, direction)
+  );
+  revalidatePath('/dashboard');
+  revalidatePath('/settings');
+}
+
+export async function toggleDashboardCardAction(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const key = String(formData.get('key') ?? '');
+  const visible = formData.get('visible') === '1';
+  const prefs = await getPreferences(user.id);
+  await updateDashboardLayout(
+    user.id,
+    toggleCard(normaliseLayout(prefs.dashboardLayout), key, visible)
+  );
+  revalidatePath('/dashboard');
+  revalidatePath('/settings');
+}
+
+export async function resetDashboardLayoutAction(): Promise<void> {
+  const user = await requireUser();
+  await updateDashboardLayout(user.id, null);
+  revalidatePath('/dashboard');
+  revalidatePath('/settings');
 }

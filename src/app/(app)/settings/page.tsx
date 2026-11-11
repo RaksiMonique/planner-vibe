@@ -5,6 +5,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
 import { ModulesForm } from '@/features/settings/components/modules-form';
+import { DashboardLayoutForm } from '@/features/settings/components/dashboard-layout-form';
 import { PasswordForm } from '@/features/settings/components/password-form';
 import { PreferencesForm } from '@/features/settings/components/preferences-form';
 import { ProfileForm } from '@/features/settings/components/profile-form';
@@ -95,6 +96,21 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent>
             <ModulesForm enabled={prefs.enabledModules} />
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="font-heading text-lg">Dashboard</CardTitle>
+            <CardDescription>
+              Order the cards and hide the ones you do not need. Cards of switched-off modules stay
+              hidden.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <DashboardLayoutForm
+              layout={prefs.dashboardLayout}
+              enabledModules={prefs.enabledModules}
+            />
           </CardContent>
         </Card>
       </div>

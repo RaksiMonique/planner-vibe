@@ -5,6 +5,7 @@ import { parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
+import { PrintButton } from '@/components/shared/print-button';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import { deleteReviewAction } from '@/features/reviews/actions';
 import { ReviewForm } from '@/features/reviews/components/review-form';
@@ -36,6 +37,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
         description={`${label}. ${template.description}`}
         actions={
           <>
+            <PrintButton />
             <Link href="/reviews" className="text-primary text-sm hover:underline">
               All reviews
             </Link>

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/shared/page-header';
+import { PrintButton } from '@/components/shared/print-button';
 import { MonthView } from '@/features/month/components/month-view';
 import { getMonthData } from '@/features/month/queries';
 import { requireUser } from '@/lib/auth';
@@ -20,6 +21,7 @@ export default async function MonthPage({ searchParams }: { searchParams: Search
       <PageHeader
         title="Monthly overview"
         description="The month at a glance: what is scheduled and due each day, goals and milestones for the month, and how the habits are going."
+        actions={<PrintButton />}
       />
       <MonthView data={data} />
     </>

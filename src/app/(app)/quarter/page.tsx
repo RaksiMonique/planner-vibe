@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/shared/page-header';
+import { PrintButton } from '@/components/shared/print-button';
 import { PeriodNav } from '@/features/horizons/components/period-nav';
 import { QuarterView } from '@/features/horizons/components/quarter-view';
 import { getQuarterData } from '@/features/horizons/queries';
@@ -21,14 +22,17 @@ export default async function QuarterPage({ searchParams }: PageProps<'/quarter'
         title={`Quarter · ${data.range.label}`}
         description="Objectives, milestones, deadlines and progress for the quarter, with its retrospective."
         actions={
-          <PeriodNav
-            label="Quarter"
-            prevHref={`/quarter?quarter=${data.prevKey}`}
-            nextHref={`/quarter?quarter=${data.nextKey}`}
-            currentHref="/quarter"
-            currentLabel="This quarter"
-            isCurrent={data.range.key === data.currentKey}
-          />
+          <>
+            <PrintButton />
+            <PeriodNav
+              label="Quarter"
+              prevHref={`/quarter?quarter=${data.prevKey}`}
+              nextHref={`/quarter?quarter=${data.nextKey}`}
+              currentHref="/quarter"
+              currentLabel="This quarter"
+              isCurrent={data.range.key === data.currentKey}
+            />
+          </>
         }
       />
       <QuarterView data={data} />

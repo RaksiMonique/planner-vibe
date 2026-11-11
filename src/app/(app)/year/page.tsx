@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { PageHeader } from '@/components/shared/page-header';
+import { PrintButton } from '@/components/shared/print-button';
 import { PeriodNav } from '@/features/horizons/components/period-nav';
 import { YearView } from '@/features/horizons/components/year-view';
 import { getYearData } from '@/features/horizons/queries';
@@ -21,14 +22,17 @@ export default async function YearPage({ searchParams }: PageProps<'/year'>) {
         title={`Year · ${data.range.key}`}
         description="Annual objectives, the year at a glance, the quarterly breakdown and the yearly reflection."
         actions={
-          <PeriodNav
-            label="Year"
-            prevHref={`/year?year=${data.prevKey}`}
-            nextHref={`/year?year=${data.nextKey}`}
-            currentHref="/year"
-            currentLabel="This year"
-            isCurrent={data.range.key === data.currentKey}
-          />
+          <>
+            <PrintButton />
+            <PeriodNav
+              label="Year"
+              prevHref={`/year?year=${data.prevKey}`}
+              nextHref={`/year?year=${data.nextKey}`}
+              currentHref="/year"
+              currentLabel="This year"
+              isCurrent={data.range.key === data.currentKey}
+            />
+          </>
         }
       />
       <YearView data={data} />

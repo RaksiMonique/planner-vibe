@@ -10,5 +10,13 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
   const user = await requireUser();
   const [data, prefs] = await Promise.all([getDashboardData(user.id), getPreferences(user.id)]);
-  return <Dashboard userId={user.id} data={data} timeZone={prefs.timeZone} />;
+  return (
+    <Dashboard
+      userId={user.id}
+      data={data}
+      timeZone={prefs.timeZone}
+      layout={prefs.dashboardLayout}
+      enabledModules={prefs.enabledModules}
+    />
+  );
 }

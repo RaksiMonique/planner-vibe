@@ -3,6 +3,7 @@ import { LogOutIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CommandPalette } from '@/components/shared/command-palette';
 import { signOut } from '@/features/auth/actions';
 import { cn } from '@/lib/utils';
 import { NotificationsBell } from '@/features/reminders/components/notifications-bell';
@@ -54,6 +55,7 @@ export function AppShell({
           <div className="ml-auto flex items-center gap-2">
             {user ? (
               <>
+                <CommandPalette enabledModules={enabledModules} />
                 <NotificationsBell userId={user.id} />
                 <form action={signOut}>
                   <Button type="submit" variant="ghost" size="sm">

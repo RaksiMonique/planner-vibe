@@ -16,8 +16,12 @@ import {
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { toDateKey, weekRange, type WeekStartsOn } from '@/lib/dates';
 import { analyseRange, type WeekAnalysis } from './analysis';
+import { analyseTime, NO_PROJECT, type ResolvedRange, type TimeAnalytics } from './analytics';
 import { expandTimeBlocks, type TimeBlockItem } from './expand';
 import {
+  listProjectTitles,
+  listRecurringTimeBlocks,
+  listTaskTitles,
   listTimeBlockTemplates,
   listTimeBlocksBetween,
   listTimeEntriesBetween,
@@ -471,6 +475,65 @@ export async function buildTimeRange(
     now
   );
   return { from: from.toISOString(), to: to.toISOString(), blocks, entries, stickies, analysis };
+}
+
+// ───────────────────────── analytics ─────────────────────────
+
+export type TimeAnalyticsData = {
+  analytics: TimeAnalytics;
+  /** Titles for the project and task ids the analytics refer to. */
+  projectTitles: Record<string, string>;
+  taskTitles: Record<string, string>;
+};
+
+/** Planned versus actual for the analytics page: blocks expanded, entries clipped, labels resolved. */
+export async function buildTimeAnalytics(
+  userId: string,
+  range: Pick<ResolvedRange, 'from' | 'to' | 'dayKeys'>,
+  timeZone: string
+): Promise<TimeAnalyticsData> {
+  const [inRange, recurring, entries] = await Promise.all([
+    listTimeBlocksBetween(userId, range.from, range.to),
+    listRecurringTimeBlocks(userId, range.to),
+    listTimeEntriesBetween(userId, range.from, range.to),
+  ]);
+  const seen = new Set(inRange.map((b) => b.id));
+  const blocks = expandTimeBlocks(
+    [...inRange, ...recurring.filter((r) => !seen.has(r.id))],
+    range.from,
+    range.to
+  );
+  const analytics = analyseTime(
+    blocks.map((b) => ({
+      start: b.start,
+      end: b.end,
+      activityType: b.activityType,
+      segmentId: b.segmentId,
+      projectId: b.projectId,
+      taskId: b.taskId,
+    })),
+    entries.map((e) => ({
+      startedAt: e.startedAt,
+      endedAt: e.endedAt,
+      durationMinutes: e.durationMinutes,
+      lifeSegmentId: e.lifeSegmentId,
+      projectId: e.projectId,
+      taskId: e.taskId,
+    })),
+    range,
+    timeZone
+  );
+  const [projectTitles, taskTitles] = await Promise.all([
+    listProjectTitles(
+      userId,
+      analytics.byProject.map((r) => r.key).filter((k) => k !== NO_PROJECT)
+    ),
+    listTaskTitles(
+      userId,
+      analytics.topTasks.map((r) => r.key)
+    ),
+  ]);
+  return { analytics, projectTitles, taskTitles };
 }
 
 // ───────────────────────── templates ─────────────────────────

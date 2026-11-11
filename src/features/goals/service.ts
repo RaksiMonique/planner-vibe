@@ -4,7 +4,7 @@ import { db } from '@/db';
 import { goalProjects, goals, projects } from '@/db/schema';
 import { getSegmentById } from '@/features/life-segments/service';
 import { NotFoundError, ValidationError } from '@/lib/errors';
-import { canBeChildOf, type Horizon } from './progress';
+import { canBeChildOf, computeGoalProgress, type Horizon } from './progress';
 import type { GoalInput } from './schema';
 
 export type Goal = typeof goals.$inferSelect;
@@ -83,6 +83,30 @@ export async function updateGoal(userId: string, id: string, input: GoalInput): 
   const [row] = await db
     .update(goals)
     .set(toRow(input))
+    .where(and(eq(goals.userId, userId), eq(goals.id, id)))
+    .returning();
+  return row;
+}
+
+/**
+ * Sets the measured value of a goal. Progress is computed on read
+ * (progress.ts); the stored percentage is refreshed from the target so the
+ * column stays coherent for anything that reads it directly.
+ */
+export async function updateGoalProgress(
+  userId: string,
+  id: string,
+  currentValue: number
+): Promise<Goal> {
+  const goal = await requireGoal(userId, id);
+  const value = currentValue.toFixed(2);
+  const progress = computeGoalProgress({ ...goal, currentValue: value }, [], {
+    total: 0,
+    done: 0,
+  });
+  const [row] = await db
+    .update(goals)
+    .set({ currentValue: value, progress })
     .where(and(eq(goals.userId, userId), eq(goals.id, id)))
     .returning();
   return row;

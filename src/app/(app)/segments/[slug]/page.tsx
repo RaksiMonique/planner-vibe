@@ -8,6 +8,7 @@ import { PageHeader } from '@/components/shared/page-header';
 import { SegmentDot } from '@/components/shared/segment-badge';
 import { GoalCard } from '@/features/goals/components/goal-card';
 import { listGoals } from '@/features/goals/queries';
+import { GoalTimeline } from '@/features/horizons/components/goal-timeline';
 import { SegmentFormDialog } from '@/features/life-segments/components/segment-form-dialog';
 import { TaskPreviewList } from '@/features/life-segments/components/task-preview-list';
 import { getSegmentBySlug, type LifeSegment } from '@/features/life-segments/service';
@@ -95,6 +96,11 @@ export default async function SegmentPage({ params }: PageProps<'/segments/[slug
               ))}
             </div>
           )}
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <h3 className="font-heading text-xl">Goal timeline</h3>
+          <GoalTimeline goals={goals} todayKey={todayKey} />
         </section>
 
         <section className="flex flex-col gap-3">

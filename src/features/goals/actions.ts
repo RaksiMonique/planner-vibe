@@ -13,6 +13,9 @@ function revalidateGoals() {
   revalidatePath('/projects', 'layout');
   revalidatePath('/segments', 'layout');
   revalidatePath('/dashboard');
+  revalidatePath('/lifelong');
+  revalidatePath('/quarter');
+  revalidatePath('/year');
 }
 
 export async function createGoalAction(

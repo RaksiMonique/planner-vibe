@@ -38,6 +38,10 @@ const ROUTES: Array<[string, RegExp]> = [
   ['/groceries', /grocer/i],
   ['/gifts', /gifts/i],
   ['/vision-boards', /vision/i],
+  // Release 5
+  ['/quarter', /quarter/i],
+  ['/year', /year/i],
+  ['/lifelong', /lifelong/i],
 ];
 
 for (const [route, heading] of ROUTES) {

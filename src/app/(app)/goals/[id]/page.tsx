@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { format, parseISO } from 'date-fns';
-import { ChevronRightIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { ChevronRightIcon, Grid3x3Icon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
 import { SegmentBadge } from '@/components/shared/segment-badge';
@@ -16,6 +17,8 @@ import { buildAncestorChain } from '@/features/goals/grouping';
 import { getGoal, listGoalOptions, listGoals, listMilestones } from '@/features/goals/queries';
 import { GOAL_STATUS_LABELS, HORIZON_LABELS } from '@/features/goals/schema';
 import { listLinkedProjectIds } from '@/features/goals/service';
+import { GoalTimeline } from '@/features/horizons/components/goal-timeline';
+import { collectSubtree } from '@/features/horizons/timeline';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import { TaskPreviewList } from '@/features/life-segments/components/task-preview-list';
 import { listSegments } from '@/features/life-segments/service';
@@ -25,6 +28,7 @@ import { getPreferences } from '@/features/settings/service';
 import { listTasks } from '@/features/tasks/queries';
 import { requireUser } from '@/lib/auth';
 import { toDateKey, todayInZone } from '@/lib/dates';
+import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = { title: 'Goal' };
 export const dynamic = 'force-dynamic';
@@ -59,6 +63,8 @@ export default async function GoalPage({ params }: PageProps<'/goals/[id]'>) {
     getPreferences(user.id),
   ]);
   const ancestors = buildAncestorChain(id, allGoals);
+  const subtree = collectSubtree(id, allGoals);
+  const horizonGoals = [...ancestors, ...subtree];
   const linkedProjects = allProjects.filter((p) => linkedIds.includes(p.id));
   const todayKey = toDateKey(todayInZone(prefs.timeZone));
   const closed = goal.status === 'achieved' || goal.status === 'abandoned';
@@ -87,6 +93,13 @@ export default async function GoalPage({ params }: PageProps<'/goals/[id]'>) {
         title={goal.title}
         actions={
           <>
+            <Link
+              href={`/goals/${goal.id}/mandala`}
+              className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+            >
+              <Grid3x3Icon data-icon="inline-start" />
+              Mandala
+            </Link>
             <GoalFormDialog
               segments={segments}
               goalOptions={goalOptions}
@@ -197,6 +210,17 @@ export default async function GoalPage({ params }: PageProps<'/goals/[id]'>) {
           </CardHeader>
           <CardContent>
             <LinkedProjects goalId={goal.id} linked={linkedProjects} options={projectOptions} />
+          </CardContent>
+        </Card>
+
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <h2>
+              <CardTitle className="font-heading text-lg">Horizons</CardTitle>
+            </h2>
+          </CardHeader>
+          <CardContent>
+            <GoalTimeline goals={horizonGoals} todayKey={todayKey} highlightId={goal.id} />
           </CardContent>
         </Card>
 

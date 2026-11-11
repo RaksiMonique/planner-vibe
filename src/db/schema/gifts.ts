@@ -1,5 +1,5 @@
 import { date, index, numeric, smallint, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { lifeSegments } from './organisation';
@@ -51,9 +51,11 @@ export const gifts = planner.table(
     url: text('url'),
     notes: text('notes'),
     ...softDelete(),
+    search: searchColumn(['title', 'notes']),
     ...timestamps(),
   },
   (t) => [
+    index('gifts_search_idx').using('gin', t.search),
     index('gifts_user_occasion_idx').on(t.userId, t.occasionDate),
     index('gifts_recipient_idx').on(t.recipientId),
     ...ownerPolicies('gifts'),

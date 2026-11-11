@@ -1,5 +1,5 @@
 import { date, index, jsonb, smallint, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { lifeSegments } from './organisation';
@@ -35,9 +35,11 @@ export const journalEntries = planner.table(
     /** Optional 1 to 5 mood noted with the entry. */
     mood: smallint('mood'),
     ...softDelete(),
+    search: searchColumn(['title', 'content']),
     ...timestamps(),
   },
   (t) => [
+    index('journal_entries_search_idx').using('gin', t.search),
     index('journal_entries_user_date_idx').on(t.userId, t.date, t.kind),
     ...ownerPolicies('journal_entries'),
   ]

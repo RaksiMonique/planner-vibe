@@ -51,7 +51,12 @@ export function plannerTables(): TableEntry[] {
   const keyByTable = new Map<PgTable, string>();
   for (const [key, value] of Object.entries(schema)) {
     if (!is(value, PgTable)) continue;
-    const columns = getTableColumns(value) as Record<string, PgColumn>;
+    // Generated columns (search vectors) are computed by the database: never exported or inserted.
+    const columns = Object.fromEntries(
+      Object.entries(getTableColumns(value) as Record<string, PgColumn>).filter(
+        ([, c]) => !c.generated
+      )
+    ) as Record<string, PgColumn>;
     const userId = columns.userId;
     if (!userId || userId.name !== 'user_id') continue;
     keyByTable.set(value, key);

@@ -10,7 +10,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { lifeSegments } from './organisation';
@@ -94,9 +94,11 @@ export const bibleStudies = planner.table(
     description: text('description'),
     lastStudiedAt: timestamp('last_studied_at', { withTimezone: true }),
     ...softDelete(),
+    search: searchColumn(['title', 'description']),
     ...timestamps(),
   },
   (t) => [
+    index('bible_studies_search_idx').using('gin', t.search),
     index('bible_studies_user_status_idx').on(t.userId, t.status),
     ...ownerPolicies('bible_studies'),
   ]
@@ -181,9 +183,11 @@ export const prayerEntries = planner.table(
     /** Intentions only: when the prayer was answered. */
     answeredAt: timestamp('answered_at', { withTimezone: true }),
     ...softDelete(),
+    search: searchColumn(['title', 'content']),
     ...timestamps(),
   },
   (t) => [
+    index('prayer_entries_search_idx').using('gin', t.search),
     index('prayer_entries_user_date_idx').on(t.userId, t.date),
     ...ownerPolicies('prayer_entries'),
   ]

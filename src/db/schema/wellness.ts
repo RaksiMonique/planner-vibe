@@ -1,5 +1,5 @@
 import { boolean, date, index, numeric, text, uuid } from 'drizzle-orm/pg-core';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { lifeSegments } from './organisation';
@@ -65,9 +65,14 @@ export const products = planner.table(
     expiresOn: date('expires_on'),
     notes: text('notes'),
     ...softDelete(),
+    search: searchColumn(['name', 'notes']),
     ...timestamps(),
   },
-  (t) => [index('products_user_idx').on(t.userId, t.category), ...ownerPolicies('products')]
+  (t) => [
+    index('products_search_idx').using('gin', t.search),
+    index('products_user_idx').on(t.userId, t.category),
+    ...ownerPolicies('products'),
+  ]
 );
 
 export type WellnessEntry = typeof wellnessEntries.$inferSelect;

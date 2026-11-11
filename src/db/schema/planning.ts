@@ -12,7 +12,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { planner } from './_schema';
-import { recurrence, softDelete, timestamps } from './_columns';
+import { recurrence, softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { lifeSegments } from './organisation';
 import { ownerId } from './profiles';
@@ -71,9 +71,11 @@ export const goals = planner.table(
     // 0–100, computed from children, milestones or measurable fields; stored for display.
     progress: smallint('progress').notNull().default(0),
     ...softDelete(),
+    search: searchColumn(['title', 'description']),
     ...timestamps(),
   },
   (t) => [
+    index('goals_search_idx').using('gin', t.search),
     index('goals_user_segment_idx').on(t.userId, t.lifeSegmentId),
     index('goals_user_horizon_idx').on(t.userId, t.horizon),
     index('goals_parent_idx').on(t.parentGoalId),
@@ -96,9 +98,11 @@ export const projects = planner.table(
     dueDate: date('due_date'),
     progress: smallint('progress').notNull().default(0),
     ...softDelete(),
+    search: searchColumn(['title', 'description']),
     ...timestamps(),
   },
   (t) => [
+    index('projects_search_idx').using('gin', t.search),
     index('projects_user_segment_idx').on(t.userId, t.lifeSegmentId),
     index('projects_user_status_idx').on(t.userId, t.status),
     ...ownerPolicies('projects'),
@@ -175,9 +179,11 @@ export const tasks = planner.table(
       onDelete: 'cascade',
     }),
     ...softDelete(),
+    search: searchColumn(['title', 'notes']),
     ...timestamps(),
   },
   (t) => [
+    index('tasks_search_idx').using('gin', t.search),
     index('tasks_user_segment_idx').on(t.userId, t.lifeSegmentId),
     index('tasks_user_due_idx').on(t.userId, t.dueDate),
     index('tasks_user_status_idx').on(t.userId, t.status),

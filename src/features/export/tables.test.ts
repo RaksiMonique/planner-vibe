@@ -57,4 +57,10 @@ describe('plannerTables', () => {
     expect(plannerTables().find((t) => t.key === 'moodEntries')?.sensitive).toBe(true);
     expect(plannerTables().find((t) => t.key === 'tasks')?.sensitive).toBe(false);
   });
+
+  it('leaves generated search columns out of the exported columns', () => {
+    const tasks = plannerTables().find((t) => t.key === 'tasks')!;
+    expect(Object.keys(tasks.columns)).toContain('title');
+    expect(Object.keys(tasks.columns)).not.toContain('search');
+  });
 });

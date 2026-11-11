@@ -19,6 +19,7 @@ export * from './finance';
 export * from './food';
 export * from './gifts';
 export * from './important';
+export * from './integrations';
 export * from './learning';
 export * from './legacy';
 export * from './media';

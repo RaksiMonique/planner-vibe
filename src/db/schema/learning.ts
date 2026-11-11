@@ -1,5 +1,5 @@
 import { date, index, integer, smallint, text, timestamp, uuid } from 'drizzle-orm/pg-core';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { accentEnum, lifeSegments } from './organisation';
@@ -66,9 +66,14 @@ export const courses = planner.table(
     progress: smallint('progress').notNull().default(0),
     notes: text('notes'),
     ...softDelete(),
+    search: searchColumn(['title', 'notes']),
     ...timestamps(),
   },
-  (t) => [index('courses_user_status_idx').on(t.userId, t.status), ...ownerPolicies('courses')]
+  (t) => [
+    index('courses_search_idx').using('gin', t.search),
+    index('courses_user_status_idx').on(t.userId, t.status),
+    ...ownerPolicies('courses'),
+  ]
 );
 
 export const lessons = planner.table(

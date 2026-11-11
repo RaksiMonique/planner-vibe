@@ -1,5 +1,5 @@
 import { boolean, index, text, uuid } from 'drizzle-orm/pg-core';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { lifeSegments } from './organisation';
@@ -24,9 +24,14 @@ export const notes = planner.table(
     source: text('source'),
     isPinned: boolean('is_pinned').notNull().default(false),
     ...softDelete(),
+    search: searchColumn(['title', 'content', 'author', 'source']),
     ...timestamps(),
   },
-  (t) => [index('notes_user_kind_idx').on(t.userId, t.kind, t.updatedAt), ...ownerPolicies('notes')]
+  (t) => [
+    index('notes_search_idx').using('gin', t.search),
+    index('notes_user_kind_idx').on(t.userId, t.kind, t.updatedAt),
+    ...ownerPolicies('notes'),
+  ]
 );
 
 export type Note = typeof notes.$inferSelect;

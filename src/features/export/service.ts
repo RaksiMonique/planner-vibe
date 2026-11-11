@@ -16,7 +16,7 @@ export async function exportPlannerData(userId: string, options: ExportOptions =
     (t) => !EXCLUDED_FROM_EXPORT.has(t.key) && (options.includeSensitive || !t.sensitive)
   );
   const rows = await Promise.all(
-    entries.map((t) => db.select().from(t.table).where(eq(t.userId, userId)))
+    entries.map((t) => db.select(t.columns).from(t.table).where(eq(t.userId, userId)))
   );
   const data: Record<string, unknown> = {
     exportedAt: new Date().toISOString(),

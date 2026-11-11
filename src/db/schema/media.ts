@@ -8,7 +8,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { lifeSegments } from './organisation';
@@ -51,9 +51,11 @@ export const mediaItems = planner.table(
     startedOn: date('started_on'),
     finishedOn: date('finished_on'),
     ...softDelete(),
+    search: searchColumn(['title', 'creator', 'notes']),
     ...timestamps(),
   },
   (t) => [
+    index('media_items_search_idx').using('gin', t.search),
     index('media_items_user_kind_status_idx').on(t.userId, t.kind, t.status),
     ...ownerPolicies('media_items'),
   ]

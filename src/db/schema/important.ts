@@ -1,5 +1,5 @@
 import { boolean, index, jsonb, text, uuid } from 'drizzle-orm/pg-core';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { ownerId } from './profiles';
@@ -31,9 +31,11 @@ export const importantRecords = planner.table(
     notes: text('notes'),
     isSensitive: boolean('is_sensitive').notNull().default(true),
     ...softDelete(),
+    search: searchColumn(['title', 'notes']),
     ...timestamps(),
   },
   (t) => [
+    index('important_records_search_idx').using('gin', t.search),
     index('important_records_user_kind_idx').on(t.userId, t.kind),
     ...ownerPolicies('important_records'),
   ]

@@ -1,5 +1,5 @@
 import { index, integer, text, uuid } from 'drizzle-orm/pg-core';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { lifeSegments } from './organisation';
@@ -25,9 +25,11 @@ export const visionBoards = planner.table(
     projectId: uuid('project_id').references(() => projects.id, { onDelete: 'set null' }),
     sortOrder: integer('sort_order').notNull().default(0),
     ...softDelete(),
+    search: searchColumn(['name', 'description']),
     ...timestamps(),
   },
   (t) => [
+    index('vision_boards_search_idx').using('gin', t.search),
     index('vision_boards_user_idx').on(t.userId, t.sortOrder),
     ...ownerPolicies('vision_boards'),
   ]

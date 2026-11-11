@@ -1,4 +1,5 @@
-import { date, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { customType, date, jsonb, text, timestamp } from 'drizzle-orm/pg-core';
 
 /** `created_at` / `updated_at` as timestamptz (instructions.md 5.2, 5.4). */
 export function timestamps() {
@@ -33,4 +34,15 @@ export function recurrence() {
     exdates: jsonb('exdates').$type<string[]>().notNull().default([]),
     occurrenceDate: date('occurrence_date'),
   };
+}
+
+export const tsvector = customType<{ data: string }>({ dataType: () => 'tsvector' });
+
+/**
+ * Full-text search column (instructions.md 9.5): a stored tsvector generated
+ * from the named SQL columns, indexed with GIN by the table that uses it.
+ */
+export function searchColumn(sqlColumns: string[]) {
+  const expr = sqlColumns.map((c) => `coalesce("${c}", '')`).join(" || ' ' || ");
+  return tsvector('search').generatedAlwaysAs(sql.raw(`to_tsvector('english', ${expr})`));
 }

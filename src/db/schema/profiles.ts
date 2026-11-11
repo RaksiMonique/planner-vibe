@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm';
-import { jsonb, pgPolicy, smallint, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, jsonb, pgPolicy, smallint, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 import { planner } from './_schema';
 import { timestamps } from './_columns';
 import { ownerPolicies } from './_policies';
@@ -29,6 +29,9 @@ export const MODULE_KEYS = [
 ] as const;
 export type ModuleKey = (typeof MODULE_KEYS)[number];
 export type EnabledModules = Record<ModuleKey, boolean>;
+
+/** Dashboard card keys in display order, plus the ones switched off. */
+export type DashboardLayout = { order: string[]; hidden: string[] };
 
 export const DEFAULT_ENABLED_MODULES: EnabledModules = Object.fromEntries(
   MODULE_KEYS.map((key) => [key, key !== 'cycle-tracking'])
@@ -89,6 +92,14 @@ export const userPreferences = planner.table(
       .$type<EnabledModules>()
       .notNull()
       .default(DEFAULT_ENABLED_MODULES),
+    /** Card order and hidden cards for the dashboard; null = default layout. */
+    dashboardLayout: jsonb('dashboard_layout').$type<DashboardLayout>(),
+    /** Secret in the ICS subscription URL; null until the feed is switched on. */
+    icsToken: text('ics_token').unique(),
+    emailReminders: boolean('email_reminders').notNull().default(false),
+    pushReminders: boolean('push_reminders').notNull().default(false),
+    /** Local hour at which the daily digest goes out. */
+    digestHour: smallint('digest_hour').notNull().default(7),
     ...timestamps(),
   },
   () => [...ownerPolicies('user_preferences')]

@@ -10,7 +10,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { planner } from './_schema';
-import { recurrence, softDelete, timestamps } from './_columns';
+import { recurrence, softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { accentEnum, lifeSegments } from './organisation';
 import { projects, tasks } from './planning';
@@ -71,14 +71,19 @@ export const events = planner.table(
     startsAt: timestamp('starts_at', { withTimezone: true }),
     endsAt: timestamp('ends_at', { withTimezone: true }),
     allDayDate: date('all_day_date'),
+    /** Id of this event in a connected external calendar, once pushed there. */
+    externalId: text('external_id'),
+    externalSyncedAt: timestamp('external_synced_at', { withTimezone: true }),
     ...recurrence(),
     recurrenceParentId: uuid('recurrence_parent_id').references((): AnyPgColumn => events.id, {
       onDelete: 'cascade',
     }),
     ...softDelete(),
+    search: searchColumn(['title', 'description', 'location']),
     ...timestamps(),
   },
   (t) => [
+    index('events_search_idx').using('gin', t.search),
     index('events_user_starts_idx').on(t.userId, t.startsAt),
     index('events_user_all_day_idx').on(t.userId, t.allDayDate),
     index('events_calendar_idx').on(t.calendarId),

@@ -12,7 +12,7 @@ import {
   uuid,
 } from 'drizzle-orm/pg-core';
 import { planner } from './_schema';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { accentEnum, lifeSegments } from './organisation';
 import { projects, tasks } from './planning';
@@ -45,9 +45,11 @@ export const habits = planner.table(
     reminderTime: time('reminder_time'),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     ...softDelete(),
+    search: searchColumn(['name']),
     ...timestamps(),
   },
   (t) => [
+    index('habits_search_idx').using('gin', t.search),
     index('habits_user_segment_idx').on(t.userId, t.lifeSegmentId),
     ...ownerPolicies('habits'),
   ]
@@ -88,9 +90,14 @@ export const routines = planner.table(
     daysOfWeek: jsonb('days_of_week').$type<number[]>().notNull().default([0, 1, 2, 3, 4, 5, 6]),
     isTemplate: boolean('is_template').notNull().default(false),
     ...softDelete(),
+    search: searchColumn(['name']),
     ...timestamps(),
   },
-  (t) => [index('routines_user_kind_idx').on(t.userId, t.kind), ...ownerPolicies('routines')]
+  (t) => [
+    index('routines_search_idx').using('gin', t.search),
+    index('routines_user_kind_idx').on(t.userId, t.kind),
+    ...ownerPolicies('routines'),
+  ]
 );
 
 export const routineSteps = planner.table(

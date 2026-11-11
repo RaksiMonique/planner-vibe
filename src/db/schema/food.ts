@@ -9,7 +9,7 @@ import {
   text,
   uuid,
 } from 'drizzle-orm/pg-core';
-import { softDelete, timestamps } from './_columns';
+import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { lifeSegments } from './organisation';
@@ -38,9 +38,14 @@ export const recipes = planner.table(
     notes: text('notes'),
     isFavourite: boolean('is_favourite').notNull().default(false),
     ...softDelete(),
+    search: searchColumn(['title', 'description', 'notes']),
     ...timestamps(),
   },
-  (t) => [index('recipes_user_idx').on(t.userId, t.title), ...ownerPolicies('recipes')]
+  (t) => [
+    index('recipes_search_idx').using('gin', t.search),
+    index('recipes_user_idx').on(t.userId, t.title),
+    ...ownerPolicies('recipes'),
+  ]
 );
 
 export const ingredients = planner.table(

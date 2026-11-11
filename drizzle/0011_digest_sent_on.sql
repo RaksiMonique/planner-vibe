@@ -1,0 +1,1 @@
+ALTER TABLE "planner"."user_preferences" ADD COLUMN "digest_sent_on" date;

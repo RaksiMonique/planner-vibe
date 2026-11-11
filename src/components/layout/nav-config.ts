@@ -6,6 +6,7 @@ import {
   CalendarFold,
   CalendarRange,
   ChartColumn,
+  ChartNoAxesColumn,
   BookMarked,
   BookOpen,
   Briefcase,
@@ -181,6 +182,13 @@ export const navGroups: NavGroup[] = [
     items: [
       { label: 'Journal', href: '/journal', icon: NotebookPen, release: 3, module: 'journal' },
       { label: 'Reviews', href: '/reviews', icon: RotateCcw, release: 3, module: 'reviews' },
+      {
+        label: 'Analytics',
+        href: '/analytics',
+        icon: ChartNoAxesColumn,
+        release: 6,
+        module: 'reviews',
+      },
     ],
   },
   {

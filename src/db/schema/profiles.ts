@@ -1,5 +1,14 @@
 import { sql } from 'drizzle-orm';
-import { boolean, jsonb, pgPolicy, smallint, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  date,
+  jsonb,
+  pgPolicy,
+  smallint,
+  text,
+  timestamp,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { planner } from './_schema';
 import { timestamps } from './_columns';
 import { ownerPolicies } from './_policies';
@@ -100,6 +109,8 @@ export const userPreferences = planner.table(
     pushReminders: boolean('push_reminders').notNull().default(false),
     /** Local hour at which the daily digest goes out. */
     digestHour: smallint('digest_hour').notNull().default(7),
+    /** Local date the last daily digest went out, so a job runs it once a day. */
+    digestSentOn: date('digest_sent_on'),
     ...timestamps(),
   },
   () => [...ownerPolicies('user_preferences')]

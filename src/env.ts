@@ -28,7 +28,7 @@ export const env = createEnv({
     // Comma-separated emails allowed to sign in. Unset = anyone (multi-user).
     AUTH_ALLOWED_EMAILS: z.string().optional(),
     // 'true' shows the Google button; the provider must be configured in Supabase first.
-    AUTH_GOOGLE: z.enum(['true', 'false']).optional(),
+    AUTH_GOOGLE: z.string().optional(),
     NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
     // Set by Vercel per deployment target; NODE_ENV is 'production' in both
     VERCEL_ENV: z.enum(['production', 'preview', 'development']).optional(),
@@ -65,5 +65,7 @@ export const env = createEnv({
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     NEXT_PUBLIC_VAPID_PUBLIC_KEY: process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY,
   },
+  // A variable saved blank in a hosting dashboard must count as unset, never fail the build.
+  emptyStringAsUndefined: true,
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
 });

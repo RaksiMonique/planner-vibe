@@ -225,6 +225,7 @@ export function CalendarPage({
         onOpenEvent={(id) => void openExisting(id)}
         onOpenTask={(id) => router.push(`/tasks?task=${id}`)}
         onOpenTimeBlock={() => router.push('/time')}
+        onOpenShift={(date) => router.push(`/work/calendar?month=${date.slice(0, 7)}`)}
         onMove={handleMove}
         initialDate={initialDate}
       />

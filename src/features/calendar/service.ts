@@ -4,9 +4,11 @@ import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
 import { db } from '@/db';
 import { calendars, captures, events, lifeSegments } from '@/db/schema';
 import { listMilestones } from '@/features/goals/queries';
+import { getPreferences } from '@/features/settings/service';
 import { listTasks } from '@/features/tasks/queries';
 import { expandTimeBlocks } from '@/features/time/expand';
 import { listTimeBlocksBetween } from '@/features/time/queries';
+import { listShiftCalendarItems } from '@/features/work/queries';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { toDateKey } from '@/lib/dates';
 import { expandEvents, type CalendarItem } from './expand';
@@ -208,14 +210,14 @@ export function toFormValues(row: Event, timeZone: string): EventFormValues {
   };
 }
 
-/** Everything the calendar draws for [from, to): events, open tasks with due dates, open milestones. */
+/** Everything the calendar draws for [from, to): events, open tasks with due dates, open milestones, time blocks and shifts. */
 export async function buildCalendarItems(
   userId: string,
   from: Date,
   to: Date
 ): Promise<CalendarItem[]> {
-  await listCalendars(userId);
-  const [blockRows, eventRows, taskRows, milestoneRows] = await Promise.all([
+  const [, prefs] = await Promise.all([listCalendars(userId), getPreferences(userId)]);
+  const [blockRows, eventRows, taskRows, milestoneRows, shiftItems] = await Promise.all([
     listTimeBlocksBetween(userId, from, to).catch(() => []),
     listEventsBetween(userId, from, to),
     listTasks(userId, {
@@ -225,6 +227,10 @@ export async function buildCalendarItems(
       status: 'open',
     }),
     listMilestones(userId, { dueFrom: toDateKey(from), dueTo: toDateKey(to), open: true }),
+    // Shifts from the job calendar, read-only here, only while the work module is on.
+    prefs.enabledModules.work === false
+      ? Promise.resolve([] as CalendarItem[])
+      : listShiftCalendarItems(userId, from, to, prefs.timeZone).catch(() => [] as CalendarItem[]),
   ]);
   const items = expandEvents(eventRows, from, to);
   for (const t of taskRows) {
@@ -276,5 +282,6 @@ export async function buildCalendarItems(
       recurring: b.recurring,
     });
   }
+  items.push(...shiftItems);
   return items;
 }

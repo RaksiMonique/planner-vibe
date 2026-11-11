@@ -47,7 +47,7 @@ const ACCENT_VARS: Record<Accent, { bg: string; fg: string }> = {
 
 export function toFullCalendarEvent(item: CalendarItem): EventInput {
   const colours =
-    item.type === 'event'
+    item.type === 'event' || item.type === 'shift'
       ? ACCENT_VARS[item.accent]
       : item.type === 'task'
         ? { bg: 'var(--blush)', fg: 'var(--charcoal)' }
@@ -63,7 +63,9 @@ export function toFullCalendarEvent(item: CalendarItem): EventInput {
           ? `☐ ${item.title}`
           : item.type === 'time_block'
             ? `⏱ ${item.title}`
-            : item.title,
+            : item.type === 'shift'
+              ? `⚒ ${item.title}`
+              : item.title,
     start: item.start,
     end: item.end ?? undefined,
     allDay: item.allDay,
@@ -98,6 +100,7 @@ export function CalendarView({
   onOpenEvent,
   onOpenTask,
   onOpenTimeBlock,
+  onOpenShift,
   onMove,
   initialDate,
 }: {
@@ -109,6 +112,8 @@ export function CalendarView({
   onOpenEvent: (sourceId: string, recurring: boolean) => void;
   onOpenTask: (id: string) => void;
   onOpenTimeBlock?: (id: string) => void;
+  /** Shifts are read-only here; `dateKey` is the day clicked. */
+  onOpenShift?: (dateKey: string) => void;
   /** yyyy-MM-dd to open on; defaults to today. */
   initialDate?: string;
   /** Resolves false when the move was rejected, so the drag is reverted. */
@@ -141,6 +146,7 @@ export function CalendarView({
     };
     if (type === 'task') onOpenTask(sourceId);
     else if (type === 'time_block') onOpenTimeBlock?.(sourceId);
+    else if (type === 'shift') onOpenShift?.(sourceId);
     else if (type === 'event') onOpenEvent(sourceId, recurring);
   }
 

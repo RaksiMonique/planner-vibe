@@ -22,7 +22,7 @@ import { ReferenceForm } from '@/features/faith/components/reference-form';
 import { ReferenceRow } from '@/features/faith/components/reference-row';
 import { StudyCard } from '@/features/faith/components/study-card';
 import { StudyFormDialog } from '@/features/faith/components/study-form-dialog';
-import { describeChapters } from '@/features/faith/plans';
+import { describeChapters, queuedBehind, queueTargets } from '@/features/faith/plans';
 import {
   getActivePlanOverview,
   getDevotional,
@@ -32,7 +32,7 @@ import {
   listStudyOptions,
   nextUpStudy,
 } from '@/features/faith/queries';
-import { STUDY_STATUS_LABELS, STUDY_STATUSES } from '@/features/faith/schema';
+import { PLAN_STATUS_LABELS, STUDY_STATUS_LABELS, STUDY_STATUSES } from '@/features/faith/schema';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import { listSegments } from '@/features/life-segments/service';
 import { getPreferences } from '@/features/settings/service';
@@ -61,6 +61,7 @@ export default async function BiblePage() {
   const favourites = references.filter((r) => r.isFavourite);
   const bookmarks = references.filter((r) => r.isBookmark && !r.isFavourite);
   const otherPlans = plans.filter((p) => p.id !== overview?.plan.id);
+  const queueAfter = queueTargets(plans).map((p) => ({ id: p.id, name: p.name }));
 
   const newStudy = (
     <StudyFormDialog
@@ -88,6 +89,7 @@ export default async function BiblePage() {
               segments={segments}
               defaultSegmentId={faith?.id}
               todayKey={todayKey}
+              queueAfter={queueAfter}
               trigger={
                 <>
                   <PlusIcon data-icon="inline-start" />
@@ -174,6 +176,7 @@ export default async function BiblePage() {
                     segments={segments}
                     defaultSegmentId={faith?.id}
                     todayKey={todayKey}
+                    queueAfter={queueAfter}
                     variant="default"
                     trigger={
                       <>
@@ -187,31 +190,44 @@ export default async function BiblePage() {
             )}
             {otherPlans.length > 0 && (
               <ul className="text-muted-foreground flex flex-col gap-1 border-t pt-3 text-xs">
-                {otherPlans.map((p) => (
-                  <li key={p.id} className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate">
-                      {p.name} <Badge variant="outline">{p.status}</Badge>
-                    </span>
-                    {p.status !== 'done' && (
-                      <form action={setPlanStatusAction}>
-                        <input type="hidden" name="id" value={p.id} />
-                        <input type="hidden" name="status" value="active" />
-                        <Button type="submit" variant="ghost" size="xs">
-                          Resume
-                        </Button>
-                      </form>
-                    )}
-                    <ConfirmActionButton
-                      action={deletePlanAction}
-                      fields={{ id: p.id }}
-                      title="Delete this reading plan?"
-                      description="Its chapter history goes with it."
-                      variant="ghost"
-                      size="xs"
-                      trigger="Delete"
-                    />
-                  </li>
-                ))}
+                {otherPlans.map((p) => {
+                  const behind = queuedBehind(p, plans);
+                  return (
+                    <li key={p.id} className="flex items-center gap-2">
+                      <span className="min-w-0 truncate">{p.name}</span>
+                      <Badge variant="outline" className="min-w-0 flex-1 justify-start truncate">
+                        {behind ? `Queued after ${behind.name}` : PLAN_STATUS_LABELS[p.status]}
+                      </Badge>
+                      {p.status !== 'done' && !behind && (
+                        <form action={setPlanStatusAction}>
+                          <input type="hidden" name="id" value={p.id} />
+                          <input type="hidden" name="status" value="active" />
+                          <Button type="submit" variant="ghost" size="xs">
+                            Resume
+                          </Button>
+                        </form>
+                      )}
+                      {p.status !== 'done' && (
+                        <form action={setPlanStatusAction}>
+                          <input type="hidden" name="id" value={p.id} />
+                          <input type="hidden" name="status" value="done" />
+                          <Button type="submit" variant="ghost" size="xs">
+                            Finish
+                          </Button>
+                        </form>
+                      )}
+                      <ConfirmActionButton
+                        action={deletePlanAction}
+                        fields={{ id: p.id }}
+                        title="Delete this reading plan?"
+                        description="Its chapter history goes with it."
+                        variant="ghost"
+                        size="xs"
+                        trigger="Delete"
+                      />
+                    </li>
+                  );
+                })}
               </ul>
             )}
           </CardContent>

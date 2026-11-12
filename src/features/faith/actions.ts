@@ -11,7 +11,9 @@ import {
   ok,
   type ActionResult,
 } from '@/lib/action-result';
+import { getPreferences } from '@/features/settings/service';
 import { requireUser } from '@/lib/auth';
+import { toDateKey, todayInZone } from '@/lib/dates';
 import {
   dateKeyValue,
   devotionalInput,
@@ -159,7 +161,13 @@ export async function setPlanStatusAction(formData: FormData): Promise<void> {
     .extend({ status: z.enum(['active', 'paused', 'done']) })
     .safeParse(formValues(formData));
   if (!parsed.success) return;
-  await setPlanStatus(user.id, parsed.data.id, parsed.data.status);
+  const prefs = await getPreferences(user.id);
+  await setPlanStatus(
+    user.id,
+    parsed.data.id,
+    parsed.data.status,
+    toDateKey(todayInZone(prefs.timeZone))
+  );
   refresh();
 }
 

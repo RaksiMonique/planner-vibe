@@ -74,8 +74,20 @@ export const planInput = z.object({
   bookIds: z.array(z.coerce.number().int().min(1).max(73)).optional().default([]),
   chaptersPerDay: z.coerce.number().int().min(1, 'At least one chapter.').max(50).default(1),
   startDate: dateKeyValue,
+  /** Queue behind this plan instead of starting now. */
+  startsAfterPlanId: z
+    .string()
+    .optional()
+    .transform((v) => (v && v !== 'none' ? v : undefined))
+    .pipe(z.uuid().optional()),
 });
 export type PlanInput = z.infer<typeof planInput>;
+
+export const PLAN_STATUS_LABELS: Record<'active' | 'paused' | 'done', string> = {
+  active: 'Active',
+  paused: 'Paused',
+  done: 'Done',
+};
 
 export const prayerInput = z.object({
   kind: z.enum(PRAYER_KINDS).default('intention'),

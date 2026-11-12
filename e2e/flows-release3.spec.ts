@@ -19,6 +19,41 @@ test('create a Bible study and save a passage', async ({ page }) => {
   await expect(page.getByText(/Phil(ippians)? 4:6-7/).first()).toBeVisible();
 });
 
+test('a queued reading plan starts when the one before it is finished', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'Reading plans share one active slot per user; the desktop run covers it.');
+  const first = `Gospels first ${stamp}`;
+  const next = `Psalms next ${stamp}`;
+  await page.goto('/bible');
+  await page.getByRole('button', { name: 'Reading plan', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'New reading plan' });
+  await dialog.getByLabel('Name').fill(first);
+  await dialog.getByRole('button', { name: 'Start plan' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText(first, { exact: true })).toBeVisible();
+
+  // The second plan queues behind the first instead of pausing it.
+  await page.getByRole('button', { name: 'Reading plan', exact: true }).click();
+  await dialog.getByLabel('Name').fill(next);
+  await dialog.getByLabel('Starts after').click();
+  await page.getByRole('option', { name: first }).click();
+  await dialog.getByRole('button', { name: 'Queue plan' }).click();
+  await expect(dialog).toBeHidden();
+  const queued = page.getByRole('listitem').filter({ hasText: next });
+  await expect(queued.getByText(`Queued after ${first}`)).toBeVisible();
+  await expect(queued.getByRole('button', { name: 'Resume' })).toHaveCount(0);
+
+  // Finishing the first starts the second: it leaves the list and becomes today's reading.
+  await page.getByRole('button', { name: 'Finish' }).first().click();
+  await expect(page.getByRole('listitem').filter({ hasText: next })).toHaveCount(0);
+  await expect(page.getByText(next, { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('listitem').filter({ hasText: first }).getByText('Done')
+  ).toBeVisible();
+});
+
 test("write today's journal entry and a gratitude line", async ({ page }) => {
   const text = `Quiet morning, good coffee ${stamp}`;
   await page.goto('/journal');

@@ -1,0 +1,3 @@
+ALTER TABLE "planner"."reading_plans" ADD COLUMN "starts_after_plan_id" uuid;--> statement-breakpoint
+ALTER TABLE "planner"."reading_plans" ADD CONSTRAINT "reading_plans_starts_after_plan_id_reading_plans_id_fk" FOREIGN KEY ("starts_after_plan_id") REFERENCES "planner"."reading_plans"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE UNIQUE INDEX "reading_plans_successor_idx" ON "planner"."reading_plans" USING btree ("starts_after_plan_id");

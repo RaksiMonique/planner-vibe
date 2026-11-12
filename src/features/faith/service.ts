@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, ne } from 'drizzle-orm';
 import { db } from '@/db';
 import {
   bibleStudies,
@@ -216,11 +216,24 @@ export async function createPlan(userId: string, input: PlanInput): Promise<Read
   if (preset === 'custom' && bookIds && bookIds.length === 0) {
     throw new ValidationError('Choose at least one book.');
   }
-  // One active plan at a time keeps "today's reading" unambiguous.
-  await db
-    .update(readingPlans)
-    .set({ status: 'paused' })
-    .where(and(eq(readingPlans.userId, userId), eq(readingPlans.status, 'active')));
+  // Queued behind an unfinished plan: wait, and leave the active plan alone.
+  let startsAfter: ReadingPlan | null = null;
+  if (input.startsAfterPlanId) {
+    const before = await getPlanOrThrow(userId, input.startsAfterPlanId);
+    if (before.status !== 'done') {
+      const taken = await db.$count(
+        readingPlans,
+        and(
+          eq(readingPlans.userId, userId),
+          eq(readingPlans.startsAfterPlanId, before.id),
+          isNull(readingPlans.deletedAt)
+        )
+      );
+      if (taken > 0) throw new ValidationError('Another plan is already queued behind that one.');
+      startsAfter = before;
+    }
+  }
+  if (!startsAfter) await pauseActivePlans(userId);
   const [row] = await db
     .insert(readingPlans)
     .values({
@@ -230,31 +243,97 @@ export async function createPlan(userId: string, input: PlanInput): Promise<Read
       bookIds: bookIds ? [...bookIds] : null,
       chaptersPerDay: input.chaptersPerDay,
       startDate: input.startDate,
-      status: 'active',
+      status: startsAfter ? 'paused' : 'active',
+      startsAfterPlanId: startsAfter?.id ?? null,
     })
     .returning();
   return row;
 }
 
-export async function setPlanStatus(userId: string, id: string, status: ReadingPlan['status']) {
-  await getPlanOrThrow(userId, id);
+/** One active plan at a time keeps "today's reading" unambiguous. */
+async function pauseActivePlans(userId: string) {
+  await db
+    .update(readingPlans)
+    .set({ status: 'paused' })
+    .where(and(eq(readingPlans.userId, userId), eq(readingPlans.status, 'active')));
+}
+
+/** The unfinished plan this one is queued behind, if any. */
+async function planInFront(userId: string, plan: ReadingPlan): Promise<ReadingPlan | null> {
+  if (!plan.startsAfterPlanId) return null;
+  const [before] = await db
+    .select()
+    .from(readingPlans)
+    .where(
+      and(
+        eq(readingPlans.userId, userId),
+        eq(readingPlans.id, plan.startsAfterPlanId),
+        isNull(readingPlans.deletedAt)
+      )
+    )
+    .limit(1);
+  return before && before.status !== 'done' ? before : null;
+}
+
+/**
+ * Changes a plan's status. Finishing a plan starts the one queued behind it
+ * from today, so its schedule is not already behind. `todayKey` is yyyy-MM-dd
+ * in the user's zone.
+ */
+export async function setPlanStatus(
+  userId: string,
+  id: string,
+  status: ReadingPlan['status'],
+  todayKey: string
+) {
+  const plan = await getPlanOrThrow(userId, id);
   if (status === 'active') {
-    await db
-      .update(readingPlans)
-      .set({ status: 'paused' })
-      .where(and(eq(readingPlans.userId, userId), eq(readingPlans.status, 'active')));
+    const before = await planInFront(userId, plan);
+    if (before) {
+      throw new ValidationError(
+        `“${plan.name}” is queued behind “${before.name}”. Finish that first.`
+      );
+    }
+    await pauseActivePlans(userId);
   }
   await db
     .update(readingPlans)
     .set({ status })
     .where(and(eq(readingPlans.userId, userId), eq(readingPlans.id, id)));
+  if (status === 'done') await startNextInQueue(userId, id, todayKey);
 }
 
+async function startNextInQueue(userId: string, finishedId: string, todayKey: string) {
+  const [next] = await db
+    .select()
+    .from(readingPlans)
+    .where(
+      and(
+        eq(readingPlans.userId, userId),
+        eq(readingPlans.startsAfterPlanId, finishedId),
+        isNull(readingPlans.deletedAt),
+        ne(readingPlans.status, 'done')
+      )
+    )
+    .limit(1);
+  if (!next) return;
+  await pauseActivePlans(userId);
+  await db
+    .update(readingPlans)
+    .set({ status: 'active', startDate: todayKey })
+    .where(and(eq(readingPlans.userId, userId), eq(readingPlans.id, next.id)));
+}
+
+/** Soft delete. Anything queued behind the plan is released to be resumed by hand. */
 export async function removePlan(userId: string, id: string) {
   await getPlanOrThrow(userId, id);
   await db
     .update(readingPlans)
-    .set({ deletedAt: new Date(), status: 'paused' })
+    .set({ startsAfterPlanId: null })
+    .where(and(eq(readingPlans.userId, userId), eq(readingPlans.startsAfterPlanId, id)));
+  await db
+    .update(readingPlans)
+    .set({ deletedAt: new Date(), status: 'paused', startsAfterPlanId: null })
     .where(and(eq(readingPlans.userId, userId), eq(readingPlans.id, id)));
 }
 

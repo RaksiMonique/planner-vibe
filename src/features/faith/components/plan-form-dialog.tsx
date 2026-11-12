@@ -30,6 +30,7 @@ export function PlanFormDialog({
   segments,
   defaultSegmentId,
   todayKey,
+  queueAfter = [],
   trigger,
   variant = 'outline',
   size = 'sm',
@@ -37,12 +38,16 @@ export function PlanFormDialog({
   segments: SegmentRef[];
   defaultSegmentId?: string;
   todayKey: string;
+  /** Unfinished plans with nothing queued behind them yet. */
+  queueAfter?: Array<{ id: string; name: string }>;
   trigger: React.ReactNode;
   variant?: React.ComponentProps<typeof Button>['variant'];
   size?: React.ComponentProps<typeof Button>['size'];
 }) {
   const [open, setOpen] = useState(false);
   const [preset, setPreset] = useState<PlanPreset>('whole');
+  const [after, setAfter] = useState('none');
+  const queued = after !== 'none';
   const [state, formAction] = useActionState(
     async (prev: ActionResult | null, formData: FormData) => {
       const result = await createPlanAction(prev, formData);
@@ -59,7 +64,8 @@ export function PlanFormDialog({
         <DialogHeader>
           <DialogTitle className="font-heading text-lg">New reading plan</DialogTitle>
           <DialogDescription>
-            A set of books read so many chapters a day. Starting a plan pauses any other active one.
+            A set of books read so many chapters a day. Start it now, or queue it behind another
+            plan.
           </DialogDescription>
         </DialogHeader>
         <form action={formAction} className="flex flex-col gap-4">
@@ -139,6 +145,26 @@ export function PlanFormDialog({
                 <FieldError errors={fieldErrors(state, 'startDate')} />
               </Field>
             </div>
+            {queueAfter.length > 0 && (
+              <Field>
+                <FieldLabel htmlFor="plan-after">Starts after</FieldLabel>
+                <ChoiceSelect
+                  id="plan-after"
+                  name="startsAfterPlanId"
+                  value={after}
+                  onValueChange={setAfter}
+                  options={[
+                    { value: 'none', label: 'Nothing, start now' },
+                    ...queueAfter.map((p) => ({ value: p.id, label: p.name })),
+                  ]}
+                />
+                <FieldDescription>
+                  {queued
+                    ? 'It waits, then starts the day that plan is finished. The start date moves to that day.'
+                    : 'Starting now pauses any other active plan.'}
+                </FieldDescription>
+              </Field>
+            )}
           </FieldGroup>
           {state && !state.ok && (
             <p role="alert" className="text-destructive text-sm">
@@ -147,7 +173,7 @@ export function PlanFormDialog({
           )}
           <DialogFooter>
             <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-            <SubmitButton>Start plan</SubmitButton>
+            <SubmitButton>{queued ? 'Queue plan' : 'Start plan'}</SubmitButton>
           </DialogFooter>
         </form>
       </DialogContent>

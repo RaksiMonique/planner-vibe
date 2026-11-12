@@ -117,3 +117,29 @@ export function describeChapters(chapters: PlanChapter[]): string {
     })
     .join(', ');
 }
+
+// ── Queue ────────────────────────────────────────────────────────────────────
+
+export type QueueLike = {
+  id: string;
+  name: string;
+  status: 'active' | 'paused' | 'done';
+  startsAfterPlanId: string | null;
+};
+
+/** The plan `plan` is still waiting on: present in `plans` and not finished. */
+export function queuedBehind<T extends QueueLike>(
+  plan: QueueLike,
+  plans: readonly T[]
+): T | undefined {
+  if (!plan.startsAfterPlanId) return undefined;
+  const before = plans.find((p) => p.id === plan.startsAfterPlanId);
+  return before && before.status !== 'done' ? before : undefined;
+}
+
+/** Plans a new plan may queue behind: unfinished, with nothing queued behind them yet. */
+export function queueTargets<T extends QueueLike>(plans: readonly T[]): T[] {
+  return plans.filter(
+    (p) => p.status !== 'done' && !plans.some((q) => q.startsAfterPlanId === p.id)
+  );
+}

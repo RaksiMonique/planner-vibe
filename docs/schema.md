@@ -216,7 +216,7 @@ erDiagram
 
 ## Release 3 tables
 
-- Faith: `bible_books` (reference data, 73 rows inserted by migration 0005, no RLS), `scripture_references`, `bible_studies`, `bible_study_notes`, `reading_plans`, `reading_progress`, `prayer_entries`, `devotional_entries`. Passages are stored as references only; Bible text is never stored.
+- Faith: `bible_books` (reference data, 73 rows inserted by migration 0005, no RLS), `scripture_references`, `bible_studies`, `bible_study_notes`, `reading_plans` (`starts_after_plan_id` queues a plan behind another; a unique index allows one successor per plan), `reading_progress`, `prayer_entries`, `devotional_entries`. Passages are stored as references only; Bible text is never stored.
 - Learning: `subjects`, `courses`, `lessons`, `study_sessions` (optionally linked to a time entry), `study_notes`, `assignments` (optionally mirrored as a task), `learning_resources`.
 - Reflection: `journal_entries` (kind daily, gratitude, wellness, reflection), `reviews` (kind weekly, monthly, quarterly, annual, goal; answers keyed by prompt).
 - Media: `media_items` (segment optional, a library record), `media_logs` (segment required), `media_lists`, `media_list_items`.

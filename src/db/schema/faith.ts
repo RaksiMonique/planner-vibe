@@ -9,6 +9,7 @@ import {
   timestamp,
   uniqueIndex,
   uuid,
+  type AnyPgColumn,
 } from 'drizzle-orm/pg-core';
 import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
@@ -140,10 +141,18 @@ export const readingPlans = planner.table(
     chaptersPerDay: smallint('chapters_per_day').notNull().default(1),
     startDate: date('start_date').notNull(),
     status: readingPlanStatusEnum('status').notNull().default('active'),
+    /** Queue: this plan starts the day the named plan is finished. One successor per plan. */
+    startsAfterPlanId: uuid('starts_after_plan_id').references((): AnyPgColumn => readingPlans.id, {
+      onDelete: 'set null',
+    }),
     ...softDelete(),
     ...timestamps(),
   },
-  (t) => [index('reading_plans_user_idx').on(t.userId, t.status), ...ownerPolicies('reading_plans')]
+  (t) => [
+    index('reading_plans_user_idx').on(t.userId, t.status),
+    uniqueIndex('reading_plans_successor_idx').on(t.startsAfterPlanId),
+    ...ownerPolicies('reading_plans'),
+  ]
 );
 
 export const readingProgress = planner.table(

@@ -41,6 +41,7 @@ import type { ActionResult } from '@/lib/action-result';
 import { deleteEvent, saveEvent } from '../actions';
 import { CATEGORY_MAX_LENGTH, categoryLabel, normalizeCategory } from '../categories';
 import { RECURRENCE_LABELS, RECURRENCE_PRESETS } from '../schema';
+import { endAfterStart } from '../times';
 import type { EventFormValues } from '../service';
 
 export type CalendarOption = { id: string; name: string; accent: Accent };
@@ -114,6 +115,8 @@ function EventForm({
 }) {
   const [state, action] = useActionState(saveEvent, null);
   const [allDay, setAllDay] = useState(values.isAllDay ?? false);
+  const [start, setStart] = useState(values.startsAt ?? '');
+  const [end, setEnd] = useState(values.endsAt ?? '');
   const [deleting, setDeleting] = useState(false);
   const [category, setCategory] = useState(values.category ?? 'general');
   const [addingCategory, setAddingCategory] = useState(false);
@@ -213,7 +216,7 @@ function EventForm({
               id="event-date"
               name="allDayDate"
               type="date"
-              defaultValue={values.allDayDate ?? ''}
+              defaultValue={values.allDayDate || start.slice(0, 10)}
               required
             />
             <FieldError errors={fieldErrors(state, 'allDayDate')} />
@@ -226,7 +229,12 @@ function EventForm({
                 id="event-start"
                 name="startsAt"
                 type="datetime-local"
-                defaultValue={values.startsAt ?? ''}
+                value={start}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setEnd((current) => endAfterStart(current, start, next));
+                  setStart(next);
+                }}
                 required
               />
               <FieldError errors={fieldErrors(state, 'startsAt')} />
@@ -237,7 +245,9 @@ function EventForm({
                 id="event-end"
                 name="endsAt"
                 type="datetime-local"
-                defaultValue={values.endsAt ?? ''}
+                value={end}
+                min={start || undefined}
+                onChange={(e) => setEnd(e.target.value)}
                 required
               />
               <FieldError errors={fieldErrors(state, 'endsAt')} />

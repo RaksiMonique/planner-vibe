@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, inArray, isNull } from 'drizzle-orm';
 import { db } from '@/db';
 import { goalProjects, goals, projects } from '@/db/schema';
 import { getSegmentById } from '@/features/life-segments/service';
@@ -51,6 +51,47 @@ async function assertParent(
   }
 }
 
+async function assertProjects(userId: string, projectIds: string[]) {
+  if (projectIds.length === 0) return;
+  const rows = await db
+    .select({ id: projects.id })
+    .from(projects)
+    .where(
+      and(eq(projects.userId, userId), isNull(projects.deletedAt), inArray(projects.id, projectIds))
+    );
+  if (rows.length !== new Set(projectIds).size)
+    throw new NotFoundError('One of those projects does not exist.');
+}
+
+/** Makes the goal's project links match `projectIds` exactly. */
+async function syncProjectLinks(userId: string, goalId: string, projectIds: string[]) {
+  const wanted = new Set(projectIds);
+  const current = await db
+    .select({ projectId: goalProjects.projectId })
+    .from(goalProjects)
+    .where(and(eq(goalProjects.userId, userId), eq(goalProjects.goalId, goalId)));
+  const have = new Set(current.map((r) => r.projectId));
+  const toRemove = [...have].filter((p) => !wanted.has(p));
+  const toAdd = [...wanted].filter((p) => !have.has(p));
+  if (toRemove.length > 0) {
+    await db
+      .delete(goalProjects)
+      .where(
+        and(
+          eq(goalProjects.userId, userId),
+          eq(goalProjects.goalId, goalId),
+          inArray(goalProjects.projectId, toRemove)
+        )
+      );
+  }
+  if (toAdd.length > 0) {
+    await db
+      .insert(goalProjects)
+      .values(toAdd.map((projectId) => ({ userId, goalId, projectId })))
+      .onConflictDoNothing();
+  }
+}
+
 function toRow(input: GoalInput) {
   return {
     title: input.title,
@@ -69,10 +110,12 @@ function toRow(input: GoalInput) {
 export async function createGoal(userId: string, input: GoalInput): Promise<Goal> {
   await getSegmentById(userId, input.lifeSegmentId);
   if (input.parentGoalId) await assertParent(userId, input.parentGoalId, input.horizon);
+  await assertProjects(userId, input.projectIds);
   const [row] = await db
     .insert(goals)
     .values({ ...toRow(input), userId })
     .returning();
+  await syncProjectLinks(userId, row.id, input.projectIds);
   return row;
 }
 
@@ -80,11 +123,13 @@ export async function updateGoal(userId: string, id: string, input: GoalInput): 
   await requireGoal(userId, id);
   await getSegmentById(userId, input.lifeSegmentId);
   if (input.parentGoalId) await assertParent(userId, input.parentGoalId, input.horizon, id);
+  await assertProjects(userId, input.projectIds);
   const [row] = await db
     .update(goals)
     .set(toRow(input))
     .where(and(eq(goals.userId, userId), eq(goals.id, id)))
     .returning();
+  await syncProjectLinks(userId, id, input.projectIds);
   return row;
 }
 

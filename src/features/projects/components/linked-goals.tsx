@@ -1,16 +1,18 @@
 import Link from 'next/link';
-import { Link2Icon, Unlink2Icon } from 'lucide-react';
+import { Link2Icon, PlusIcon, Unlink2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { GoalFormDialog } from '@/features/goals/components/goal-form-dialog';
 import type { GoalOption, GoalRow } from '@/features/goals/queries';
 import { HORIZON_LABELS } from '@/features/goals/schema';
 import { ChoiceSelect } from '@/features/life-segments/components/choice-select';
 import type { SegmentRef } from '@/features/life-segments/types';
 import { linkGoalAction, unlinkGoalAction } from '../actions';
-import { NewLinkedGoal } from './new-linked-goal';
+import type { ProjectOption } from '../queries';
 
 /**
  * The goals one project supports: link an existing goal, unlink one, or
- * create a new goal that is linked to this project as soon as it is saved.
+ * create a new goal with this project already ticked, so it is linked on save.
+ * `projectOptions` must include this project, whatever its status.
  */
 export function LinkedGoals({
   projectId,
@@ -18,12 +20,14 @@ export function LinkedGoals({
   linked,
   options,
   segments,
+  projectOptions,
 }: {
   projectId: string;
   lifeSegmentId: string;
   linked: GoalRow[];
   options: GoalOption[];
   segments: SegmentRef[];
+  projectOptions: ProjectOption[];
 }) {
   const available = options.filter((o) => !linked.some((l) => l.id === o.id));
   return (
@@ -83,11 +87,19 @@ export function LinkedGoals({
               : 'Every open goal is linked already.'}
           </p>
         )}
-        <NewLinkedGoal
-          projectId={projectId}
-          lifeSegmentId={lifeSegmentId}
+        <GoalFormDialog
           segments={segments}
           goalOptions={options}
+          projectOptions={projectOptions}
+          linkedProjectIds={[projectId]}
+          defaults={{ lifeSegmentId }}
+          variant="outline"
+          trigger={
+            <>
+              <PlusIcon data-icon="inline-start" />
+              New goal
+            </>
+          }
         />
       </div>
     </div>

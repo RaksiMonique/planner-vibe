@@ -11,6 +11,7 @@ import { listGoalOptions, listGoals } from '@/features/goals/queries';
 import { HORIZON_LABELS } from '@/features/goals/schema';
 import { SegmentFilter } from '@/features/life-segments/components/segment-filter';
 import { listSegments } from '@/features/life-segments/service';
+import { listProjectOptions } from '@/features/projects/queries';
 import { getPreferences } from '@/features/settings/service';
 import { requireUser } from '@/lib/auth';
 import { toDateKey, todayInZone } from '@/lib/dates';
@@ -25,9 +26,10 @@ export default async function GoalsPage({ searchParams }: PageProps<'/goals'>) {
   const segmentSlug = typeof params.segment === 'string' ? params.segment : undefined;
   const showAll = params.status === 'all';
 
-  const [segments, goalOptions, prefs] = await Promise.all([
+  const [segments, goalOptions, projectOptions, prefs] = await Promise.all([
     listSegments(user.id),
     listGoalOptions(user.id),
+    listProjectOptions(user.id),
     getPreferences(user.id),
   ]);
   const segment = segments.find((s) => s.slug === segmentSlug);
@@ -62,6 +64,7 @@ export default async function GoalsPage({ searchParams }: PageProps<'/goals'>) {
             <GoalFormDialog
               segments={segments}
               goalOptions={goalOptions}
+              projectOptions={projectOptions}
               defaults={{ lifeSegmentId: segment?.id }}
               trigger={
                 <>

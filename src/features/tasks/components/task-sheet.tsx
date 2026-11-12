@@ -298,6 +298,8 @@ export function TaskSheet(props: TaskSheetProps) {
                     <GoalForm
                       segments={segmentOptions}
                       goalOptions={goalOptions}
+                      projectOptions={projectOptions}
+                      linkedProjectIds={projectId ? [projectId] : []}
                       defaults={{ lifeSegmentId: segmentId || undefined }}
                       onDone={(saved) => {
                         setAddedGoals((rows) => [...rows, saved]);

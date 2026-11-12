@@ -40,7 +40,10 @@ test('a lifelong goal breaks down in the Mandala view and shows on the horizon p
   await expect(page.getByRole('link', { name: new RegExp(child) })).toBeVisible();
 
   // The goal page shows every horizon on one axis, and the lifelong page lists the aspiration.
-  await page.getByRole('link', { name: /open goal/i }).first().click();
+  await page
+    .getByRole('link', { name: /open goal/i })
+    .first()
+    .click();
   await expect(page.getByRole('heading', { name: /horizons/i })).toBeVisible();
   await page.goto('/lifelong');
   await expect(page.getByText(title).first()).toBeVisible();

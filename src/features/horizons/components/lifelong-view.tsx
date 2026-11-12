@@ -11,6 +11,7 @@ import { GoalFormDialog } from '@/features/goals/components/goal-form-dialog';
 import type { GoalOption } from '@/features/goals/queries';
 import { HORIZON_LABELS } from '@/features/goals/schema';
 import type { SegmentRef } from '@/features/life-segments/types';
+import type { ProjectOption } from '@/features/projects/queries';
 import { cn } from '@/lib/utils';
 import type { LifelongData } from '../queries';
 import { GoalTimeline } from './goal-timeline';
@@ -19,10 +20,12 @@ export function LifelongView({
   data,
   segments,
   goalOptions,
+  projectOptions,
 }: {
   data: LifelongData;
   segments: SegmentRef[];
   goalOptions: GoalOption[];
+  projectOptions: ProjectOption[];
 }) {
   const { todayKey } = data;
   return (
@@ -38,6 +41,7 @@ export function LifelongView({
               <GoalFormDialog
                 segments={segments}
                 goalOptions={goalOptions}
+                projectOptions={projectOptions}
                 defaults={{ horizon: 'lifelong' }}
                 trigger={<>Add a lifelong goal</>}
               />

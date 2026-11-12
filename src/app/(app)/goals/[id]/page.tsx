@@ -103,7 +103,9 @@ export default async function GoalPage({ params }: PageProps<'/goals/[id]'>) {
             <GoalFormDialog
               segments={segments}
               goalOptions={goalOptions}
+              projectOptions={projectOptions}
               goal={goal}
+              linkedProjectIds={linkedIds}
               variant="outline"
               trigger={
                 <>
@@ -177,6 +179,7 @@ export default async function GoalPage({ params }: PageProps<'/goals/[id]'>) {
                 <GoalFormDialog
                   segments={segments}
                   goalOptions={goalOptions}
+                  projectOptions={projectOptions}
                   defaults={{ parentGoalId: goal.id, lifeSegmentId: goal.lifeSegmentId }}
                   variant="outline"
                   trigger={

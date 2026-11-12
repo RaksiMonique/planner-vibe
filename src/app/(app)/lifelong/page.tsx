@@ -6,6 +6,7 @@ import { listGoalOptions } from '@/features/goals/queries';
 import { LifelongView } from '@/features/horizons/components/lifelong-view';
 import { getLifelongData } from '@/features/horizons/queries';
 import { listSegments } from '@/features/life-segments/service';
+import { listProjectOptions } from '@/features/projects/queries';
 import { requireUser } from '@/lib/auth';
 
 export const metadata: Metadata = { title: 'Lifelong goals' };
@@ -13,10 +14,11 @@ export const dynamic = 'force-dynamic';
 
 export default async function LifelongPage() {
   const user = await requireUser();
-  const [data, segments, goalOptions] = await Promise.all([
+  const [data, segments, goalOptions, projectOptions] = await Promise.all([
     getLifelongData(user.id),
     listSegments(user.id),
     listGoalOptions(user.id),
+    listProjectOptions(user.id),
   ]);
   return (
     <>
@@ -28,6 +30,7 @@ export default async function LifelongPage() {
           <GoalFormDialog
             segments={segments}
             goalOptions={goalOptions}
+            projectOptions={projectOptions}
             defaults={{ horizon: 'lifelong' }}
             trigger={
               <>
@@ -38,7 +41,12 @@ export default async function LifelongPage() {
           />
         }
       />
-      <LifelongView data={data} segments={segments} goalOptions={goalOptions} />
+      <LifelongView
+        data={data}
+        segments={segments}
+        goalOptions={goalOptions}
+        projectOptions={projectOptions}
+      />
     </>
   );
 }

@@ -163,9 +163,50 @@ test('a goal page starts a linked project, and a project page a linked goal', as
   await page.getByRole('button', { name: 'New goal' }).click();
   const goalDialog = page.getByRole('dialog', { name: 'New goal' });
   await goalDialog.getByLabel('Title').fill(secondGoal);
+  await expect(goalDialog.getByRole('checkbox', { name: projectTitle })).toBeChecked();
   await goalDialog.getByRole('button', { name: 'Create goal' }).click();
   await expect(goalDialog).toBeHidden();
   await expect(page.getByRole('link', { name: secondGoal })).toBeVisible();
+});
+
+test('the goal form ticks the projects that support it', async ({ page }) => {
+  const projectTitle = `Garage conversion ${stamp}`;
+  const goalTitle = `A home office by spring ${stamp}`;
+  await page.goto('/projects');
+  await page
+    .getByRole('button', { name: /new project/i })
+    .first()
+    .click();
+  const projectDialog = page.getByRole('dialog', { name: 'New project' });
+  await projectDialog.getByLabel('Title').fill(projectTitle);
+  await projectDialog.getByRole('button', { name: 'Create project' }).click();
+  await expect(projectDialog).toBeHidden();
+
+  // Creating a goal: tick the project and it is linked on save.
+  await page.goto('/goals');
+  await page
+    .getByRole('button', { name: /new goal/i })
+    .first()
+    .click();
+  const newGoal = page.getByRole('dialog', { name: 'New goal' });
+  await newGoal.getByLabel('Title').fill(goalTitle);
+  await newGoal.getByRole('checkbox', { name: projectTitle }).check();
+  await newGoal.getByRole('button', { name: 'Create goal' }).click();
+  await expect(newGoal).toBeHidden();
+  await page.getByRole('link', { name: goalTitle }).first().click();
+  await expect(page).toHaveURL(/\/goals\/[0-9a-f-]+$/);
+  await expect(page.getByRole('link', { name: projectTitle })).toBeVisible();
+
+  // Editing the goal: the project comes pre-ticked, and unticking it unlinks.
+  await page.getByRole('button', { name: 'Edit', exact: true }).click();
+  const editGoal = page.getByRole('dialog', { name: 'Edit goal' });
+  const box = editGoal.getByRole('checkbox', { name: projectTitle });
+  await expect(box).toBeChecked();
+  await box.uncheck();
+  await editGoal.getByRole('button', { name: 'Save changes' }).click();
+  await expect(editGoal).toBeHidden();
+  await expect(page.getByRole('link', { name: projectTitle })).toBeHidden();
+  await expect(page.getByText('No projects support this goal yet')).toBeVisible();
 });
 
 test('import the legacy JSON export', async ({ page }) => {

@@ -7,6 +7,7 @@ import { HORIZON_ORDER } from '@/features/goals/progress';
 import type { GoalOption, GoalRow } from '@/features/goals/queries';
 import { HORIZON_LABELS } from '@/features/goals/schema';
 import type { SegmentRef } from '@/features/life-segments/types';
+import type { ProjectOption } from '@/features/projects/queries';
 import { buildMandala } from '../mandala';
 
 /** A goal in the middle, up to eight supporting goals around it; each opens its own grid. */
@@ -15,11 +16,13 @@ export function MandalaGrid({
   supporting,
   segments,
   goalOptions,
+  projectOptions,
 }: {
   center: GoalRow;
   supporting: GoalRow[];
   segments: SegmentRef[];
   goalOptions: GoalOption[];
+  projectOptions: ProjectOption[];
 }) {
   const { cells, overflow } = buildMandala(center, supporting);
   const nextHorizon = HORIZON_ORDER[HORIZON_ORDER.indexOf(center.horizon) + 1];
@@ -75,6 +78,7 @@ export function MandalaGrid({
                   <GoalFormDialog
                     segments={segments}
                     goalOptions={goalOptions}
+                    projectOptions={projectOptions}
                     defaults={{
                       parentGoalId: center.id,
                       lifeSegmentId: center.lifeSegmentId,

@@ -36,5 +36,6 @@ export const goalInput = z.object({
   currentValue: optionalNumber,
   unit: z.string().trim().max(30).optional(),
   description: z.string().trim().max(2000).optional(),
+  projectIds: z.array(z.uuid()).default([]),
 });
 export type GoalInput = z.infer<typeof goalInput>;

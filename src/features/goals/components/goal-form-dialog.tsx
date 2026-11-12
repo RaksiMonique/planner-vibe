@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogClose,
@@ -20,6 +21,7 @@ import { ChoiceSelect } from '@/features/life-segments/components/choice-select'
 import { fieldErrors, hasFieldError } from '@/features/life-segments/components/field-errors';
 import { SegmentSelect } from '@/features/life-segments/components/segment-select';
 import type { SegmentRef } from '@/features/life-segments/types';
+import type { ProjectOption } from '@/features/projects/queries';
 import { createGoalAction, updateGoalAction, type GoalActionResult } from '../actions';
 import { canBeChildOf, type Horizon } from '../progress';
 import type { GoalOption, GoalRow } from '../queries';
@@ -34,14 +36,18 @@ export type GoalFormDefaults = {
 export function GoalFormDialog({
   segments,
   goalOptions,
+  projectOptions,
   goal,
+  linkedProjectIds = [],
   defaults,
   trigger,
   variant = 'default',
 }: {
   segments: SegmentRef[];
   goalOptions: GoalOption[];
+  projectOptions: ProjectOption[];
   goal?: GoalRow;
+  linkedProjectIds?: string[];
   defaults?: GoalFormDefaults;
   trigger: React.ReactNode;
   variant?: React.ComponentProps<typeof Button>['variant'];
@@ -62,7 +68,9 @@ export function GoalFormDialog({
         <GoalForm
           segments={segments}
           goalOptions={goalOptions}
+          projectOptions={projectOptions}
           goal={goal}
+          linkedProjectIds={linkedProjectIds}
           defaults={defaults}
           onDone={() => setOpen(false)}
         />
@@ -78,13 +86,17 @@ export function GoalFormDialog({
 export function GoalForm({
   segments,
   goalOptions,
+  projectOptions,
   goal,
+  linkedProjectIds = [],
   defaults,
   onDone,
 }: {
   segments: SegmentRef[];
   goalOptions: GoalOption[];
+  projectOptions: ProjectOption[];
   goal?: GoalRow;
+  linkedProjectIds?: string[];
   defaults?: GoalFormDefaults;
   onDone: (saved: GoalOption) => void;
 }) {
@@ -238,6 +250,27 @@ export function GoalForm({
             rows={3}
             maxLength={2000}
           />
+        </Field>
+        <Field>
+          <FieldLabel>Supported by these projects</FieldLabel>
+          {projectOptions.length === 0 ? (
+            <FieldDescription>No open projects yet. You can link projects later.</FieldDescription>
+          ) : (
+            <ul className="flex max-h-44 flex-col gap-1 overflow-y-auto rounded-lg border p-2">
+              {projectOptions.map((p) => (
+                <li key={p.id}>
+                  <label className="hover:bg-muted/60 flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-sm">
+                    <Checkbox
+                      name="projectIds[]"
+                      value={p.id}
+                      defaultChecked={linkedProjectIds.includes(p.id)}
+                    />
+                    <span className="min-w-0 flex-1 truncate">{p.title}</span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
         </Field>
       </FieldGroup>
       {state && !state.ok && (

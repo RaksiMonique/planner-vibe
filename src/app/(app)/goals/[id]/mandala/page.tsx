@@ -8,6 +8,7 @@ import { buildAncestorChain } from '@/features/goals/grouping';
 import { getGoal, listGoalOptions, listGoals } from '@/features/goals/queries';
 import { MandalaGrid } from '@/features/horizons/components/mandala-grid';
 import { listSegments } from '@/features/life-segments/service';
+import { listProjectOptions } from '@/features/projects/queries';
 import { requireUser } from '@/lib/auth';
 import { cn } from '@/lib/utils';
 
@@ -21,10 +22,11 @@ export default async function MandalaPage({ params }: PageProps<'/goals/[id]/man
   const { id } = await params;
   const goal = await getGoal(user.id, id);
   if (!goal) notFound();
-  const [allGoals, segments, goalOptions] = await Promise.all([
+  const [allGoals, segments, goalOptions, projectOptions] = await Promise.all([
     listGoals(user.id, { status: 'all' }),
     listSegments(user.id),
     listGoalOptions(user.id),
+    listProjectOptions(user.id),
   ]);
   const ancestors = buildAncestorChain(id, allGoals);
   const parent = ancestors.at(-1) ?? null;
@@ -84,6 +86,7 @@ export default async function MandalaPage({ params }: PageProps<'/goals/[id]/man
         supporting={children}
         segments={segments}
         goalOptions={goalOptions}
+        projectOptions={projectOptions}
       />
     </>
   );

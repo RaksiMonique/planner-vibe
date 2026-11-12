@@ -16,7 +16,7 @@ import { MilestoneList } from '@/features/milestones/components/milestone-list';
 import { deleteProjectAction } from '@/features/projects/actions';
 import { LinkedGoals } from '@/features/projects/components/linked-goals';
 import { ProjectFormDialog } from '@/features/projects/components/project-form-dialog';
-import { getProject } from '@/features/projects/queries';
+import { getProject, listProjectOptions } from '@/features/projects/queries';
 import { PROJECT_STATUS_LABELS } from '@/features/projects/schema';
 import { getPreferences } from '@/features/settings/service';
 import { listTasks } from '@/features/tasks/queries';
@@ -32,16 +32,25 @@ export default async function ProjectPage({ params }: PageProps<'/projects/[id]'
   const project = await getProject(user.id, id);
   if (!project) notFound();
 
-  const [milestones, segments, goalOptions, allGoals, linkedIds, tasks, prefs] = await Promise.all([
-    listMilestones(user.id, { projectId: id }),
-    listSegments(user.id),
-    listGoalOptions(user.id),
-    listGoals(user.id, { status: 'all' }),
-    listLinkedGoalIds(user.id, id),
-    listTasks(user.id, { projectId: id, status: 'all' }),
-    getPreferences(user.id),
-  ]);
+  const [milestones, segments, goalOptions, openProjects, allGoals, linkedIds, tasks, prefs] =
+    await Promise.all([
+      listMilestones(user.id, { projectId: id }),
+      listSegments(user.id),
+      listGoalOptions(user.id),
+      listProjectOptions(user.id),
+      listGoals(user.id, { status: 'all' }),
+      listLinkedGoalIds(user.id, id),
+      listTasks(user.id, { projectId: id, status: 'all' }),
+      getPreferences(user.id),
+    ]);
   const linkedGoals = allGoals.filter((g) => linkedIds.includes(g.id));
+  // A new goal started here must be able to tick this project even once it is done.
+  const projectOptions = openProjects.some((p) => p.id === project.id)
+    ? openProjects
+    : [
+        { id: project.id, title: project.title, lifeSegmentId: project.lifeSegmentId },
+        ...openProjects,
+      ];
   const todayKey = toDateKey(todayInZone(prefs.timeZone));
   const closed = project.status === 'done' || project.status === 'archived';
   const overdue = !closed && project.dueDate !== null && project.dueDate < todayKey;
@@ -130,6 +139,7 @@ export default async function ProjectPage({ params }: PageProps<'/projects/[id]'
               linked={linkedGoals}
               options={goalOptions}
               segments={segments}
+              projectOptions={projectOptions}
             />
           </CardContent>
         </Card>

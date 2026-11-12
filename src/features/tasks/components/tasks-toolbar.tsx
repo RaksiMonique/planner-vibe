@@ -118,6 +118,16 @@ export function TasksToolbar({
             </option>
           ))}
         </NativeSelect>
+        <NativeSelect
+          aria-label="Blocking"
+          value={params.get('blocked') ?? ''}
+          onChange={(e) => setParam('blocked', e.target.value || null)}
+          className="sm:w-40"
+        >
+          <option value="">Blocked or not</option>
+          <option value="hide">Ready to do</option>
+          <option value="only">Blocked only</option>
+        </NativeSelect>
         <label className="flex items-center gap-2 text-sm">
           <Checkbox
             checked={params.get('done') === '1'}

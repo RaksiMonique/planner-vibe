@@ -13,7 +13,13 @@ import {
   TaskMatrixView,
 } from '@/features/tasks/components/task-views';
 import { TasksToolbar } from '@/features/tasks/components/tasks-toolbar';
-import { countOpenSubtasks, getTask, listTasks } from '@/features/tasks/queries';
+import {
+  countOpenSubtasks,
+  getTask,
+  listBlockerOptions,
+  listDependencyIds,
+  listTasks,
+} from '@/features/tasks/queries';
 import { requireUser } from '@/lib/auth';
 import { todayInZone } from '@/lib/dates';
 
@@ -30,6 +36,7 @@ export default async function TasksPage({ searchParams }: PageProps<'/tasks'>) {
   const taskId = one(sp.task);
   const parentId = one(sp.parent);
   const isNew = one(sp.new) === '1';
+  const blocked = one(sp.blocked);
 
   const [prefs, segments, projects, goals] = await Promise.all([
     getPreferences(user.id),
@@ -40,19 +47,28 @@ export default async function TasksPage({ searchParams }: PageProps<'/tasks'>) {
   const segment = segments.find((s) => s.slug === one(sp.segment));
   const today = todayInZone(prefs.timeZone);
 
-  const [tasks, subtaskCounts, editing, parentTask, milestones] = await Promise.all([
-    listTasks(user.id, {
-      lifeSegmentId: segment?.id,
-      projectId: one(sp.project),
-      goalId: one(sp.goal),
-      status: includeDone ? 'all' : 'open',
-      parentTaskId: null,
-    }),
-    countOpenSubtasks(user.id),
-    taskId ? getTask(user.id, taskId) : Promise.resolve(null),
-    parentId ? getTask(user.id, parentId) : Promise.resolve(null),
-    taskId || isNew ? listMilestones(user.id, { open: true }) : Promise.resolve([]),
-  ]);
+  const [allTasks, subtaskCounts, editing, parentTask, milestones, blockerOptions, blockedByIds] =
+    await Promise.all([
+      listTasks(user.id, {
+        lifeSegmentId: segment?.id,
+        projectId: one(sp.project),
+        goalId: one(sp.goal),
+        status: includeDone ? 'all' : 'open',
+        parentTaskId: null,
+      }),
+      countOpenSubtasks(user.id),
+      taskId ? getTask(user.id, taskId) : Promise.resolve(null),
+      parentId ? getTask(user.id, parentId) : Promise.resolve(null),
+      taskId || isNew ? listMilestones(user.id, { open: true }) : Promise.resolve([]),
+      taskId || isNew ? listBlockerOptions(user.id, taskId) : Promise.resolve([]),
+      taskId ? listDependencyIds(user.id, taskId) : Promise.resolve([]),
+    ]);
+  const tasks =
+    blocked === 'hide'
+      ? allTasks.filter((t) => t.blockedBy.length === 0)
+      : blocked === 'only'
+        ? allTasks.filter((t) => t.blockedBy.length > 0)
+        : allTasks;
   const subtasks = editing
     ? await listTasks(user.id, { parentTaskId: editing.id, status: 'all' })
     : [];
@@ -91,6 +107,8 @@ export default async function TasksPage({ searchParams }: PageProps<'/tasks'>) {
           projects={projects}
           goals={goals}
           milestones={milestones}
+          blockerOptions={blockerOptions}
+          blockedByIds={blockedByIds}
           defaults={{
             lifeSegmentId: segment?.id ?? parentTask?.lifeSegmentId,
             projectId: one(sp.project) ?? parentTask?.projectId ?? undefined,

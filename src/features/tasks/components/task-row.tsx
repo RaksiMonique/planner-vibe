@@ -10,6 +10,8 @@ import type { DueStatus } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import { toggleTaskDoneAction } from '../actions';
 import type { TaskRow as TaskRowData } from '../queries';
+import { BlockedBadge } from './blocked-badge';
+import { BlockedConfirm } from './blocked-confirm';
 import { DueChip } from './due-chip';
 
 export function TaskRow({
@@ -28,7 +30,16 @@ export function TaskRow({
 }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState(false);
   const done = task.status === 'done';
+  const blocked = !done && task.blockedBy.length > 0;
+
+  function setDone(checked: boolean) {
+    start(async () => {
+      const result = await toggleTaskDoneAction(task.id, checked);
+      setError(result.ok ? null : result.error);
+    });
+  }
 
   return (
     <div
@@ -41,13 +52,22 @@ export function TaskRow({
         checked={done}
         disabled={pending}
         aria-label={done ? `Reopen ${task.title}` : `Complete ${task.title}`}
-        onCheckedChange={(checked) =>
-          start(async () => {
-            const result = await toggleTaskDoneAction(task.id, checked === true);
-            setError(result.ok ? null : result.error);
-          })
-        }
+        onCheckedChange={(checked) => {
+          if (checked === true && blocked) setConfirming(true);
+          else setDone(checked === true);
+        }}
       />
+      {blocked && (
+        <BlockedConfirm
+          open={confirming}
+          onOpenChange={setConfirming}
+          blockedBy={task.blockedBy}
+          onConfirm={() => {
+            setConfirming(false);
+            setDone(true);
+          }}
+        />
+      )}
       <SegmentDot accent={task.segment.accent} />
       <Link
         href={editHref}
@@ -66,6 +86,7 @@ export function TaskRow({
           <ListTreeIcon className="size-3.5" aria-hidden /> {subtaskCount}
         </span>
       )}
+      {blocked && <BlockedBadge blockedBy={task.blockedBy} />}
       {task.isImportant && !compact && (
         <Badge variant="secondary" className="hidden sm:inline-flex">
           Important

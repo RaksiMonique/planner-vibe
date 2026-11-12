@@ -65,6 +65,7 @@ export async function convertCaptureToTask(
       status: 'todo',
       recurrence: 'none',
       reminder: 'none',
+      blockedByIds: [],
       dueDate: capture.pinnedDate ?? undefined,
     },
     ctx

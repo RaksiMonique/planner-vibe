@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { EmptyState } from '@/components/shared/empty-state';
 import { SegmentDot } from '@/components/shared/segment-badge';
+import { BlockedBadge } from '@/features/tasks/components/blocked-badge';
 import type { TaskRow } from '@/features/tasks/queries';
 import { cn } from '@/lib/utils';
 
@@ -43,6 +44,7 @@ export function TaskPreviewList({
               >
                 {t.title}
               </span>
+              {t.status !== 'done' && <BlockedBadge blockedBy={t.blockedBy} />}
               {t.isImportant && <Badge variant="secondary">Important</Badge>}
               {t.dueDate && (
                 <span

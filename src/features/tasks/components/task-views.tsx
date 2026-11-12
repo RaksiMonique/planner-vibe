@@ -84,7 +84,7 @@ export function TaskBoardView({ tasks, today, weekStartsOn, subtaskCounts, editH
                   compact
                 />
                 <div className="px-2 pb-1.5">
-                  <BoardMove id={t.id} status={col.key} />
+                  <BoardMove id={t.id} status={col.key} blockedBy={t.blockedBy} />
                 </div>
               </li>
             ))}

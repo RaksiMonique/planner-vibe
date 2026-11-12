@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useActionState, useEffect, useState, useTransition } from 'react';
+import { format, parseISO } from 'date-fns';
 import { Trash2Icon } from 'lucide-react';
 import {
   AlertDialog,
@@ -17,7 +18,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import {
   Sheet,
@@ -35,13 +36,14 @@ import { SegmentForm } from '@/features/life-segments/components/segment-form-di
 import type { SegmentRef } from '@/features/life-segments/types';
 import { ProjectForm } from '@/features/projects/components/project-form-dialog';
 import type { ProjectOption } from '@/features/projects/queries';
+import { cn } from '@/lib/utils';
 import {
   createTaskAction,
   deleteTaskAction,
   updateTaskAction,
   type TaskFormState,
 } from '../actions';
-import type { TaskRow } from '../queries';
+import type { BlockerOption, TaskRow } from '../queries';
 import { presetFromRrule, RECURRENCE_LABELS, RECURRENCE_PRESETS } from '../recurrence';
 import { PRIORITIES, PRIORITY_LABELS, STATUS_LABELS, TASK_STATUSES } from '../schema';
 import { NativeSelect } from './native-select';
@@ -55,6 +57,10 @@ export type TaskSheetProps = {
   projects: ProjectOption[];
   goals: GoalOption[];
   milestones: Milestone[];
+  /** Tasks this one may wait on (open ones, plus any it already waits on). */
+  blockerOptions: BlockerOption[];
+  /** Ids this task currently waits on. */
+  blockedByIds: string[];
   defaults: { lifeSegmentId?: string; projectId?: string };
   /** HH:mm of the existing due time in the user's zone, if any. */
   dueTime: string;
@@ -75,8 +81,19 @@ function withAdded<T extends { id: string }>(base: T[], added: T[]): T[] {
 }
 
 export function TaskSheet(props: TaskSheetProps) {
-  const { task, subtasks, parentTask, segments, projects, goals, milestones, defaults, dueTime } =
-    props;
+  const {
+    task,
+    subtasks,
+    parentTask,
+    segments,
+    projects,
+    goals,
+    milestones,
+    blockerOptions,
+    blockedByIds,
+    defaults,
+    dueTime,
+  } = props;
   const router = useRouter();
   const pathname = usePathname();
   const params = useSearchParams();
@@ -90,6 +107,13 @@ export function TaskSheet(props: TaskSheetProps) {
   const [addedSegments, setAddedSegments] = useState<SegmentRef[]>([]);
   const [addedProjects, setAddedProjects] = useState<ProjectOption[]>([]);
   const [addedGoals, setAddedGoals] = useState<GoalOption[]>([]);
+  const [waitingOn, setWaitingOn] = useState(() => new Set(blockedByIds));
+  const [blockerFilter, setBlockerFilter] = useState('');
+  const needle = blockerFilter.trim().toLowerCase();
+  // Ticked rows stay visible whatever the filter, or their value would not be submitted.
+  const shownBlockers = blockerOptions.filter(
+    (o) => waitingOn.has(o.id) || !needle || o.title.toLowerCase().includes(needle)
+  );
   const segmentOptions = withAdded(segments, addedSegments);
   const projectOptions = withAdded(projects, addedProjects);
   const goalOptions = withAdded(goals, addedGoals);
@@ -341,6 +365,64 @@ export function TaskSheet(props: TaskSheetProps) {
                 </NativeSelect>
               </Field>
             )}
+            <Field>
+              <FieldLabel>Blocked by</FieldLabel>
+              {blockerOptions.length === 0 ? (
+                <FieldDescription>No other open tasks to wait on.</FieldDescription>
+              ) : (
+                <>
+                  {blockerOptions.length > 6 && (
+                    <Input
+                      aria-label="Filter tasks to wait on"
+                      placeholder="Filter tasks"
+                      value={blockerFilter}
+                      onChange={(e) => setBlockerFilter(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && e.preventDefault()}
+                    />
+                  )}
+                  <ul className="flex max-h-44 flex-col gap-1 overflow-y-auto rounded-lg border p-2">
+                    {shownBlockers.map((o) => (
+                      <li key={o.id}>
+                        <label className="hover:bg-muted/60 flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-sm">
+                          <Checkbox
+                            name="blockedByIds[]"
+                            value={o.id}
+                            checked={waitingOn.has(o.id)}
+                            onCheckedChange={(checked) =>
+                              setWaitingOn((prev) => {
+                                const next = new Set(prev);
+                                if (checked === true) next.add(o.id);
+                                else next.delete(o.id);
+                                return next;
+                              })
+                            }
+                          />
+                          <span
+                            className={cn(
+                              'min-w-0 flex-1 truncate',
+                              o.status === 'done' && 'text-muted-foreground line-through'
+                            )}
+                          >
+                            {o.title}
+                          </span>
+                          {o.dueDate && (
+                            <span className="text-muted-foreground text-xs tabular-nums">
+                              {format(parseISO(o.dueDate), 'd MMM')}
+                            </span>
+                          )}
+                        </label>
+                      </li>
+                    ))}
+                    {shownBlockers.length === 0 && (
+                      <li className="text-muted-foreground px-1 py-1 text-sm">No match.</li>
+                    )}
+                  </ul>
+                  <FieldDescription>
+                    This task shows as blocked until the ticked tasks are done.
+                  </FieldDescription>
+                </>
+              )}
+            </Field>
             <Field>
               <FieldLabel htmlFor="task-notes">Notes</FieldLabel>
               <Textarea id="task-notes" name="notes" rows={3} defaultValue={task?.notes ?? ''} />

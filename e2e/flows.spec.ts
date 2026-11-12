@@ -16,6 +16,50 @@ test('create a task from the sheet and complete it', async ({ page }) => {
   await expect(page.getByRole('checkbox', { name: `Reopen ${title}` })).toBeVisible();
 });
 
+test('a task waits on another and is released when that one is done', async ({ page }) => {
+  const first = `Buy paint ${stamp}`;
+  const second = `Paint the fence ${stamp}`;
+
+  await page.goto('/tasks?new=1');
+  await page.getByRole('dialog', { name: 'New task' }).getByLabel('Title').fill(first);
+  await page.getByRole('button', { name: 'Add task' }).click();
+  await expect(page.getByRole('dialog', { name: 'New task' })).toBeHidden();
+  await expect(page.getByRole('link', { name: first })).toBeVisible();
+
+  await page.goto('/tasks?new=1');
+  const sheet = page.getByRole('dialog', { name: 'New task' });
+  await sheet.getByLabel('Title').fill(second);
+  await sheet.getByRole('checkbox', { name: first }).check();
+  await sheet.getByRole('button', { name: 'Add task' }).click();
+  await expect(sheet).toBeHidden();
+  const badge = page.getByTitle(`Blocked by ${first}`);
+  await expect(badge).toBeVisible();
+
+  // Completing a blocked task asks first; keeping it open changes nothing.
+  await page.getByRole('checkbox', { name: `Complete ${second}` }).click();
+  const confirm = page.getByRole('alertdialog', { name: 'Complete a blocked task?' });
+  await expect(confirm).toBeVisible();
+  await confirm.getByRole('button', { name: 'Keep it open' }).click();
+  await expect(confirm).toBeHidden();
+  await expect(badge).toBeVisible();
+
+  // The toolbar filter separates what is ready from what waits.
+  const blocking = page.getByLabel('Blocking');
+  await blocking.selectOption({ label: 'Ready to do' });
+  await expect(page.getByRole('link', { name: second })).toBeHidden();
+  await expect(page.getByRole('link', { name: first })).toBeVisible();
+  await blocking.selectOption({ label: 'Blocked only' });
+  await expect(page.getByRole('link', { name: second })).toBeVisible();
+  await expect(page.getByRole('link', { name: first })).toBeHidden();
+  await blocking.selectOption({ label: 'Blocked or not' });
+
+  // Finishing the first releases the second.
+  await page.getByRole('checkbox', { name: `Complete ${first}` }).click();
+  await expect(page.getByRole('checkbox', { name: `Complete ${first}` })).toBeHidden();
+  await expect(page.getByRole('link', { name: second })).toBeVisible();
+  await expect(page.getByTitle(`Blocked by ${first}`)).toBeHidden();
+});
+
 test('create a segment, project and goal without leaving the task sheet', async ({ page }) => {
   const segmentName = `Garden ${stamp}`;
   const projectTitle = `Raised beds ${stamp}`;

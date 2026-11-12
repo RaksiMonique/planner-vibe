@@ -1,12 +1,40 @@
 import 'server-only';
-import { and, asc, desc, eq, gte, isNull, lte, ne, sql } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, inArray, isNull, lte, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { lifeSegments, tasks } from '@/db/schema';
+import { lifeSegments, taskDependencies, tasks } from '@/db/schema';
 import { segmentRefColumns } from '@/features/life-segments/queries';
 import type { SegmentRef } from '@/features/life-segments/types';
+import type { Blocker } from './dependencies';
 
 export type Task = typeof tasks.$inferSelect;
-export type TaskRow = Task & { segment: SegmentRef };
+/** `blockedBy` lists the still-open tasks this one waits on; empty means ready. */
+export type TaskRow = Task & { segment: SegmentRef; blockedBy: Blocker[] };
+
+/** Open blockers keyed by the waiting task's id, for one task or all of the user's. */
+async function openBlockersByTask(
+  userId: string,
+  taskId?: string
+): Promise<Map<string, Blocker[]>> {
+  const conds = [
+    eq(taskDependencies.userId, userId),
+    isNull(tasks.deletedAt),
+    ne(tasks.status, 'done'),
+  ];
+  if (taskId) conds.push(eq(taskDependencies.taskId, taskId));
+  const rows = await db
+    .select({ taskId: taskDependencies.taskId, id: tasks.id, title: tasks.title })
+    .from(taskDependencies)
+    .innerJoin(tasks, eq(tasks.id, taskDependencies.dependsOnTaskId))
+    .where(and(...conds))
+    .orderBy(asc(tasks.dueDate), asc(tasks.title));
+  const map = new Map<string, Blocker[]>();
+  for (const r of rows) {
+    const list = map.get(r.taskId) ?? [];
+    list.push({ id: r.id, title: r.title });
+    map.set(r.taskId, list);
+  }
+  return map;
+}
 
 export type TaskFilters = {
   lifeSegmentId?: string;
@@ -38,28 +66,79 @@ export async function listTasks(userId: string, filters: TaskFilters = {}): Prom
   if (filters.dueTo) conds.push(lte(tasks.dueDate, filters.dueTo));
   if (filters.onlyWithDueDate) conds.push(sql`${tasks.dueDate} is not null`);
 
-  const rows = await db
-    .select({ task: tasks, segment: segmentRefColumns })
-    .from(tasks)
-    .innerJoin(lifeSegments, eq(tasks.lifeSegmentId, lifeSegments.id))
-    .where(and(...conds))
-    .orderBy(
-      asc(tasks.dueDate),
-      desc(tasks.isImportant),
-      asc(tasks.sortOrder),
-      asc(tasks.createdAt)
-    );
-  return rows.map((r) => ({ ...r.task, segment: r.segment }));
+  const [rows, blockers] = await Promise.all([
+    db
+      .select({ task: tasks, segment: segmentRefColumns })
+      .from(tasks)
+      .innerJoin(lifeSegments, eq(tasks.lifeSegmentId, lifeSegments.id))
+      .where(and(...conds))
+      .orderBy(
+        asc(tasks.dueDate),
+        desc(tasks.isImportant),
+        asc(tasks.sortOrder),
+        asc(tasks.createdAt)
+      ),
+    openBlockersByTask(userId),
+  ]);
+  return rows.map((r) => ({
+    ...r.task,
+    segment: r.segment,
+    blockedBy: blockers.get(r.task.id) ?? [],
+  }));
 }
 
 export async function getTask(userId: string, id: string): Promise<TaskRow | null> {
-  const [row] = await db
-    .select({ task: tasks, segment: segmentRefColumns })
+  const [[row], blockers] = await Promise.all([
+    db
+      .select({ task: tasks, segment: segmentRefColumns })
+      .from(tasks)
+      .innerJoin(lifeSegments, eq(tasks.lifeSegmentId, lifeSegments.id))
+      .where(and(eq(tasks.userId, userId), eq(tasks.id, id), isNull(tasks.deletedAt)))
+      .limit(1),
+    openBlockersByTask(userId, id),
+  ]);
+  return row ? { ...row.task, segment: row.segment, blockedBy: blockers.get(id) ?? [] } : null;
+}
+
+export type BlockerOption = {
+  id: string;
+  title: string;
+  dueDate: string | null;
+  status: Task['status'];
+};
+
+/**
+ * Tasks one task may wait on: every open task but itself, plus anything it
+ * already waits on even if that is done, so editing never drops a link unseen.
+ */
+export async function listBlockerOptions(
+  userId: string,
+  forTaskId?: string
+): Promise<BlockerOption[]> {
+  const conds = [eq(tasks.userId, userId), isNull(tasks.deletedAt)];
+  if (forTaskId) {
+    const linked = db
+      .select({ id: taskDependencies.dependsOnTaskId })
+      .from(taskDependencies)
+      .where(and(eq(taskDependencies.userId, userId), eq(taskDependencies.taskId, forTaskId)));
+    conds.push(ne(tasks.id, forTaskId), or(ne(tasks.status, 'done'), inArray(tasks.id, linked))!);
+  } else {
+    conds.push(ne(tasks.status, 'done'));
+  }
+  return db
+    .select({ id: tasks.id, title: tasks.title, dueDate: tasks.dueDate, status: tasks.status })
     .from(tasks)
-    .innerJoin(lifeSegments, eq(tasks.lifeSegmentId, lifeSegments.id))
-    .where(and(eq(tasks.userId, userId), eq(tasks.id, id), isNull(tasks.deletedAt)))
-    .limit(1);
-  return row ? { ...row.task, segment: row.segment } : null;
+    .where(and(...conds))
+    .orderBy(asc(tasks.dueDate), asc(tasks.title));
+}
+
+/** Ids of every task this one waits on, open or done. */
+export async function listDependencyIds(userId: string, taskId: string): Promise<string[]> {
+  const rows = await db
+    .select({ id: taskDependencies.dependsOnTaskId })
+    .from(taskDependencies)
+    .where(and(eq(taskDependencies.userId, userId), eq(taskDependencies.taskId, taskId)));
+  return rows.map((r) => r.id);
 }
 
 /** Open task counts keyed by Life Segment id. */

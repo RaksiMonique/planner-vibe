@@ -1,9 +1,10 @@
 import 'server-only';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { db } from '@/db';
-import { goals, lifeSegments, milestones, projects, tasks } from '@/db/schema';
+import { goals, lifeSegments, milestones, projects, taskDependencies, tasks } from '@/db/schema';
 import { NotFoundError, ValidationError } from '@/lib/errors';
+import { findCycles } from './dependencies';
 import type { Task } from './queries';
 import { dateKeyToUtc, nextOccurrence, presetToRrule } from './recurrence';
 import type { TaskInput } from './schema';
@@ -60,6 +61,59 @@ async function assertOwned(userId: string, input: TaskInput, selfId?: string) {
   });
 }
 
+/** The tasks this one waits on must be the user's, not itself, and not already waiting on it. */
+async function assertBlockers(userId: string, blockerIds: string[], selfId?: string) {
+  if (blockerIds.length === 0) return;
+  if (selfId && blockerIds.includes(selfId))
+    throw new ValidationError('A task cannot wait on itself.');
+  const owned = await db.$count(
+    tasks,
+    and(eq(tasks.userId, userId), isNull(tasks.deletedAt), inArray(tasks.id, blockerIds))
+  );
+  if (owned !== new Set(blockerIds).size)
+    throw new ValidationError('One of the tasks to wait on does not exist.');
+  if (selfId) {
+    const edges = await db
+      .select({
+        taskId: taskDependencies.taskId,
+        dependsOnTaskId: taskDependencies.dependsOnTaskId,
+      })
+      .from(taskDependencies)
+      .where(eq(taskDependencies.userId, userId));
+    if (findCycles(selfId, blockerIds, edges).length > 0)
+      throw new ValidationError('Those tasks already wait on this one, so it cannot wait on them.');
+  }
+}
+
+/** Makes the task's "blocked by" links match `blockerIds` exactly. */
+async function syncBlockers(userId: string, taskId: string, blockerIds: string[]) {
+  const wanted = new Set(blockerIds);
+  const current = await db
+    .select({ id: taskDependencies.dependsOnTaskId })
+    .from(taskDependencies)
+    .where(and(eq(taskDependencies.userId, userId), eq(taskDependencies.taskId, taskId)));
+  const have = new Set(current.map((r) => r.id));
+  const toRemove = [...have].filter((id) => !wanted.has(id));
+  const toAdd = [...wanted].filter((id) => !have.has(id));
+  if (toRemove.length > 0) {
+    await db
+      .delete(taskDependencies)
+      .where(
+        and(
+          eq(taskDependencies.userId, userId),
+          eq(taskDependencies.taskId, taskId),
+          inArray(taskDependencies.dependsOnTaskId, toRemove)
+        )
+      );
+  }
+  if (toAdd.length > 0) {
+    await db
+      .insert(taskDependencies)
+      .values(toAdd.map((dependsOnTaskId) => ({ userId, taskId, dependsOnTaskId })))
+      .onConflictDoNothing();
+  }
+}
+
 function toDueAt(dueDate: string | undefined, dueTime: string | undefined, timeZone: string) {
   if (!dueDate || !dueTime) return null;
   return fromZonedTime(`${dueDate}T${dueTime}:00`, timeZone);
@@ -91,6 +145,7 @@ export async function createTask(
   ctx: TaskContext
 ): Promise<Task> {
   await assertOwned(userId, input);
+  await assertBlockers(userId, input.blockedByIds);
   const [row] = await db
     .insert(tasks)
     .values({
@@ -99,6 +154,7 @@ export async function createTask(
       completedAt: input.status === 'done' ? new Date() : null,
     })
     .returning();
+  await syncBlockers(userId, row.id, input.blockedByIds);
   return row;
 }
 
@@ -110,6 +166,7 @@ export async function updateTask(
 ): Promise<Task> {
   const current = await getTaskOrThrow(userId, id);
   await assertOwned(userId, input, id);
+  await assertBlockers(userId, input.blockedByIds, id);
   const wasDone = current.status === 'done';
   const nowDone = input.status === 'done';
   const [row] = await db
@@ -120,6 +177,7 @@ export async function updateTask(
     })
     .where(and(eq(tasks.userId, userId), eq(tasks.id, id)))
     .returning();
+  await syncBlockers(userId, id, input.blockedByIds);
   if (nowDone && !wasDone) await spawnNextOccurrence(userId, row, ctx);
   return row;
 }

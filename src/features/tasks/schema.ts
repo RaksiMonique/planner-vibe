@@ -34,6 +34,7 @@ export const taskInput = z
     dueDate: dateKey.optional(),
     dueTime: timeKey.optional(),
     recurrence: z.enum(RECURRENCE_PRESETS).default('none'),
+    blockedByIds: z.array(z.uuid()).default([]),
     ...reminderFields,
   })
   .refine((d) => !(d.reminder === 'custom' && !d.reminderAt), {

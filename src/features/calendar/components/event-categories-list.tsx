@@ -13,7 +13,8 @@ export function EventCategoriesList({ custom }: { custom: string[] }) {
       </p>
       {custom.length === 0 ? (
         <p>
-          No categories of your own yet. In the event form, choose “New category” under Category.
+          No categories of your own yet. In the event form, press “New category” beside the Category
+          field.
         </p>
       ) : (
         <ul className="flex flex-col gap-2">

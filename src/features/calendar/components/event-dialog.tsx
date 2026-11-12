@@ -1,7 +1,7 @@
 'use client';
 
 import { useActionState, useEffect, useRef, useState } from 'react';
-import { Trash2Icon } from 'lucide-react';
+import { PlusIcon, Trash2Icon } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,9 +47,6 @@ export type CalendarOption = { id: string; name: string; accent: Accent };
 export type SegmentOption = { id: string; name: string; accent: Accent };
 
 export type EventDialogValues = Partial<EventFormValues> & { captureId?: string };
-
-/** Picked in the category select to reveal the name box. */
-const NEW_CATEGORY = '__new__';
 
 export function EventDialog({
   open,
@@ -119,8 +116,8 @@ function EventForm({
   const [allDay, setAllDay] = useState(values.isAllDay ?? false);
   const [deleting, setDeleting] = useState(false);
   const [category, setCategory] = useState(values.category ?? 'general');
+  const [addingCategory, setAddingCategory] = useState(false);
   const [newCategory, setNewCategory] = useState('');
-  const addingCategory = category === NEW_CATEGORY;
   const chosenCategory = addingCategory ? normalizeCategory(newCategory) : category;
   // An existing event may carry a label that is not in the list yet.
   const categoryChoices =
@@ -250,30 +247,31 @@ function EventForm({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
-            <FieldLabel htmlFor="event-category">Category</FieldLabel>
+            <div className="flex items-center justify-between gap-2">
+              <FieldLabel htmlFor={addingCategory ? 'event-category-name' : 'event-category'}>
+                Category
+              </FieldLabel>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                className="text-primary hover:text-primary -my-1"
+                onClick={() => setAddingCategory((v) => !v)}
+              >
+                {addingCategory ? (
+                  'Pick existing'
+                ) : (
+                  <>
+                    <PlusIcon aria-hidden />
+                    New category
+                  </>
+                )}
+              </Button>
+            </div>
             <input type="hidden" name="category" value={chosenCategory} />
-            <Select
-              value={category}
-              onValueChange={(v) => setCategory(v ?? 'general')}
-              items={[
-                ...categoryChoices.map((c) => ({ value: c, label: categoryLabel(c) })),
-                { value: NEW_CATEGORY, label: 'New category…' },
-              ]}
-            >
-              <SelectTrigger id="event-category" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {categoryChoices.map((c) => (
-                  <SelectItem key={c} value={c}>
-                    {categoryLabel(c)}
-                  </SelectItem>
-                ))}
-                <SelectItem value={NEW_CATEGORY}>New category…</SelectItem>
-              </SelectContent>
-            </Select>
-            {addingCategory && (
+            {addingCategory ? (
               <Input
+                id="event-category-name"
                 aria-label="Category name"
                 placeholder="Category name"
                 value={newCategory}
@@ -282,6 +280,23 @@ function EventForm({
                 required
                 autoFocus
               />
+            ) : (
+              <Select
+                value={category}
+                onValueChange={(v) => setCategory(v ?? 'general')}
+                items={categoryChoices.map((c) => ({ value: c, label: categoryLabel(c) }))}
+              >
+                <SelectTrigger id="event-category" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {categoryChoices.map((c) => (
+                    <SelectItem key={c} value={c}>
+                      {categoryLabel(c)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
             <FieldError errors={fieldErrors(state, 'category')} />
           </Field>

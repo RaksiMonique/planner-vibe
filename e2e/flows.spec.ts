@@ -26,8 +26,7 @@ test('an event takes a category of its own, which Settings can rename', async ({
   await page.getByRole('option', { name: 'Faith' }).click();
   await dialog.getByLabel('Starts').fill('2030-01-15T10:00');
   await dialog.getByLabel('Ends').fill('2030-01-15T11:00');
-  await dialog.getByLabel('Category').click();
-  await page.getByRole('option', { name: 'New category' }).click();
+  await dialog.getByRole('button', { name: 'New category' }).click();
   await dialog.getByLabel('Category name').fill(category);
   await dialog.getByRole('button', { name: 'Create event' }).click();
   await expect(dialog).toBeHidden();

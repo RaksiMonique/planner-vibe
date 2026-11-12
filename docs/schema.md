@@ -243,6 +243,7 @@ erDiagram
 - Search: seventeen tables carry a stored `search` tsvector (generated from their title and text columns through `searchColumn()` in `_columns.ts`) with a GIN index. Generated columns are never exported or imported.
 - `user_preferences` gains `dashboard_layout` (card order and hidden cards), `ics_token` (the feed secret; null while the feed is off), `email_reminders`, `push_reminders`, `digest_hour` and `digest_sent_on`.
 - `events` gains `external_id` and `external_synced_at`: the copy of the event in the connected Google calendar.
+- `events.category` is text (migration 0013): one of the built-in keys `general`, `appointment`, `self_care`, `work`, `other`, or a label the user typed. A custom label exists for as long as an event carries it; Settings renames or removes it across events.
 - Integrations: `push_subscriptions` (one row per browser), `calendar_connections` (one per provider per user; tokens encrypted with `TOKEN_ENCRYPTION_KEY`), `external_events` (read-only copies of the connected calendar's own events, replaced on every full sync).
 
 ## Working with the schema

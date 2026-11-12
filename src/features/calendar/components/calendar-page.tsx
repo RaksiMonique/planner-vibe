@@ -17,6 +17,7 @@ import { Switch } from '@/components/ui/switch';
 import { SegmentDot } from '@/components/shared/segment-badge';
 import { cn } from '@/lib/utils';
 import { getCalendarItems, loadEvent, moveEventAction } from '../actions';
+import { categoryChoices } from '../categories';
 import type { CalendarItem } from '../expand';
 import type { MoveInput } from '../schema';
 import type { CalendarViewName } from './calendar-view';
@@ -43,6 +44,7 @@ const localDate = (d: Date) => localDateTime(d).slice(0, 10);
 export function CalendarPage({
   calendars,
   segments,
+  customCategories,
   initialRange,
   weekStartsOn,
   openNew,
@@ -51,6 +53,8 @@ export function CalendarPage({
 }: {
   calendars: (CalendarOption & { isEnabled: boolean })[];
   segments: SegmentOption[];
+  /** Category labels the user has typed before. */
+  customCategories: string[];
   initialRange: Range;
   weekStartsOn: number;
   openNew: boolean;
@@ -66,6 +70,8 @@ export function CalendarPage({
   );
   const [segmentId, setSegmentId] = useState<string>('all');
   const [showTasks, setShowTasks] = useState(true);
+  const [addedCategories, setAddedCategories] = useState<string[]>([]);
+  const categories = categoryChoices([...customCategories, ...addedCategories]);
   const [dialog, setDialog] = useState<{ open: boolean; values: EventDialogValues }>(() => ({
     open: openNew || !!capture,
     values: capture ? { title: capture.text, captureId: capture.id } : {},
@@ -236,8 +242,10 @@ export function CalendarPage({
         values={dialog.values}
         calendars={calendars}
         segments={segments}
-        onSaved={() => {
+        categories={categories}
+        onSaved={({ category }) => {
           setDialog((d) => ({ ...d, open: false }));
+          if (!categories.includes(category)) setAddedCategories((c) => [...c, category]);
           refresh();
         }}
       />

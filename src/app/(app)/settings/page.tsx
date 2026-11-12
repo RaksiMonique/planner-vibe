@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { DatabaseIcon } from 'lucide-react';
+import { DatabaseIcon, PlugIcon } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
+import { EventCategoriesList } from '@/features/calendar/components/event-categories-list';
+import { listCustomCategories } from '@/features/calendar/queries';
 import { ModulesForm } from '@/features/settings/components/modules-form';
 import { DashboardLayoutForm } from '@/features/settings/components/dashboard-layout-form';
 import { PasswordForm } from '@/features/settings/components/password-form';
@@ -20,7 +22,11 @@ export const dynamic = 'force-dynamic';
 export default async function SettingsPage() {
   const user = await requireUser();
   const access = await getAccess(user.id);
-  const [profile, prefs] = await Promise.all([getProfile(user.id), getPreferences(user.id)]);
+  const [profile, prefs, customCategories] = await Promise.all([
+    getProfile(user.id),
+    getPreferences(user.id),
+    listCustomCategories(user.id),
+  ]);
 
   return (
     <>
@@ -48,8 +54,8 @@ export default async function SettingsPage() {
               href="/settings/integrations"
               className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
             >
-              <DatabaseIcon data-icon="inline-start" />
-              Import, export and delete data
+              <PlugIcon data-icon="inline-start" />
+              Integrations
             </Link>
           </>
         }
@@ -85,6 +91,18 @@ export default async function SettingsPage() {
           </CardHeader>
           <CardContent>
             <PreferencesForm timeZone={prefs.timeZone} weekStartsOn={prefs.weekStartsOn} />
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="font-heading text-lg">Event categories</CardTitle>
+            <CardDescription>
+              Add your own from the event form. Renaming or removing one changes every event that
+              uses it; removed ones become General.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <EventCategoriesList custom={customCategories} />
           </CardContent>
         </Card>
         <Card className="lg:col-span-2">

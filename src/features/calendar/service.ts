@@ -12,6 +12,7 @@ import { listExternalEventsBetween } from '@/features/integrations/google-sync';
 import { listShiftCalendarItems } from '@/features/work/queries';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { toDateKey } from '@/lib/dates';
+import { isBuiltInCategory, normalizeCategory } from './categories';
 import { expandEvents, type CalendarItem } from './expand';
 import { listCalendars, listEventsBetween, type Event } from './queries';
 import {
@@ -183,7 +184,7 @@ export type EventFormValues = {
   title: string;
   calendarId: string;
   lifeSegmentId: string;
-  category: EventInput['category'];
+  category: string;
   isAllDay: boolean;
   allDayDate: string;
   startsAt: string;
@@ -306,4 +307,23 @@ export async function buildCalendarItems(
   }
   items.push(...shiftItems);
   return items;
+}
+
+/** Renames one of the user's own categories on every event that carries it. */
+export async function renameCategory(userId: string, from: string, to: string): Promise<void> {
+  const target = normalizeCategory(to);
+  if (isBuiltInCategory(from)) throw new ValidationError('Built-in categories keep their names.');
+  await db
+    .update(events)
+    .set({ category: target })
+    .where(and(eq(events.userId, userId), eq(events.category, from)));
+}
+
+/** Drops one of the user's own categories; its events become General. */
+export async function removeCategory(userId: string, name: string): Promise<void> {
+  if (isBuiltInCategory(name)) throw new ValidationError('Built-in categories cannot be removed.');
+  await db
+    .update(events)
+    .set({ category: 'general' })
+    .where(and(eq(events.userId, userId), eq(events.category, name)));
 }

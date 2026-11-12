@@ -18,13 +18,15 @@ import {
   type ActionResult,
 } from '@/lib/action-result';
 import type { CalendarItem } from './expand';
-import { eventInput, moveInput } from './schema';
+import { eventInput, moveInput, removeCategoryInput, renameCategoryInput } from './schema';
 import {
   buildCalendarItems,
   createEvent,
   getEvent,
   moveEvent,
+  removeCategory,
   removeEvent,
+  renameCategory,
   toFormValues,
   updateEvent,
   type EventFormValues,
@@ -125,4 +127,24 @@ export async function loadCaptureText(id: string): Promise<string | null> {
     .where(and(eq(captures.userId, user.id), eq(captures.id, id)))
     .limit(1);
   return row?.text ?? null;
+}
+
+/** Settings: rename one of the user's own event categories everywhere it is used. */
+export async function renameEventCategory(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const parsed = renameCategoryInput.safeParse(formValues(formData));
+  if (!parsed.success) return;
+  await renameCategory(user.id, parsed.data.from, parsed.data.to);
+  revalidate();
+  revalidatePath('/settings');
+}
+
+/** Settings: drop one of the user's own event categories; its events become General. */
+export async function removeEventCategory(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const parsed = removeCategoryInput.safeParse(formValues(formData));
+  if (!parsed.success) return;
+  await removeCategory(user.id, parsed.data.name);
+  revalidate();
+  revalidatePath('/settings');
 }

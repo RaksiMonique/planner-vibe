@@ -17,13 +17,6 @@ import { projects, tasks } from './planning';
 import { ownerId } from './profiles';
 
 export const calendarKindEnum = planner.enum('calendar_kind', ['personal', 'work', 'other']);
-export const eventCategoryEnum = planner.enum('event_category', [
-  'general',
-  'appointment',
-  'self_care',
-  'work',
-  'other',
-]);
 export const activityTypeEnum = planner.enum('activity_type', [
   'deep_work',
   'light_work',
@@ -65,7 +58,8 @@ export const events = planner.table(
     title: text('title').notNull(),
     description: text('description'),
     location: text('location'),
-    category: eventCategoryEnum('category').notNull().default('general'),
+    /** A built-in key (general, appointment, self_care, work, other) or the user's own label. */
+    category: text('category').notNull().default('general'),
     // Timed events use starts_at/ends_at; all-day events use all_day_date (5.4).
     isAllDay: boolean('is_all_day').notNull().default(false),
     startsAt: timestamp('starts_at', { withTimezone: true }),

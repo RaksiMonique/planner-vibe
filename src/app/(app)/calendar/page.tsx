@@ -5,7 +5,7 @@ import { db } from '@/db';
 import { captures } from '@/db/schema';
 import { PageHeader } from '@/components/shared/page-header';
 import { CalendarPage } from '@/features/calendar/components/calendar-page';
-import { listCalendars } from '@/features/calendar/queries';
+import { listCalendars, listCustomCategories } from '@/features/calendar/queries';
 import { buildCalendarItems } from '@/features/calendar/service';
 import { listSegments } from '@/features/life-segments/service';
 import { getPreferences } from '@/features/settings/service';
@@ -19,10 +19,11 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function CalendarRoute({ searchParams }: { searchParams: SearchParams }) {
   const [user, params] = await Promise.all([requireUser(), searchParams]);
-  const [prefs, segments, calendars] = await Promise.all([
+  const [prefs, segments, calendars, customCategories] = await Promise.all([
     getPreferences(user.id),
     listSegments(user.id),
     listCalendars(user.id),
+    listCustomCategories(user.id),
   ]);
 
   // `?date=` opens the calendar on that day (dashboard and notification links).
@@ -62,6 +63,7 @@ export default async function CalendarRoute({ searchParams }: { searchParams: Se
           isEnabled: c.isEnabled,
         }))}
         segments={segments.map((s) => ({ id: s.id, name: s.name, accent: s.accent }))}
+        customCategories={customCategories}
         initialRange={{ from: from.toISOString(), to: to.toISOString(), items }}
         weekStartsOn={prefs.weekStartsOn}
         openNew={params.new === '1'}

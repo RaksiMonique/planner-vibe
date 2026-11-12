@@ -1,10 +1,11 @@
 import 'server-only';
-import { and, asc, eq, gt, gte, isNull, lt, lte, or, sql } from 'drizzle-orm';
+import { and, asc, eq, gt, gte, isNull, lt, lte, notInArray, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { calendars, events, lifeSegments } from '@/db/schema';
 import { segmentRefColumns } from '@/features/life-segments/queries';
 import type { SegmentRef } from '@/features/life-segments/types';
 import { toDateKey } from '@/lib/dates';
+import { EVENT_CATEGORIES } from './categories';
 
 export type Calendar = typeof calendars.$inferSelect;
 export type Event = typeof events.$inferSelect;
@@ -31,6 +32,22 @@ export async function listCalendars(userId: string): Promise<Calendar[]> {
     .from(calendars)
     .where(eq(calendars.userId, userId))
     .orderBy(asc(calendars.createdAt));
+}
+
+/** Category labels the user typed themselves, alive while an event carries them. */
+export async function listCustomCategories(userId: string): Promise<string[]> {
+  const rows = await db
+    .selectDistinct({ category: events.category })
+    .from(events)
+    .where(
+      and(
+        eq(events.userId, userId),
+        isNull(events.deletedAt),
+        notInArray(events.category, [...EVENT_CATEGORIES])
+      )
+    )
+    .orderBy(asc(events.category));
+  return rows.map((r) => r.category);
 }
 
 /**

@@ -1,19 +1,11 @@
 import { z } from 'zod';
 import { reminderFields } from '@/features/reminders/schema';
+import { CATEGORY_MAX_LENGTH, normalizeCategory } from './categories';
+
+export { CATEGORY_LABELS, EVENT_CATEGORIES } from './categories';
 
 export const RECURRENCE_PRESETS = ['none', 'daily', 'weekly', 'monthly', 'yearly'] as const;
 export type RecurrencePreset = (typeof RECURRENCE_PRESETS)[number];
-
-export const EVENT_CATEGORIES = ['general', 'appointment', 'self_care', 'work', 'other'] as const;
-export type EventCategory = (typeof EVENT_CATEGORIES)[number];
-
-export const CATEGORY_LABELS: Record<EventCategory, string> = {
-  general: 'General',
-  appointment: 'Appointment',
-  self_care: 'Self-care',
-  work: 'Work',
-  other: 'Other',
-};
 
 export const RECURRENCE_LABELS: Record<RecurrencePreset, string> = {
   none: 'Does not repeat',
@@ -33,7 +25,11 @@ export const eventInput = z
     title: z.string().trim().min(1, 'Give the event a title.').max(200),
     calendarId: z.uuid('Choose a calendar.'),
     lifeSegmentId: z.uuid('Choose a Life Segment.'),
-    category: z.enum(EVENT_CATEGORIES).default('general'),
+    category: z
+      .string()
+      .max(CATEGORY_MAX_LENGTH, 'Keep the category short.')
+      .default('general')
+      .transform(normalizeCategory),
     isAllDay: z.coerce.boolean().default(false),
     allDayDate: dateKey.optional(),
     startsAt: localDateTime.optional(),
@@ -80,6 +76,14 @@ export const moveInput = z.object({
   end: z.string().nullable(),
 });
 export type MoveInput = z.infer<typeof moveInput>;
+
+export const categoryName = z
+  .string()
+  .trim()
+  .min(1, 'Name the category.')
+  .max(CATEGORY_MAX_LENGTH, 'Keep the category short.');
+export const renameCategoryInput = z.object({ from: categoryName, to: categoryName });
+export const removeCategoryInput = z.object({ name: categoryName });
 
 export function presetToRRule(preset: RecurrencePreset): string | null {
   switch (preset) {

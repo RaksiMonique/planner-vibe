@@ -92,6 +92,13 @@
       "when": 1794518199096,
       "tag": "0012_reading_plan_queue",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794519993452,
+      "tag": "0013_event_category_text",
+      "breakpoints": true
     }
   ]
 }

@@ -39,12 +39,8 @@ import { SegmentDot } from '@/components/shared/segment-badge';
 import type { Accent } from '@/lib/accents';
 import type { ActionResult } from '@/lib/action-result';
 import { deleteEvent, saveEvent } from '../actions';
-import {
-  CATEGORY_LABELS,
-  EVENT_CATEGORIES,
-  RECURRENCE_LABELS,
-  RECURRENCE_PRESETS,
-} from '../schema';
+import { CATEGORY_MAX_LENGTH, categoryLabel, normalizeCategory } from '../categories';
+import { RECURRENCE_LABELS, RECURRENCE_PRESETS } from '../schema';
 import type { EventFormValues } from '../service';
 
 export type CalendarOption = { id: string; name: string; accent: Accent };
@@ -52,12 +48,16 @@ export type SegmentOption = { id: string; name: string; accent: Accent };
 
 export type EventDialogValues = Partial<EventFormValues> & { captureId?: string };
 
+/** Picked in the category select to reveal the name box. */
+const NEW_CATEGORY = '__new__';
+
 export function EventDialog({
   open,
   onOpenChange,
   values,
   calendars,
   segments,
+  categories,
   onSaved,
 }: {
   open: boolean;
@@ -65,7 +65,9 @@ export function EventDialog({
   values: EventDialogValues;
   calendars: CalendarOption[];
   segments: SegmentOption[];
-  onSaved: () => void;
+  /** Built-in keys first, then the user's own labels. */
+  categories: string[];
+  onSaved: (saved: { category: string }) => void;
 }) {
   // A new key per opening resets the form state to the supplied values.
   const formKey = `${values.id ?? 'new'}:${values.allDayDate ?? ''}:${values.startsAt ?? ''}:${values.captureId ?? ''}`;
@@ -88,6 +90,7 @@ export function EventDialog({
             values={values}
             calendars={calendars}
             segments={segments}
+            categories={categories}
             onSaved={onSaved}
           />
         )}
@@ -103,31 +106,42 @@ function EventForm({
   values,
   calendars,
   segments,
+  categories,
   onSaved,
 }: {
   values: EventDialogValues;
   calendars: CalendarOption[];
   segments: SegmentOption[];
-  onSaved: () => void;
+  categories: string[];
+  onSaved: (saved: { category: string }) => void;
 }) {
   const [state, action] = useActionState(saveEvent, null);
   const [allDay, setAllDay] = useState(values.isAllDay ?? false);
   const [deleting, setDeleting] = useState(false);
+  const [category, setCategory] = useState(values.category ?? 'general');
+  const [newCategory, setNewCategory] = useState('');
+  const addingCategory = category === NEW_CATEGORY;
+  const chosenCategory = addingCategory ? normalizeCategory(newCategory) : category;
+  // An existing event may carry a label that is not in the list yet.
+  const categoryChoices =
+    values.category && !categories.includes(values.category)
+      ? [...categories, values.category]
+      : categories;
   const handled = useRef<typeof state>(null);
 
   useEffect(() => {
     if (state?.ok && handled.current !== state) {
       handled.current = state;
-      onSaved();
+      onSaved({ category: chosenCategory });
     }
-  }, [state, onSaved]);
+  }, [state, onSaved, chosenCategory]);
 
   async function handleDelete() {
     if (!values.id) return;
     setDeleting(true);
     const result = await deleteEvent(values.id);
     setDeleting(false);
-    if (result.ok) onSaved();
+    if (result.ok) onSaved({ category: chosenCategory });
   }
 
   return (
@@ -237,22 +251,39 @@ function EventForm({
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
             <FieldLabel htmlFor="event-category">Category</FieldLabel>
+            <input type="hidden" name="category" value={chosenCategory} />
             <Select
-              name="category"
-              defaultValue={values.category ?? 'general'}
-              items={EVENT_CATEGORIES.map((c) => ({ value: c, label: CATEGORY_LABELS[c] }))}
+              value={category}
+              onValueChange={(v) => setCategory(v ?? 'general')}
+              items={[
+                ...categoryChoices.map((c) => ({ value: c, label: categoryLabel(c) })),
+                { value: NEW_CATEGORY, label: 'New category…' },
+              ]}
             >
               <SelectTrigger id="event-category" className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {EVENT_CATEGORIES.map((c) => (
+                {categoryChoices.map((c) => (
                   <SelectItem key={c} value={c}>
-                    {CATEGORY_LABELS[c]}
+                    {categoryLabel(c)}
                   </SelectItem>
                 ))}
+                <SelectItem value={NEW_CATEGORY}>New category…</SelectItem>
               </SelectContent>
             </Select>
+            {addingCategory && (
+              <Input
+                aria-label="Category name"
+                placeholder="Category name"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                maxLength={CATEGORY_MAX_LENGTH}
+                required
+                autoFocus
+              />
+            )}
+            <FieldError errors={fieldErrors(state, 'category')} />
           </Field>
           <Field>
             <FieldLabel htmlFor="event-recurrence">Repeats</FieldLabel>

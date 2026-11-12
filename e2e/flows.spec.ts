@@ -16,6 +16,37 @@ test('create a task from the sheet and complete it', async ({ page }) => {
   await expect(page.getByRole('checkbox', { name: `Reopen ${title}` })).toBeVisible();
 });
 
+test('an event takes a category of its own, which Settings can rename', async ({ page }) => {
+  const title = `Dentist check-up ${stamp}`;
+  const category = `Health visits ${stamp}`;
+  await page.goto('/calendar?new=1');
+  const dialog = page.getByRole('dialog', { name: 'New event' });
+  await dialog.getByLabel('Title').fill(title);
+  await dialog.getByLabel('Life Segment').click();
+  await page.getByRole('option', { name: 'Faith' }).click();
+  await dialog.getByLabel('Starts').fill('2030-01-15T10:00');
+  await dialog.getByLabel('Ends').fill('2030-01-15T11:00');
+  await dialog.getByLabel('Category').click();
+  await page.getByRole('option', { name: 'New category' }).click();
+  await dialog.getByLabel('Category name').fill(category);
+  await dialog.getByRole('button', { name: 'Create event' }).click();
+  await expect(dialog).toBeHidden();
+
+  // The new label is offered next time.
+  await page.getByRole('button', { name: 'New event' }).click();
+  await dialog.getByLabel('Category').click();
+  await expect(page.getByRole('option', { name: category })).toBeVisible();
+  await page.keyboard.press('Escape');
+
+  // Settings lists it and renames it everywhere.
+  await page.goto('/settings');
+  const field = page.getByLabel(`Rename ${category}`);
+  await expect(field).toHaveValue(category);
+  await field.fill(`${category} renamed`);
+  await field.locator('..').getByRole('button', { name: 'Rename' }).click();
+  await expect(page.getByLabel(`Rename ${category} renamed`)).toBeVisible();
+});
+
 test('a task waits on another and is released when that one is done', async ({ page }) => {
   const first = `Buy paint ${stamp}`;
   const second = `Paint the fence ${stamp}`;

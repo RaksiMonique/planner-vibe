@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, eq, isNull, sql } from 'drizzle-orm';
+import { and, asc, count, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { lifeSegments, milestones, projects, tasks } from '@/db/schema';
 import { segmentRefColumns } from '@/features/life-segments/queries';
@@ -100,10 +100,21 @@ export async function getProject(userId: string, id: string): Promise<ProjectRow
 
 export type ProjectOption = Pick<Project, 'id' | 'title' | 'lifeSegmentId'>;
 
+/**
+ * Lightweight list for pickers: every project still in play, the most used
+ * first. Usage is the number of tasks ever filed under the project.
+ */
 export async function listProjectOptions(userId: string): Promise<ProjectOption[]> {
+  const usage = db
+    .select({ projectId: tasks.projectId, n: count().as('task_n') })
+    .from(tasks)
+    .where(and(eq(tasks.userId, userId), isNull(tasks.deletedAt)))
+    .groupBy(tasks.projectId)
+    .as('usage');
   return db
     .select({ id: projects.id, title: projects.title, lifeSegmentId: projects.lifeSegmentId })
     .from(projects)
+    .leftJoin(usage, eq(usage.projectId, projects.id))
     .where(
       and(
         eq(projects.userId, userId),
@@ -111,5 +122,5 @@ export async function listProjectOptions(userId: string): Promise<ProjectOption[
         sql`${projects.status} not in ('done', 'archived')`
       )
     )
-    .orderBy(asc(projects.title));
+    .orderBy(sql`coalesce(${usage.n}, 0) desc`, asc(projects.title));
 }

@@ -57,6 +57,51 @@ test('create a segment, project and goal without leaving the task sheet', async 
   await expect(page.getByText(projectTitle)).toBeVisible();
 });
 
+test('pickers list the most used segments and projects first', async ({ page }) => {
+  const quiet = { segment: `Attic ${stamp}`, project: `Boxes ${stamp}` };
+  const busy = { segment: `Cellar ${stamp}`, project: `Wine ${stamp}` };
+
+  async function addTask(title: string, create?: { segment: string; project: string }) {
+    await page.goto('/tasks?new=1');
+    const sheet = page.getByRole('dialog', { name: 'New task' });
+    await sheet.getByLabel('Title').fill(title);
+    if (create) {
+      await sheet.getByRole('button', { name: 'New segment' }).click();
+      const segmentDialog = page.getByRole('dialog', { name: 'New Life Segment' });
+      await segmentDialog.getByLabel('Name').fill(create.segment);
+      await segmentDialog.getByRole('button', { name: 'Create segment' }).click();
+      await expect(segmentDialog).toBeHidden();
+      await sheet.getByRole('button', { name: 'New project' }).click();
+      const projectDialog = page.getByRole('dialog', { name: 'New project' });
+      await projectDialog.getByLabel('Title').fill(create.project);
+      await projectDialog.getByRole('button', { name: 'Create project' }).click();
+      await expect(projectDialog).toBeHidden();
+    } else {
+      await sheet.locator('#task-segment').selectOption({ label: busy.segment });
+      await sheet.locator('#task-project').selectOption({ label: busy.project });
+    }
+    await sheet.getByRole('button', { name: 'Add task' }).click();
+    await expect(sheet).toBeHidden();
+    await expect(page.getByText(title)).toBeVisible();
+  }
+
+  // One task in the quiet pair, two in the busy pair.
+  await addTask(`Label the boxes ${stamp}`, quiet);
+  await addTask(`Rack the bottles ${stamp}`, busy);
+  await addTask(`Check the corks ${stamp}`);
+
+  await page.goto('/tasks?new=1');
+  const sheet = page.getByRole('dialog', { name: 'New task' });
+  // The sheet mounts through a portal after hydration, so wait for its pickers.
+  await expect(sheet.locator('#task-segment')).toBeVisible();
+  const segments = await sheet.locator('#task-segment option').allTextContents();
+  expect(segments.indexOf(busy.segment)).toBeGreaterThan(-1);
+  expect(segments.indexOf(busy.segment)).toBeLessThan(segments.indexOf(quiet.segment));
+  const projects = await sheet.locator('#task-project option').allTextContents();
+  expect(projects.indexOf(busy.project)).toBeGreaterThan(-1);
+  expect(projects.indexOf(busy.project)).toBeLessThan(projects.indexOf(quiet.project));
+});
+
 test('quick capture lands in the Inbox and files as a task', async ({ page }) => {
   const text = `Buy stamps ${stamp}`;
   await page.goto('/dashboard');

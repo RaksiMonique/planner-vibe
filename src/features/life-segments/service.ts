@@ -1,9 +1,10 @@
 import 'server-only';
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, asc, count, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db';
-import { lifeSegments } from '@/db/schema';
+import { lifeSegments, tasks } from '@/db/schema';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { slugify, type SegmentInput } from './schema';
+import { orderByUsage } from './usage';
 
 export type LifeSegment = typeof lifeSegments.$inferSelect;
 
@@ -45,6 +46,22 @@ export async function listSegments(
         : and(eq(lifeSegments.userId, userId), isNull(lifeSegments.archivedAt))
     )
     .orderBy(asc(lifeSegments.sortOrder), asc(lifeSegments.name));
+}
+
+/**
+ * Active segments with the most used first, for pickers: usage is the number
+ * of tasks ever filed under the segment. Unused segments keep their own order.
+ */
+export async function listSegmentsByUsage(userId: string): Promise<LifeSegment[]> {
+  const [segments, usage] = await Promise.all([
+    listSegments(userId),
+    db
+      .select({ id: tasks.lifeSegmentId, n: count() })
+      .from(tasks)
+      .where(and(eq(tasks.userId, userId), isNull(tasks.deletedAt)))
+      .groupBy(tasks.lifeSegmentId),
+  ]);
+  return orderByUsage(segments, new Map(usage.map((row) => [row.id, row.n])));
 }
 
 export async function getSegmentBySlug(userId: string, slug: string): Promise<LifeSegment> {

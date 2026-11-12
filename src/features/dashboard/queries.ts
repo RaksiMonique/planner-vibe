@@ -7,7 +7,7 @@ import { profiles } from '@/db/schema';
 import { listEventsBetween, type EventRow } from '@/features/calendar/queries';
 import { listCaptures, type Capture } from '@/features/capture/queries';
 import { listGoals, listMilestones, type GoalRow, type Milestone } from '@/features/goals/queries';
-import { listSegments, type LifeSegment } from '@/features/life-segments/service';
+import { listSegmentsByUsage, type LifeSegment } from '@/features/life-segments/service';
 import { getPreferences } from '@/features/settings/service';
 import { countOpenTasksBySegment, listTasks, type TaskRow } from '@/features/tasks/queries';
 import type { WorkDay } from '@/features/work/availability';
@@ -85,7 +85,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     captures,
     workDays,
   ] = await Promise.all([
-    listSegments(userId),
+    listSegmentsByUsage(userId),
     countOpenTasksBySegment(userId),
     listTasks(userId, { status: 'open', parentTaskId: null }),
     listTasks(userId, { status: 'done' }),

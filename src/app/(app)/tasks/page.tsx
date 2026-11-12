@@ -3,7 +3,7 @@ import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { PageHeader } from '@/components/shared/page-header';
 import { listGoalOptions, listMilestones } from '@/features/goals/queries';
-import { listSegments } from '@/features/life-segments/service';
+import { listSegmentsByUsage } from '@/features/life-segments/service';
 import { listProjectOptions } from '@/features/projects/queries';
 import { getPreferences } from '@/features/settings/service';
 import { TaskSheet } from '@/features/tasks/components/task-sheet';
@@ -33,7 +33,7 @@ export default async function TasksPage({ searchParams }: PageProps<'/tasks'>) {
 
   const [prefs, segments, projects, goals] = await Promise.all([
     getPreferences(user.id),
-    listSegments(user.id),
+    listSegmentsByUsage(user.id),
     listProjectOptions(user.id),
     listGoalOptions(user.id),
   ]);

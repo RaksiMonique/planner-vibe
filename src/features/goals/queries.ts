@@ -1,7 +1,7 @@
 import 'server-only';
-import { and, asc, eq, gte, isNull, lte, sql } from 'drizzle-orm';
+import { and, asc, count, eq, gte, isNull, lte, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { goals, lifeSegments, milestones } from '@/db/schema';
+import { goalProjects, goals, lifeSegments, milestones, tasks } from '@/db/schema';
 import { segmentRefColumns } from '@/features/life-segments/queries';
 import type { SegmentRef } from '@/features/life-segments/types';
 import { computeGoalProgress, type Horizon } from './progress';
@@ -101,8 +101,23 @@ export async function getGoal(userId: string, id: string): Promise<GoalRow | nul
 
 export type GoalOption = Pick<Goal, 'id' | 'title' | 'horizon' | 'lifeSegmentId' | 'parentGoalId'>;
 
-/** Lightweight list for pickers: every goal that is not achieved or abandoned. */
+/**
+ * Lightweight list for pickers: every goal that is not achieved or abandoned,
+ * the most used first. Usage is the number of tasks and projects linked to it.
+ */
 export async function listGoalOptions(userId: string): Promise<GoalOption[]> {
+  const taskUse = db
+    .select({ goalId: tasks.goalId, n: count().as('task_n') })
+    .from(tasks)
+    .where(and(eq(tasks.userId, userId), isNull(tasks.deletedAt)))
+    .groupBy(tasks.goalId)
+    .as('task_use');
+  const projectUse = db
+    .select({ goalId: goalProjects.goalId, n: count().as('project_n') })
+    .from(goalProjects)
+    .where(eq(goalProjects.userId, userId))
+    .groupBy(goalProjects.goalId)
+    .as('project_use');
   return db
     .select({
       id: goals.id,
@@ -112,6 +127,8 @@ export async function listGoalOptions(userId: string): Promise<GoalOption[]> {
       parentGoalId: goals.parentGoalId,
     })
     .from(goals)
+    .leftJoin(taskUse, eq(taskUse.goalId, goals.id))
+    .leftJoin(projectUse, eq(projectUse.goalId, goals.id))
     .where(
       and(
         eq(goals.userId, userId),
@@ -119,7 +136,11 @@ export async function listGoalOptions(userId: string): Promise<GoalOption[]> {
         sql`${goals.status} not in ('achieved', 'abandoned')`
       )
     )
-    .orderBy(asc(goals.horizon), asc(goals.title));
+    .orderBy(
+      sql`coalesce(${taskUse.n}, 0) + coalesce(${projectUse.n}, 0) desc`,
+      asc(goals.horizon),
+      asc(goals.title)
+    );
 }
 
 export type MilestoneFilters = {

@@ -124,7 +124,13 @@ export default async function ProjectPage({ params }: PageProps<'/projects/[id]'
             <CardTitle className="font-heading text-lg">Goals</CardTitle>
           </CardHeader>
           <CardContent>
-            <LinkedGoals projectId={project.id} linked={linkedGoals} options={goalOptions} />
+            <LinkedGoals
+              projectId={project.id}
+              lifeSegmentId={project.lifeSegmentId}
+              linked={linkedGoals}
+              options={goalOptions}
+              segments={segments}
+            />
           </CardContent>
         </Card>
 

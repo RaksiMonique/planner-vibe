@@ -132,6 +132,42 @@ test('create a goal from the dialog', async ({ page }) => {
   await expect(page.getByText(title)).toBeVisible();
 });
 
+test('a goal page starts a linked project, and a project page a linked goal', async ({ page }) => {
+  const goalTitle = `Run a half marathon ${stamp}`;
+  const projectTitle = `Training plan ${stamp}`;
+  const secondGoal = `Run a full marathon ${stamp}`;
+  await page.goto('/goals');
+  await page
+    .getByRole('button', { name: /new goal/i })
+    .first()
+    .click();
+  await page.getByLabel('Title').fill(goalTitle);
+  await page.getByRole('button', { name: 'Create goal' }).click();
+  await page.getByRole('link', { name: goalTitle }).first().click();
+  await expect(page).toHaveURL(/\/goals\/[0-9a-f-]+$/);
+
+  // New project from the goal page: created already linked to this goal.
+  await page.getByRole('button', { name: 'New project' }).click();
+  const projectDialog = page.getByRole('dialog', { name: 'New project' });
+  await projectDialog.getByLabel('Title').fill(projectTitle);
+  await expect(projectDialog.getByRole('checkbox', { name: goalTitle })).toBeChecked();
+  await projectDialog.getByRole('button', { name: 'Create project' }).click();
+  await expect(projectDialog).toBeHidden();
+  const projectLink = page.getByRole('link', { name: projectTitle });
+  await expect(projectLink).toBeVisible();
+
+  // New goal from the project page: linked to the project once saved.
+  await projectLink.click();
+  await expect(page).toHaveURL(/\/projects\/[0-9a-f-]+$/);
+  await expect(page.getByRole('link', { name: goalTitle })).toBeVisible();
+  await page.getByRole('button', { name: 'New goal' }).click();
+  const goalDialog = page.getByRole('dialog', { name: 'New goal' });
+  await goalDialog.getByLabel('Title').fill(secondGoal);
+  await goalDialog.getByRole('button', { name: 'Create goal' }).click();
+  await expect(goalDialog).toBeHidden();
+  await expect(page.getByRole('link', { name: secondGoal })).toBeVisible();
+});
+
 test('import the legacy JSON export', async ({ page }) => {
   await page.goto('/settings/data');
   await page

@@ -29,8 +29,11 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { SubmitButton } from '@/components/shared/submit-button';
 import { ReminderField } from '@/features/reminders/components/reminder-field';
+import { GoalForm } from '@/features/goals/components/goal-form-dialog';
 import type { GoalOption, Milestone } from '@/features/goals/queries';
-import type { LifeSegment } from '@/features/life-segments/service';
+import { SegmentForm } from '@/features/life-segments/components/segment-form-dialog';
+import type { SegmentRef } from '@/features/life-segments/types';
+import { ProjectForm } from '@/features/projects/components/project-form-dialog';
 import type { ProjectOption } from '@/features/projects/queries';
 import {
   createTaskAction,
@@ -42,12 +45,13 @@ import type { TaskRow } from '../queries';
 import { presetFromRrule, RECURRENCE_LABELS, RECURRENCE_PRESETS } from '../recurrence';
 import { PRIORITIES, PRIORITY_LABELS, STATUS_LABELS, TASK_STATUSES } from '../schema';
 import { NativeSelect } from './native-select';
+import { NewOptionDialog } from './new-option-dialog';
 
 export type TaskSheetProps = {
   task: TaskRow | null;
   subtasks: TaskRow[];
   parentTask: { id: string; title: string } | null;
-  segments: LifeSegment[];
+  segments: SegmentRef[];
   projects: ProjectOption[];
   goals: GoalOption[];
   milestones: Milestone[];
@@ -59,6 +63,15 @@ export type TaskSheetProps = {
 function fieldErrors(state: TaskFormState, name: string) {
   if (!state || state.ok || !state.fieldErrors?.[name]) return undefined;
   return state.fieldErrors[name]!.map((message) => ({ message }));
+}
+
+/**
+ * Rows created from inside the sheet, appended until the page's own lists
+ * catch up after revalidation (then the id already exists and is skipped).
+ */
+function withAdded<T extends { id: string }>(base: T[], added: T[]): T[] {
+  const known = new Set(base.map((row) => row.id));
+  return [...base, ...added.filter((row) => !known.has(row.id))];
 }
 
 export function TaskSheet(props: TaskSheetProps) {
@@ -74,6 +87,12 @@ export function TaskSheet(props: TaskSheetProps) {
   const [segmentId, setSegmentId] = useState(
     task?.lifeSegmentId ?? defaults.lifeSegmentId ?? segments[0]?.id ?? ''
   );
+  const [addedSegments, setAddedSegments] = useState<SegmentRef[]>([]);
+  const [addedProjects, setAddedProjects] = useState<ProjectOption[]>([]);
+  const [addedGoals, setAddedGoals] = useState<GoalOption[]>([]);
+  const segmentOptions = withAdded(segments, addedSegments);
+  const projectOptions = withAdded(projects, addedProjects);
+  const goalOptions = withAdded(goals, addedGoals);
 
   function close() {
     const next = new URLSearchParams(params.toString());
@@ -137,7 +156,24 @@ export function TaskSheet(props: TaskSheetProps) {
               <FieldError errors={fieldErrors(state, 'title')} />
             </Field>
             <Field data-invalid={Boolean(fieldErrors(state, 'lifeSegmentId')) || undefined}>
-              <FieldLabel htmlFor="task-segment">Life Segment</FieldLabel>
+              <div className="flex items-center justify-between gap-2">
+                <FieldLabel htmlFor="task-segment">Life Segment</FieldLabel>
+                <NewOptionDialog
+                  label="New segment"
+                  title="New Life Segment"
+                  description="An ongoing area of life. Every task, goal and event belongs to one."
+                >
+                  {(done) => (
+                    <SegmentForm
+                      onDone={(saved) => {
+                        setAddedSegments((rows) => [...rows, saved]);
+                        setSegmentId(saved.id);
+                        done();
+                      }}
+                    />
+                  )}
+                </NewOptionDialog>
+              </div>
               <NativeSelect
                 id="task-segment"
                 name="lifeSegmentId"
@@ -145,7 +181,7 @@ export function TaskSheet(props: TaskSheetProps) {
                 onChange={(e) => setSegmentId(e.target.value)}
                 required
               >
-                {segments.map((s) => (
+                {segmentOptions.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
                   </option>
@@ -215,7 +251,27 @@ export function TaskSheet(props: TaskSheetProps) {
             </Field>
             <ReminderField entityType="task" entityId={task?.id} idPrefix="task" />
             <Field>
-              <FieldLabel htmlFor="task-project">Project</FieldLabel>
+              <div className="flex items-center justify-between gap-2">
+                <FieldLabel htmlFor="task-project">Project</FieldLabel>
+                <NewOptionDialog
+                  label="New project"
+                  title="New project"
+                  description="A defined body of work with an end, supporting one or more goals."
+                >
+                  {(done) => (
+                    <ProjectForm
+                      segments={segmentOptions}
+                      goalOptions={goalOptions}
+                      defaults={{ lifeSegmentId: segmentId || undefined }}
+                      onDone={(saved) => {
+                        setAddedProjects((rows) => [...rows, saved]);
+                        setProjectId(saved.id);
+                        done();
+                      }}
+                    />
+                  )}
+                </NewOptionDialog>
+              </div>
               <NativeSelect
                 id="task-project"
                 name="projectId"
@@ -223,7 +279,7 @@ export function TaskSheet(props: TaskSheetProps) {
                 onChange={(e) => setProjectId(e.target.value)}
               >
                 <option value="">None</option>
-                {projects.map((p) => (
+                {projectOptions.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.title}
                   </option>
@@ -231,7 +287,27 @@ export function TaskSheet(props: TaskSheetProps) {
               </NativeSelect>
             </Field>
             <Field>
-              <FieldLabel htmlFor="task-goal">Goal</FieldLabel>
+              <div className="flex items-center justify-between gap-2">
+                <FieldLabel htmlFor="task-goal">Goal</FieldLabel>
+                <NewOptionDialog
+                  label="New goal"
+                  title="New goal"
+                  description="A measurable outcome. Break it down into shorter horizons rather than copying it."
+                >
+                  {(done) => (
+                    <GoalForm
+                      segments={segmentOptions}
+                      goalOptions={goalOptions}
+                      defaults={{ lifeSegmentId: segmentId || undefined }}
+                      onDone={(saved) => {
+                        setAddedGoals((rows) => [...rows, saved]);
+                        setGoalId(saved.id);
+                        done();
+                      }}
+                    />
+                  )}
+                </NewOptionDialog>
+              </div>
               <NativeSelect
                 id="task-goal"
                 name="goalId"
@@ -239,7 +315,7 @@ export function TaskSheet(props: TaskSheetProps) {
                 onChange={(e) => setGoalId(e.target.value)}
               >
                 <option value="">None</option>
-                {goals.map((g) => (
+                {goalOptions.map((g) => (
                   <option key={g.id} value={g.id}>
                     {g.title} ({g.horizon})
                   </option>

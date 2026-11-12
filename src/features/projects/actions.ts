@@ -6,8 +6,9 @@ import { z } from 'zod';
 import { linkProject, unlinkProject } from '@/features/goals/service';
 import { formValues, fromError, fromZodError, ok, type ActionResult } from '@/lib/action-result';
 import { requireUser } from '@/lib/auth';
+import type { ProjectOption } from './queries';
 import { projectInput } from './schema';
-import { createProject, deleteProject, updateProject } from './service';
+import { createProject, deleteProject, updateProject, type Project } from './service';
 
 function revalidateProjects() {
   revalidatePath('/projects', 'layout');
@@ -17,17 +18,24 @@ function revalidateProjects() {
   revalidatePath('/dashboard');
 }
 
+/** The saved row, in the shape pickers elsewhere need to select it straight away. */
+export type ProjectActionResult = ActionResult<ProjectOption>;
+
+function toOption(row: Project): ProjectOption {
+  return { id: row.id, title: row.title, lifeSegmentId: row.lifeSegmentId };
+}
+
 export async function createProjectAction(
-  _prev: ActionResult | null,
+  _prev: ProjectActionResult | null,
   formData: FormData
-): Promise<ActionResult> {
+): Promise<ProjectActionResult> {
   try {
     const user = await requireUser();
     const parsed = projectInput.safeParse(formValues(formData));
     if (!parsed.success) return fromZodError(parsed.error);
-    await createProject(user.id, parsed.data);
+    const row = await createProject(user.id, parsed.data);
     revalidateProjects();
-    return ok(undefined);
+    return ok(toOption(row));
   } catch (e) {
     return fromError(e);
   }
@@ -36,9 +44,9 @@ export async function createProjectAction(
 const withId = z.object({ id: z.uuid() });
 
 export async function updateProjectAction(
-  _prev: ActionResult | null,
+  _prev: ProjectActionResult | null,
   formData: FormData
-): Promise<ActionResult> {
+): Promise<ProjectActionResult> {
   try {
     const user = await requireUser();
     const values = formValues(formData);
@@ -46,9 +54,9 @@ export async function updateProjectAction(
     if (!id.success) return fromZodError(id.error);
     const parsed = projectInput.safeParse(values);
     if (!parsed.success) return fromZodError(parsed.error);
-    await updateProject(user.id, id.data.id, parsed.data);
+    const row = await updateProject(user.id, id.data.id, parsed.data);
     revalidateProjects();
-    return ok(undefined);
+    return ok(toOption(row));
   } catch (e) {
     return fromError(e);
   }

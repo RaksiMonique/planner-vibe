@@ -5,30 +5,52 @@ import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { formValues, fromError, fromZodError, ok, type ActionResult } from '@/lib/action-result';
 import { requireUser } from '@/lib/auth';
+import type { GoalOption } from './queries';
 import { goalInput } from './schema';
-import { createGoal, deleteGoal, linkProject, unlinkProject, updateGoal } from './service';
+import {
+  createGoal,
+  deleteGoal,
+  linkProject,
+  unlinkProject,
+  updateGoal,
+  type Goal,
+} from './service';
 
 function revalidateGoals() {
   revalidatePath('/goals', 'layout');
   revalidatePath('/projects', 'layout');
   revalidatePath('/segments', 'layout');
+  revalidatePath('/tasks', 'layout');
   revalidatePath('/dashboard');
   revalidatePath('/lifelong');
   revalidatePath('/quarter');
   revalidatePath('/year');
 }
 
+/** The saved row, in the shape pickers elsewhere need to select it straight away. */
+export type GoalActionResult = ActionResult<GoalOption>;
+
+function toOption(row: Goal): GoalOption {
+  return {
+    id: row.id,
+    title: row.title,
+    horizon: row.horizon,
+    lifeSegmentId: row.lifeSegmentId,
+    parentGoalId: row.parentGoalId,
+  };
+}
+
 export async function createGoalAction(
-  _prev: ActionResult | null,
+  _prev: GoalActionResult | null,
   formData: FormData
-): Promise<ActionResult> {
+): Promise<GoalActionResult> {
   try {
     const user = await requireUser();
     const parsed = goalInput.safeParse(formValues(formData));
     if (!parsed.success) return fromZodError(parsed.error);
-    await createGoal(user.id, parsed.data);
+    const row = await createGoal(user.id, parsed.data);
     revalidateGoals();
-    return ok(undefined);
+    return ok(toOption(row));
   } catch (e) {
     return fromError(e);
   }
@@ -37,9 +59,9 @@ export async function createGoalAction(
 const withId = z.object({ id: z.uuid() });
 
 export async function updateGoalAction(
-  _prev: ActionResult | null,
+  _prev: GoalActionResult | null,
   formData: FormData
-): Promise<ActionResult> {
+): Promise<GoalActionResult> {
   try {
     const user = await requireUser();
     const values = formValues(formData);
@@ -47,9 +69,9 @@ export async function updateGoalAction(
     if (!id.success) return fromZodError(id.error);
     const parsed = goalInput.safeParse(values);
     if (!parsed.success) return fromZodError(parsed.error);
-    await updateGoal(user.id, id.data.id, parsed.data);
+    const row = await updateGoal(user.id, id.data.id, parsed.data);
     revalidateGoals();
-    return ok(undefined);
+    return ok(toOption(row));
   } catch (e) {
     return fromError(e);
   }

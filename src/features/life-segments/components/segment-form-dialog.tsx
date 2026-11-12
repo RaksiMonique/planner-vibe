@@ -16,10 +16,10 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/c
 import { Input } from '@/components/ui/input';
 import { SegmentDot } from '@/components/shared/segment-badge';
 import { SubmitButton } from '@/components/shared/submit-button';
-import type { ActionResult } from '@/lib/action-result';
-import { createSegmentAction, updateSegmentAction } from '../actions';
+import { createSegmentAction, updateSegmentAction, type SegmentActionResult } from '../actions';
 import { ACCENT_LABELS, ACCENTS } from '../schema';
 import type { LifeSegment } from '../service';
+import type { SegmentRef } from '../types';
 import { ChoiceSelect } from './choice-select';
 import { fieldErrors, hasFieldError } from './field-errors';
 
@@ -51,12 +51,22 @@ export function SegmentFormDialog({
   );
 }
 
-function SegmentForm({ segment, onDone }: { segment?: LifeSegment; onDone: () => void }) {
+/**
+ * The create/edit fields on their own, for any dialog that needs them. `onDone`
+ * receives the saved segment so a picker can select it at once.
+ */
+export function SegmentForm({
+  segment,
+  onDone,
+}: {
+  segment?: LifeSegment;
+  onDone: (saved: SegmentRef) => void;
+}) {
   const action = segment ? updateSegmentAction : createSegmentAction;
   const [state, formAction] = useActionState(
-    async (prev: ActionResult | null, formData: FormData) => {
+    async (prev: SegmentActionResult | null, formData: FormData) => {
       const result = await action(prev, formData);
-      if (result.ok) onDone();
+      if (result.ok) onDone(result.data);
       return result;
     },
     null

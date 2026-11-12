@@ -23,9 +23,8 @@ import { ChoiceSelect } from '@/features/life-segments/components/choice-select'
 import { fieldErrors, hasFieldError } from '@/features/life-segments/components/field-errors';
 import { SegmentSelect } from '@/features/life-segments/components/segment-select';
 import type { SegmentRef } from '@/features/life-segments/types';
-import type { ActionResult } from '@/lib/action-result';
-import { createProjectAction, updateProjectAction } from '../actions';
-import type { ProjectRow } from '../queries';
+import { createProjectAction, updateProjectAction, type ProjectActionResult } from '../actions';
+import type { ProjectOption, ProjectRow } from '../queries';
 import { PROJECT_STATUS_LABELS, PROJECT_STATUSES } from '../schema';
 
 export function ProjectFormDialog({
@@ -71,26 +70,30 @@ export function ProjectFormDialog({
   );
 }
 
-function ProjectForm({
+/**
+ * The create/edit fields on their own, for any dialog that needs them. `onDone`
+ * receives the saved project so a picker can select it at once.
+ */
+export function ProjectForm({
   segments,
   goalOptions,
   project,
-  linkedGoalIds,
+  linkedGoalIds = [],
   defaults,
   onDone,
 }: {
   segments: SegmentRef[];
   goalOptions: GoalOption[];
   project?: ProjectRow;
-  linkedGoalIds: string[];
+  linkedGoalIds?: string[];
   defaults?: { lifeSegmentId?: string };
-  onDone: () => void;
+  onDone: (saved: ProjectOption) => void;
 }) {
   const action = project ? updateProjectAction : createProjectAction;
   const [state, formAction] = useActionState(
-    async (prev: ActionResult | null, formData: FormData) => {
+    async (prev: ProjectActionResult | null, formData: FormData) => {
       const result = await action(prev, formData);
-      if (result.ok) onDone();
+      if (result.ok) onDone(result.data);
       return result;
     },
     null

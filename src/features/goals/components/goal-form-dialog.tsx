@@ -20,8 +20,7 @@ import { ChoiceSelect } from '@/features/life-segments/components/choice-select'
 import { fieldErrors, hasFieldError } from '@/features/life-segments/components/field-errors';
 import { SegmentSelect } from '@/features/life-segments/components/segment-select';
 import type { SegmentRef } from '@/features/life-segments/types';
-import type { ActionResult } from '@/lib/action-result';
-import { createGoalAction, updateGoalAction } from '../actions';
+import { createGoalAction, updateGoalAction, type GoalActionResult } from '../actions';
 import { canBeChildOf, type Horizon } from '../progress';
 import type { GoalOption, GoalRow } from '../queries';
 import { GOAL_STATUS_LABELS, GOAL_STATUSES, HORIZON_LABELS, HORIZONS } from '../schema';
@@ -72,7 +71,11 @@ export function GoalFormDialog({
   );
 }
 
-function GoalForm({
+/**
+ * The create/edit fields on their own, for any dialog that needs them. `onDone`
+ * receives the saved goal so a picker can select it at once.
+ */
+export function GoalForm({
   segments,
   goalOptions,
   goal,
@@ -83,13 +86,13 @@ function GoalForm({
   goalOptions: GoalOption[];
   goal?: GoalRow;
   defaults?: GoalFormDefaults;
-  onDone: () => void;
+  onDone: (saved: GoalOption) => void;
 }) {
   const action = goal ? updateGoalAction : createGoalAction;
   const [state, formAction] = useActionState(
-    async (prev: ActionResult | null, formData: FormData) => {
+    async (prev: GoalActionResult | null, formData: FormData) => {
       const result = await action(prev, formData);
-      if (result.ok) onDone();
+      if (result.ok) onDone(result.data);
       return result;
     },
     null

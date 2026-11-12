@@ -2,7 +2,7 @@ import type { ActionResult } from '@/lib/action-result';
 
 /** Per-field messages from an ActionResult, shaped for `FieldError`. */
 export function fieldErrors(
-  state: ActionResult | null,
+  state: ActionResult<unknown> | null,
   name: string
 ): Array<{ message?: string }> | undefined {
   if (!state || state.ok) return undefined;
@@ -10,6 +10,6 @@ export function fieldErrors(
   return messages?.map((message) => ({ message }));
 }
 
-export function hasFieldError(state: ActionResult | null, name: string): boolean {
+export function hasFieldError(state: ActionResult<unknown> | null, name: string): boolean {
   return !!fieldErrors(state, name)?.length;
 }

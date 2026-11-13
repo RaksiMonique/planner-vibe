@@ -1,3 +1,4 @@
+import { differenceInCalendarDays, parseISO } from 'date-fns';
 import { z } from 'zod';
 import { ACCENTS } from '@/features/life-segments/schema';
 
@@ -75,18 +76,67 @@ export const patternInput = z.object({
 });
 export type PatternInput = z.infer<typeof patternInput>;
 
+/** How often a manual shift comes back; 0 is a one-off. */
+export const SHIFT_REPEAT_WEEKS = [0, 1, 2, 3, 4] as const;
+export const SHIFT_REPEAT_LABELS: Record<(typeof SHIFT_REPEAT_WEEKS)[number], string> = {
+  0: 'Does not repeat',
+  1: 'Every week',
+  2: 'Every 2 weeks',
+  3: 'Every 3 weeks',
+  4: 'Every 4 weeks',
+};
+
+/** Days in the block from `date` to `endDate` inclusive; 1 without an end. */
+export function shiftSpanDays(date: string, endDate?: string | null): number {
+  if (!endDate) return 1;
+  return Math.max(1, differenceInCalendarDays(parseISO(endDate), parseISO(date)) + 1);
+}
+
 export const shiftInput = z
   .object({
     date: dateKey,
+    endDate: dateKey.optional(),
     kind: z.enum(SHIFT_KINDS).default('work'),
     label: z.string().trim().max(60).optional(),
     startTime: timeKey.optional(),
     endTime: timeKey.optional(),
+    repeatWeeks: z.coerce.number().int().min(0).max(4).default(0),
+    repeatUntil: dateKey.optional(),
     note: z.string().trim().max(2000).optional(),
   })
-  .refine((v) => !(v.startTime && !v.endTime) && !(v.endTime && !v.startTime), {
-    path: ['endTime'],
-    message: 'Give both a start and an end, or neither.',
+  .superRefine((v, ctx) => {
+    if ((v.startTime && !v.endTime) || (v.endTime && !v.startTime)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['endTime'],
+        message: 'Give both a start and an end, or neither.',
+      });
+    }
+    if (v.endDate && v.endDate < v.date) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['endDate'],
+        message: 'The last day must be on or after the first.',
+      });
+    }
+    if (v.repeatWeeks > 0) {
+      const most = 7 * v.repeatWeeks;
+      if (shiftSpanDays(v.date, v.endDate) > most) {
+        const every = v.repeatWeeks === 1 ? 'week' : `${v.repeatWeeks} weeks`;
+        ctx.addIssue({
+          code: 'custom',
+          path: ['endDate'],
+          message: `A shift that comes back every ${every} can cover at most ${most} days.`,
+        });
+      }
+      if (v.repeatUntil && v.repeatUntil < v.date) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['repeatUntil'],
+          message: 'Repeat until must be on or after the first day.',
+        });
+      }
+    }
   });
 export type ShiftInput = z.infer<typeof shiftInput>;
 

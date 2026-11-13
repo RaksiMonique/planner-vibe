@@ -1,4 +1,14 @@
-import { boolean, date, index, jsonb, text, time, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
+import {
+  boolean,
+  date,
+  index,
+  integer,
+  jsonb,
+  text,
+  time,
+  uniqueIndex,
+  uuid,
+} from 'drizzle-orm/pg-core';
 import { planner } from './_schema';
 import { softDelete, timestamps } from './_columns';
 import { ownerPolicies } from './_policies';
@@ -47,7 +57,10 @@ export const shiftPatterns = planner.table(
   (t) => [index('shift_patterns_user_idx').on(t.userId), ...ownerPolicies('shift_patterns')]
 );
 
-/** A shift placed on a date by hand. Any row on a date replaces the pattern for that date. */
+/**
+ * Shifts placed by hand: a single day, a block of days, or a block that comes
+ * back every few weeks. Any day they cover replaces the pattern for that day.
+ */
 export const shifts = planner.table(
   'shifts',
   {
@@ -57,11 +70,18 @@ export const shifts = planner.table(
       .notNull()
       .references(() => lifeSegments.id, { onDelete: 'restrict' }),
     patternId: uuid('pattern_id').references(() => shiftPatterns.id, { onDelete: 'set null' }),
+    /** First day of the shift. */
     date: date('date').notNull(),
+    /** Last day of a block of days; null for a single day. */
+    endDate: date('end_date'),
     kind: shiftKindEnum('kind').notNull().default('work'),
     label: text('label'),
     startTime: time('start_time'),
     endTime: time('end_time'),
+    /** 0 for a one-off; otherwise the block comes back every this many weeks. */
+    repeatWeeks: integer('repeat_weeks').notNull().default(0),
+    /** No day after this one is produced; null repeats for good. */
+    repeatUntil: date('repeat_until'),
     note: text('note'),
     ...timestamps(),
   },

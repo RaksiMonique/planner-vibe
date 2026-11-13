@@ -3,7 +3,13 @@ import { fromZonedTime } from 'date-fns-tz';
 import type { PatternDay } from '@/db/schema/work';
 import type { CalendarItem } from '@/features/calendar/expand';
 import type { Accent } from '@/lib/accents';
-import { SHIFT_KIND_LABELS, type LeaveKind, type LeaveStatus, type ShiftKind } from './schema';
+import {
+  SHIFT_KIND_LABELS,
+  shiftSpanDays,
+  type LeaveKind,
+  type LeaveStatus,
+  type ShiftKind,
+} from './schema';
 
 /**
  * Availability is derived, never stored (instructions.md 8.18). Everything
@@ -23,7 +29,12 @@ export type PatternSource = {
 
 export type ShiftSource = {
   id: string;
+  /** First day; `endDate` closes a block of days (null for one day). */
   date: string;
+  endDate: string | null;
+  /** 0 for a one-off; otherwise the block comes back every this many weeks until `repeatUntil`. */
+  repeatWeeks: number;
+  repeatUntil: string | null;
   kind: ShiftKind;
   label: string | null;
   startTime: string | null;
@@ -60,6 +71,8 @@ export type WorkShift = {
   accent?: Accent;
   /** The `shifts` row behind a manual entry. */
   id?: string;
+  /** A manual shift that comes back every few weeks. */
+  repeats?: boolean;
 };
 
 export type WorkDay = {
@@ -86,6 +99,52 @@ export function dateKeysBetween(from: string, to: string): string[] {
   const count = differenceInCalendarDays(parseISO(to), start);
   if (count < 0) return [];
   return Array.from({ length: count + 1 }, (_, i) => toKey(addDays(start, i)));
+}
+
+const laterOf = (a: string, b: string) => (a > b ? a : b);
+const earlierOf = (a: string, b: string) => (a < b ? a : b);
+
+type ShiftSpan = Pick<ShiftSource, 'date' | 'endDate' | 'repeatWeeks' | 'repeatUntil'>;
+
+/**
+ * The dates in [from, to] a manual shift covers: its block of days, and when
+ * it repeats, that block again every `repeatWeeks` weeks, never past
+ * `repeatUntil`.
+ */
+export function expandShift(shift: ShiftSpan, from: string, to: string): string[] {
+  const length = shiftSpanDays(shift.date, shift.endDate);
+  const lastDay = (startKey: string) => toKey(addDays(parseISO(startKey), length - 1));
+  if (shift.repeatWeeks <= 0) {
+    return dateKeysBetween(laterOf(shift.date, from), earlierOf(lastDay(shift.date), to));
+  }
+  const last = shift.repeatUntil ? earlierOf(shift.repeatUntil, to) : to;
+  const step = 7 * shift.repeatWeeks;
+  const first = parseISO(shift.date);
+  // Jump straight to the first block that can reach `from`.
+  const behind = differenceInCalendarDays(parseISO(from), first) - (length - 1);
+  let block = behind > 0 ? Math.ceil(behind / step) : 0;
+  const dates: string[] = [];
+  for (;;) {
+    const start = toKey(addDays(first, block * step));
+    if (start > last) break;
+    dates.push(...dateKeysBetween(laterOf(start, from), earlierOf(lastDay(start), last)));
+    block += 1;
+  }
+  return dates;
+}
+
+/** "3 days · every 2 weeks · until 20 May"; null for a plain single day. */
+export function describeShift(shift: ShiftSpan): string | null {
+  const parts: string[] = [];
+  const length = shiftSpanDays(shift.date, shift.endDate);
+  if (length > 1) parts.push(`${length} days`);
+  if (shift.repeatWeeks === 1) parts.push('every week');
+  else if (shift.repeatWeeks > 1) parts.push(`every ${shift.repeatWeeks} weeks`);
+  if (shift.repeatWeeks > 0 && shift.repeatUntil) {
+    const sameYear = shift.repeatUntil.slice(0, 4) === shift.date.slice(0, 4);
+    parts.push(`until ${format(parseISO(shift.repeatUntil), sameYear ? 'd MMM' : 'd MMM yyyy')}`);
+  }
+  return parts.length > 0 ? parts.join(' · ') : null;
 }
 
 /** Position of `date` in a cycle of `length` days anchored on `anchorDate`; positive even before the anchor. */
@@ -123,16 +182,21 @@ function statusOf(shifts: WorkShift[]): WorkDayStatus {
 /**
  * One entry per date in [from, to]. Precedence per date: a public holiday,
  * then any leave period covering it (whatever its status), then manual
- * `shifts` rows (which replace the pattern for that date; an `off` row is a
- * day off), otherwise the active patterns overlaid.
+ * `shifts` covering it (which replace the pattern for that date; an `off`
+ * row is a day off; a shift placed on the day itself beats one that repeats
+ * onto it), otherwise the active patterns overlaid.
  */
 export function deriveWorkDays(sources: WorkSources, from: string, to: string): WorkDay[] {
   const holidays = new Map(sources.holidays.map((h) => [h.date, h]));
-  const manual = new Map<string, ShiftSource[]>();
+  const placed = new Map<string, ShiftSource[]>();
+  const repeating = new Map<string, ShiftSource[]>();
   for (const s of sources.shifts) {
-    const list = manual.get(s.date) ?? [];
-    list.push(s);
-    manual.set(s.date, list);
+    const into = s.repeatWeeks > 0 ? repeating : placed;
+    for (const date of expandShift(s, from, to)) {
+      const list = into.get(date) ?? [];
+      list.push(s);
+      into.set(date, list);
+    }
   }
   const patterns = sources.patterns.filter((p) => p.isActive && p.cycle.length > 0);
   const expanded = patterns.map((p) => ({
@@ -154,7 +218,7 @@ export function deriveWorkDays(sources: WorkSources, from: string, to: string): 
       };
     }
 
-    const rows = manual.get(date);
+    const rows = placed.get(date) ?? repeating.get(date);
     if (rows && rows.length > 0) {
       const shifts: WorkShift[] = rows.map((r) => ({
         kind: r.kind,
@@ -164,6 +228,7 @@ export function deriveWorkDays(sources: WorkSources, from: string, to: string): 
         source: 'manual',
         patternId: r.patternId ?? undefined,
         id: r.id,
+        ...(r.repeatWeeks > 0 ? { repeats: true } : {}),
       }));
       return { date, status: statusOf(shifts), shifts };
     }
@@ -223,7 +288,7 @@ export function shiftCalendarItems(
         accent: shift.accent ?? ('burgundy' as Accent),
         calendarId: null,
         segmentId,
-        recurring: shift.source === 'pattern',
+        recurring: shift.source === 'pattern' || shift.repeats === true,
       };
       if (shift.start && shift.end) {
         const start = fromZonedTime(`${day.date}T${shift.start}:00`, timeZone);

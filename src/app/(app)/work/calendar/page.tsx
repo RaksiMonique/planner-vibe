@@ -65,7 +65,7 @@ export default async function JobCalendarPage({ searchParams }: PageProps<'/work
       <PageHeader
         eyebrow="Work"
         title="Job calendar"
-        description="Shift patterns repeat on their own; add one-off shifts, leave and public holidays and the calendar works out when you are free."
+        description="Shift patterns repeat on their own; add one-off or repeating shifts, leave and public holidays and the calendar works out when you are free."
         actions={
           <>
             <ShiftFormDialog
@@ -111,6 +111,8 @@ export default async function JobCalendarPage({ searchParams }: PageProps<'/work
             shifts={manualShifts}
             monthLabel={format(first, 'MMMM')}
             defaultDate={defaultDate}
+            from={monthStart}
+            to={monthEnd}
           />
           <LeavePanel leave={leave} defaultDate={defaultDate} />
           <HolidaysPanel holidays={holidays} defaultDate={defaultDate} />

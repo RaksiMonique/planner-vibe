@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, desc, eq, gte, isNull, lte } from 'drizzle-orm';
+import { and, asc, desc, eq, gt, gte, isNull, lte, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { leavePeriods, publicHolidays, shiftPatterns, shifts } from '@/db/schema';
 import { expandEvents, type CalendarItem } from '@/features/calendar/expand';
@@ -42,7 +42,11 @@ export async function listPatterns(
     .orderBy(desc(shiftPatterns.isActive), asc(shiftPatterns.name));
 }
 
-/** Manual shift rows dated within [from, to] (inclusive 'yyyy-MM-dd' keys). */
+/**
+ * Manual shift rows with a day inside [from, to] (inclusive 'yyyy-MM-dd'
+ * keys): a block that overlaps it, or a repeating one that has not ended
+ * before it. `expandShift` turns each into its dates.
+ */
 export async function listShiftsBetween(
   userId: string,
   from: string,
@@ -51,7 +55,22 @@ export async function listShiftsBetween(
   return db
     .select()
     .from(shifts)
-    .where(and(eq(shifts.userId, userId), gte(shifts.date, from), lte(shifts.date, to)))
+    .where(
+      and(
+        eq(shifts.userId, userId),
+        lte(shifts.date, to),
+        or(
+          and(
+            eq(shifts.repeatWeeks, 0),
+            gte(sql`coalesce(${shifts.endDate}, ${shifts.date})`, from)
+          ),
+          and(
+            gt(shifts.repeatWeeks, 0),
+            or(isNull(shifts.repeatUntil), gte(shifts.repeatUntil, from))
+          )
+        )
+      )
+    )
     .orderBy(asc(shifts.date), asc(shifts.startTime), asc(shifts.createdAt));
 }
 

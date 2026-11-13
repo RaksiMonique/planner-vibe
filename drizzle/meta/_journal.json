@@ -127,6 +127,13 @@
       "when": 1794539252678,
       "tag": "0017_shift_kinds",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794569047487,
+      "tag": "0018_work_history",
+      "breakpoints": true
     }
   ]
 }

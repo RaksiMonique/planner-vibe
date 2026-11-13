@@ -59,7 +59,13 @@ export function PatternsPanel({
                     {!p.isActive && <Badge variant="outline">Paused</Badge>}
                   </p>
                   <p className="text-muted-foreground truncate text-xs">
-                    {describeCycle(p.cycle)} · from {format(parseISO(p.anchorDate), 'd MMM yyyy')}
+                    {describeCycle(p.cycle)}
+                    {p.startDate && ` · from ${format(parseISO(p.startDate), 'd MMM yyyy')}`}
+                    {p.endDate &&
+                      ` · ${p.endDate < todayKey ? 'ended' : 'until'} ${format(parseISO(p.endDate), 'd MMM yyyy')}`}
+                    {!p.startDate &&
+                      !p.endDate &&
+                      ` · anchored ${format(parseISO(p.anchorDate), 'd MMM yyyy')}`}
                   </p>
                 </div>
                 <span className="flex items-center">
@@ -91,7 +97,7 @@ export function PatternsPanel({
                     action={deletePatternAction}
                     fields={{ id: p.id }}
                     title={`Delete "${p.name}"?`}
-                    description="Its days disappear from the calendar. Shifts you added by hand stay."
+                    description="Days already past keep it; from today it is gone. Shifts you added by hand stay."
                     variant="ghost"
                     size="icon-xs"
                     trigger={

@@ -66,14 +66,26 @@ const cycleField = z.preprocess(
     .max(56, 'A cycle can have at most 56 days.')
 );
 
-export const patternInput = z.object({
-  name: z.string().trim().min(1, 'Give the pattern a name.').max(120),
-  anchorDate: dateKey,
-  cycle: cycleField,
-  accent: z.enum(ACCENTS).default('burgundy'),
-  isActive: z.coerce.boolean().default(false),
-  note: z.string().trim().max(2000).optional(),
-});
+export const PATTERN_END_AFTER_START = 'The end must be on or after the start.';
+
+export const patternInput = z
+  .object({
+    name: z.string().trim().min(1, 'Give the pattern a name.').max(120),
+    anchorDate: dateKey,
+    /** First and last day the pattern produces; empty is open-ended. */
+    startDate: dateKey.optional(),
+    endDate: dateKey.optional(),
+    /** On edit: the day the changes take effect; earlier days keep the old pattern. */
+    applyFrom: dateKey.optional(),
+    cycle: cycleField,
+    accent: z.enum(ACCENTS).default('burgundy'),
+    isActive: z.coerce.boolean().default(false),
+    note: z.string().trim().max(2000).optional(),
+  })
+  .refine((v) => !v.startDate || !v.endDate || v.endDate >= v.startDate, {
+    path: ['endDate'],
+    message: PATTERN_END_AFTER_START,
+  });
 export type PatternInput = z.infer<typeof patternInput>;
 
 export const LAST_DAY_AFTER_FIRST = 'The last day must be on or after the first.';

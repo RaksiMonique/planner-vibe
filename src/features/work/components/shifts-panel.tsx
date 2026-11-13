@@ -17,7 +17,7 @@ function removalCopy(shift: ShiftRow): { title: string; description: string } {
   if (shift.repeatEvery > 0) {
     return {
       title: 'Remove this repeating shift?',
-      description: 'Every day it covers goes back to the pattern.',
+      description: 'Days already past keep it; from today they go back to the pattern.',
     };
   }
   if (shift.endDate) {

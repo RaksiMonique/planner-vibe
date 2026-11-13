@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { formValues, fromError, fromZodError, ok, type ActionResult } from '@/lib/action-result';
 import { requireUser } from '@/lib/auth';
+import { getPreferences } from '@/features/settings/service';
+import { toDateKey, todayInZone } from '@/lib/dates';
 import { holidayInput, leaveInput, patternInput, shiftInput, shiftKindInput } from './schema';
 import {
   createLeave,
@@ -46,6 +48,11 @@ function formAction<T>(
       return fromError(e);
     }
   };
+}
+
+async function todayKeyFor(userId: string): Promise<string> {
+  const prefs = await getPreferences(userId);
+  return toDateKey(todayInZone(prefs.timeZone));
 }
 
 function idOf(values: Record<string, unknown>): string {
@@ -94,7 +101,7 @@ export async function deletePatternAction(formData: FormData): Promise<void> {
   const user = await requireUser();
   const parsed = withId.safeParse(formValues(formData));
   if (!parsed.success) return;
-  await removePattern(user.id, parsed.data.id);
+  await removePattern(user.id, parsed.data.id, await todayKeyFor(user.id));
   refresh();
 }
 
@@ -102,7 +109,7 @@ export async function deleteShiftAction(formData: FormData): Promise<void> {
   const user = await requireUser();
   const parsed = withId.safeParse(formValues(formData));
   if (!parsed.success) return;
-  await removeShift(user.id, parsed.data.id);
+  await removeShift(user.id, parsed.data.id, await todayKeyFor(user.id));
   refresh();
 }
 

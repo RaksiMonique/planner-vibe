@@ -264,6 +264,25 @@ describe('deriveWorkDays', () => {
     expect(days[2].shifts).toEqual([]);
   });
 
+  it('keeps a pattern inside its start and end dates', () => {
+    const days = deriveWorkDays(
+      { ...empty, patterns: [{ ...twoOnTwoOff, startDate: '2026-03-03', endDate: '2026-03-06' }] },
+      '2026-03-01',
+      '2026-03-08'
+    );
+    // 2 and 7 March would be working days of the cycle, but fall outside the span.
+    expect(days.map((d) => d.status)).toEqual([
+      'off',
+      'off',
+      'working',
+      'off',
+      'off',
+      'working',
+      'off',
+      'off',
+    ]);
+  });
+
   it('ignores inactive patterns and overlays several active ones', () => {
     const onCall: PatternSource = {
       id: 'p2',

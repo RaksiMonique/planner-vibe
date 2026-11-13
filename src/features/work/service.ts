@@ -1,4 +1,5 @@
 import 'server-only';
+import { addDays, format, parseISO } from 'date-fns';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { leavePeriods, publicHolidays, shiftKinds, shiftPatterns, shifts } from '@/db/schema';
@@ -40,10 +41,25 @@ export async function getPatternOrThrow(userId: string, id: string): Promise<Shi
   return row;
 }
 
+const dayBefore = (key: string) => format(addDays(parseISO(key), -1), 'yyyy-MM-dd');
+
+/**
+ * Whether a repeating record produced days before `day` that the reader may
+ * have lived by: it must have started, and have existed, before that day.
+ * Creation is read in the server's zone, which is close enough for a day.
+ */
+function ranBefore(start: string | null, createdAt: Date, day: string): boolean {
+  const created = format(createdAt, 'yyyy-MM-dd');
+  const began = start && start > created ? start : created;
+  return began < day;
+}
+
 function patternValues(input: PatternInput) {
   return {
     name: input.name,
     anchorDate: input.anchorDate,
+    startDate: input.startDate ?? null,
+    endDate: input.endDate ?? null,
     cycle: input.cycle.map((d) => ({
       kind: d.kind,
       ...(d.label ? { label: d.label } : {}),
@@ -65,8 +81,31 @@ export async function createPattern(userId: string, input: PatternInput): Promis
   return row;
 }
 
+/**
+ * With `applyFrom`, the days before it keep the old pattern: the existing row
+ * ends the day before and a new row carries the changes from that day on.
+ * Without it, or when the pattern has no days before it, the row is changed
+ * in place.
+ */
 export async function updatePattern(userId: string, id: string, input: PatternInput) {
-  await getPatternOrThrow(userId, id);
+  const current = await getPatternOrThrow(userId, id);
+  const { applyFrom } = input;
+  const hasPast = applyFrom && ranBefore(current.startDate, current.createdAt, applyFrom);
+  const stillRunning = applyFrom && (!current.endDate || current.endDate >= applyFrom);
+  if (applyFrom && hasPast && stillRunning) {
+    await db
+      .update(shiftPatterns)
+      .set({ endDate: dayBefore(applyFrom) })
+      .where(and(eq(shiftPatterns.userId, userId), eq(shiftPatterns.id, id)));
+    await db.insert(shiftPatterns).values({
+      userId,
+      lifeSegmentId: current.lifeSegmentId,
+      ...patternValues(input),
+      startDate: applyFrom,
+      endDate: input.endDate && input.endDate >= applyFrom ? input.endDate : null,
+    });
+    return;
+  }
   await db
     .update(shiftPatterns)
     .set(patternValues(input))
@@ -81,9 +120,23 @@ export async function setPatternActive(userId: string, id: string, isActive: boo
     .where(and(eq(shiftPatterns.userId, userId), eq(shiftPatterns.id, id)));
 }
 
-/** Soft-deletes the pattern; manual shifts that pointed at it keep their date and lose the link. */
-export async function removePattern(userId: string, id: string) {
-  await getPatternOrThrow(userId, id);
+/**
+ * A pattern that has already produced days ends the day before `todayKey`,
+ * so the past keeps what it had; one that has not yet started, or had
+ * already ended, is soft-deleted. Manual shifts that pointed at it keep
+ * their date and lose the link.
+ */
+export async function removePattern(userId: string, id: string, todayKey: string) {
+  const current = await getPatternOrThrow(userId, id);
+  const hasPast = ranBefore(current.startDate, current.createdAt, todayKey);
+  const stillRunning = !current.endDate || current.endDate >= todayKey;
+  if (hasPast && stillRunning) {
+    await db
+      .update(shiftPatterns)
+      .set({ endDate: dayBefore(todayKey) })
+      .where(and(eq(shiftPatterns.userId, userId), eq(shiftPatterns.id, id)));
+    return;
+  }
   await db
     .update(shifts)
     .set({ patternId: null })
@@ -191,7 +244,7 @@ export async function getShiftOrThrow(userId: string, id: string): Promise<Shift
   const [row] = await db
     .select()
     .from(shifts)
-    .where(and(eq(shifts.userId, userId), eq(shifts.id, id)))
+    .where(and(eq(shifts.userId, userId), eq(shifts.id, id), isNull(shifts.deletedAt)))
     .limit(1);
   if (!row) throw new NotFoundError('That shift does not exist.');
   return row;
@@ -225,18 +278,58 @@ export async function createShift(userId: string, input: ShiftInput): Promise<Sh
   return row;
 }
 
+/**
+ * A repeating shift whose first day is moved later is split: the old row
+ * ends the day before the new first day and a new row carries the changes
+ * from there, so the days already worked keep their old times. Anything
+ * else is changed in place.
+ */
 export async function updateShift(userId: string, id: string, input: ShiftInput) {
-  await getShiftOrThrow(userId, id);
+  const current = await getShiftOrThrow(userId, id);
+  const values = await shiftValues(userId, input);
+  const splits =
+    current.repeatEvery > 0 &&
+    ranBefore(current.date, current.createdAt, input.date) &&
+    (!current.repeatUntil || current.repeatUntil >= input.date);
+  if (splits) {
+    await db
+      .update(shifts)
+      .set({ repeatUntil: dayBefore(input.date) })
+      .where(and(eq(shifts.userId, userId), eq(shifts.id, id)));
+    await db.insert(shifts).values({
+      userId,
+      lifeSegmentId: current.lifeSegmentId,
+      patternId: current.patternId,
+      ...values,
+    });
+    return;
+  }
   await db
     .update(shifts)
-    .set(await shiftValues(userId, input))
+    .set(values)
     .where(and(eq(shifts.userId, userId), eq(shifts.id, id)));
 }
 
-/** Manual shifts are overrides, not history, so they are removed outright. */
-export async function removeShift(userId: string, id: string) {
-  await getShiftOrThrow(userId, id);
-  await db.delete(shifts).where(and(eq(shifts.userId, userId), eq(shifts.id, id)));
+/**
+ * A repeating shift that has already produced days ends the day before
+ * `todayKey`, keeping the past; everything else is soft-deleted, so a data
+ * export still shows what was planned.
+ */
+export async function removeShift(userId: string, id: string, todayKey: string) {
+  const current = await getShiftOrThrow(userId, id);
+  const hasPast = current.repeatEvery > 0 && ranBefore(current.date, current.createdAt, todayKey);
+  const stillRunning = !current.repeatUntil || current.repeatUntil >= todayKey;
+  if (hasPast && stillRunning) {
+    await db
+      .update(shifts)
+      .set({ repeatUntil: dayBefore(todayKey) })
+      .where(and(eq(shifts.userId, userId), eq(shifts.id, id)));
+    return;
+  }
+  await db
+    .update(shifts)
+    .set({ deletedAt: new Date() })
+    .where(and(eq(shifts.userId, userId), eq(shifts.id, id)));
 }
 
 // Leave periods

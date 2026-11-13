@@ -45,8 +45,11 @@ export const shiftPatterns = planner.table(
       .notNull()
       .references(() => lifeSegments.id, { onDelete: 'restrict' }),
     name: text('name').notNull(),
-    /** Day 0 of the cycle falls on this date; the cycle repeats from there. */
+    /** Day 0 of the cycle falls on this date; the cycle repeats from there, in both directions. */
     anchorDate: date('anchor_date').notNull(),
+    /** The pattern produces no days before `startDate` or after `endDate`; null is open-ended. */
+    startDate: date('start_date'),
+    endDate: date('end_date'),
     cycle: jsonb('cycle').$type<PatternDay[]>().notNull().default([]),
     accent: accentEnum('accent').notNull().default('burgundy'),
     isActive: boolean('is_active').notNull().default(true),
@@ -109,6 +112,7 @@ export const shifts = planner.table(
     /** No day after this one is produced; null repeats for good. */
     repeatUntil: date('repeat_until'),
     note: text('note'),
+    ...softDelete(),
     ...timestamps(),
   },
   (t) => [index('shifts_user_date_idx').on(t.userId, t.date), ...ownerPolicies('shifts')]

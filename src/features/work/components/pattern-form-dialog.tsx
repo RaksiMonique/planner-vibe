@@ -113,9 +113,52 @@ function PatternForm({
               defaultValue={pattern?.anchorDate ?? defaultAnchorDate}
               required
             />
+            <FieldDescription>
+              Day 1 of the cycle falls here; it repeats both ways.
+            </FieldDescription>
             <FieldError errors={fieldErrors(state, 'anchorDate')} />
           </Field>
         </div>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field data-invalid={hasFieldError(state, 'startDate')}>
+            <FieldLabel htmlFor="pattern-start">Starts on</FieldLabel>
+            <Input
+              id="pattern-start"
+              name="startDate"
+              type="date"
+              defaultValue={pattern?.startDate ?? ''}
+            />
+            <FieldDescription>Leave empty for no start.</FieldDescription>
+            <FieldError errors={fieldErrors(state, 'startDate')} />
+          </Field>
+          <Field data-invalid={hasFieldError(state, 'endDate')}>
+            <FieldLabel htmlFor="pattern-end">Ends on</FieldLabel>
+            <Input
+              id="pattern-end"
+              name="endDate"
+              type="date"
+              defaultValue={pattern?.endDate ?? ''}
+            />
+            <FieldDescription>Leave empty to keep going.</FieldDescription>
+            <FieldError errors={fieldErrors(state, 'endDate')} />
+          </Field>
+        </div>
+        {pattern && (
+          <Field data-invalid={hasFieldError(state, 'applyFrom')}>
+            <FieldLabel htmlFor="pattern-apply-from">Changes apply from</FieldLabel>
+            <Input
+              id="pattern-apply-from"
+              name="applyFrom"
+              type="date"
+              defaultValue={defaultAnchorDate}
+            />
+            <FieldDescription>
+              Days before this keep the old pattern. Clear it to rewrite the whole pattern, past
+              included.
+            </FieldDescription>
+            <FieldError errors={fieldErrors(state, 'applyFrom')} />
+          </Field>
+        )}
 
         <fieldset
           className="flex flex-col gap-2"

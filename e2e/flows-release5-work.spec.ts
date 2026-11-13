@@ -137,9 +137,29 @@ test('a shift can cover several days and come back every week', async ({ page, i
   await expect(cell(day(0))).toHaveAttribute('data-status', 'on_call');
   await expect(row.getByText('On call')).toBeVisible();
 
-  await row.getByRole('button', { name: `Remove ${label}` }).click();
+  // A change from the second week leaves the first week as it was.
+  const renamed = `${label} v2`;
+  await row.getByRole('button', { name: `Edit ${label}` }).click();
+  const edit = page.getByRole('dialog');
+  await edit.getByLabel('First day').fill(day(7));
+  await edit.getByLabel('Label').fill(renamed);
+  await edit.getByRole('button', { name: 'Save changes' }).click();
+  await expect(edit).toBeHidden();
+  await expect(cell(day(0)).getByText(label)).toBeVisible();
+  await expect(cell(day(0)).getByText(renamed)).toHaveCount(0);
+  await expect(cell(day(7)).getByText(renamed)).toBeVisible();
+  await expect(cell(day(14)).getByText(renamed)).toBeVisible();
+  const oldRow = page.locator('li', { hasText: `until ${format(parseISO(day(6)), 'd MMM')}` });
+  await expect(oldRow).toHaveCount(1);
+  await oldRow.getByRole('button', { name: `Remove ${label}` }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Remove' }).click();
   await expect(cell(day(0)).getByText(label)).toHaveCount(0);
+  const newRow = page.locator('li', { hasText: renamed }).filter({ hasText: 'every week' });
+  await expect(newRow).toHaveCount(1);
+  await newRow.getByRole('button', { name: `Remove ${renamed}` }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Remove' }).click();
+  await expect(cell(day(7)).getByText(renamed)).toHaveCount(0);
+
   await expect(cell(day(14)).getByText(label)).toHaveCount(0);
 });
 

@@ -129,6 +129,11 @@ function ShiftForm({
               required
               autoFocus
             />
+            {shift && shift.repeatEvery > 0 && (
+              <FieldDescription>
+                Move this to the day your changes start; earlier days keep what they had.
+              </FieldDescription>
+            )}
             <FieldError errors={fieldErrors(state, 'date')} />
           </Field>
           <Field data-invalid={hasFieldError(state, 'endDate') || lastTooEarly}>

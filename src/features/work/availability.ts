@@ -30,6 +30,9 @@ export type PatternSource = {
   name: string;
   /** Day 0 of the cycle. */
   anchorDate: string;
+  /** No days before `startDate` or after `endDate`; null is open-ended. */
+  startDate?: string | null;
+  endDate?: string | null;
   cycle: PatternDay[];
   accent: Accent;
   isActive: boolean;
@@ -224,7 +227,13 @@ export function deriveWorkDays(sources: WorkSources, from: string, to: string): 
   const patterns = sources.patterns.filter((p) => p.isActive && p.cycle.length > 0);
   const expanded = patterns.map((p) => ({
     pattern: p,
-    byDate: new Map(expandPattern(p, from, to).map((e) => [e.date, e.day])),
+    byDate: new Map(
+      expandPattern(p, from, to)
+        .filter(
+          (e) => (!p.startDate || e.date >= p.startDate) && (!p.endDate || e.date <= p.endDate)
+        )
+        .map((e) => [e.date, e.day])
+    ),
   }));
 
   return dateKeysBetween(from, to).map((date) => {

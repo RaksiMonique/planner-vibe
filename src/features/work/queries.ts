@@ -63,6 +63,7 @@ export async function listShiftsBetween(
     .where(
       and(
         eq(shifts.userId, userId),
+        isNull(shifts.deletedAt),
         lte(shifts.date, to),
         or(
           and(

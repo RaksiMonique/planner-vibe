@@ -62,3 +62,13 @@ export function toDateKey(date: Date): string {
 export function formatLongDate(date: Date): string {
   return format(date, 'EEEE, d MMMM yyyy');
 }
+
+/**
+ * `key` moved by as many days as it took `previous` to reach `next`, so a
+ * last day keeps its distance from a first day that moved. Empty stays empty.
+ */
+export function moveWith(key: string, previous: string, next: string): string {
+  if (!key || !previous || !next) return key;
+  const days = differenceInCalendarDays(parseISO(next), parseISO(previous));
+  return toDateKey(addDays(parseISO(key), days));
+}

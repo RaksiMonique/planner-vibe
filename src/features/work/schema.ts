@@ -76,6 +76,10 @@ export const patternInput = z.object({
 });
 export type PatternInput = z.infer<typeof patternInput>;
 
+export const LAST_DAY_AFTER_FIRST = 'The last day must be on or after the first.';
+export const REPEAT_UNTIL_AFTER_FIRST = 'Repeat until must be on or after the first day.';
+export const LEAVE_END_AFTER_START = 'The end must be on or after the start.';
+
 /** How often a manual shift comes back; 0 is a one-off. */
 export const SHIFT_REPEAT_WEEKS = [0, 1, 2, 3, 4] as const;
 export const SHIFT_REPEAT_LABELS: Record<(typeof SHIFT_REPEAT_WEEKS)[number], string> = {
@@ -113,11 +117,7 @@ export const shiftInput = z
       });
     }
     if (v.endDate && v.endDate < v.date) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['endDate'],
-        message: 'The last day must be on or after the first.',
-      });
+      ctx.addIssue({ code: 'custom', path: ['endDate'], message: LAST_DAY_AFTER_FIRST });
     }
     if (v.repeatWeeks > 0) {
       const most = 7 * v.repeatWeeks;
@@ -130,11 +130,7 @@ export const shiftInput = z
         });
       }
       if (v.repeatUntil && v.repeatUntil < v.date) {
-        ctx.addIssue({
-          code: 'custom',
-          path: ['repeatUntil'],
-          message: 'Repeat until must be on or after the first day.',
-        });
+        ctx.addIssue({ code: 'custom', path: ['repeatUntil'], message: REPEAT_UNTIL_AFTER_FIRST });
       }
     }
   });
@@ -148,10 +144,7 @@ export const leaveInput = z
     endDate: dateKey,
     note: z.string().trim().max(2000).optional(),
   })
-  .refine((v) => v.endDate >= v.startDate, {
-    path: ['endDate'],
-    message: 'The end must be on or after the start.',
-  });
+  .refine((v) => v.endDate >= v.startDate, { path: ['endDate'], message: LEAVE_END_AFTER_START });
 export type LeaveInput = z.infer<typeof leaveInput>;
 
 export const holidayInput = z.object({

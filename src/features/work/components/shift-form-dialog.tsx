@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState, useState } from 'react';
+import { useActionState, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -10,9 +10,12 @@ import { SubmitButton } from '@/components/shared/submit-button';
 import { fieldErrors, hasFieldError } from '@/features/life-segments/components/field-errors';
 import { NativeSelect } from '@/features/tasks/components/native-select';
 import type { ActionResult } from '@/lib/action-result';
+import { moveWith } from '@/lib/dates';
 import { createShiftAction, updateShiftAction } from '../actions';
 import type { Shift } from '../queries';
 import {
+  LAST_DAY_AFTER_FIRST,
+  REPEAT_UNTIL_AFTER_FIRST,
   SHIFT_KIND_LABELS,
   SHIFT_KINDS,
   SHIFT_REPEAT_LABELS,
@@ -64,10 +67,25 @@ function ShiftForm({
   }, null);
   const [kind, setKind] = useState<ShiftKind>(shift?.kind ?? 'work');
   const [firstDay, setFirstDay] = useState(shift?.date ?? defaultDate);
+  const [lastDay, setLastDay] = useState(shift?.endDate ?? '');
   const [repeatWeeks, setRepeatWeeks] = useState(String(shift?.repeatWeeks ?? 0));
+  const [until, setUntil] = useState(shift?.repeatUntil ?? '');
   const repeats = repeatWeeks !== '0';
+  // Phone pickers ignore `min`, so the order of the days is checked here as well.
+  const lastTooEarly = Boolean(lastDay) && lastDay < firstDay;
+  const untilTooEarly = repeats && Boolean(until) && until < firstDay;
+  const lastDayRef = useRef<HTMLInputElement>(null);
+  const untilRef = useRef<HTMLInputElement>(null);
   return (
-    <form action={formAction} className="flex flex-col gap-4">
+    <form
+      action={formAction}
+      className="flex flex-col gap-4"
+      onSubmit={(e) => {
+        if (!lastTooEarly && !untilTooEarly) return;
+        e.preventDefault();
+        (lastTooEarly ? lastDayRef : untilRef).current?.focus();
+      }}
+    >
       {shift && <input type="hidden" name="id" value={shift.id} />}
       <FieldGroup>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -78,23 +96,35 @@ function ShiftForm({
               name="date"
               type="date"
               value={firstDay}
-              onChange={(e) => setFirstDay(e.target.value)}
+              onChange={(e) => {
+                const next = e.target.value;
+                // The block keeps its length when its first day moves.
+                setLastDay((current) => moveWith(current, firstDay, next));
+                setFirstDay(next);
+              }}
               required
               autoFocus
             />
             <FieldError errors={fieldErrors(state, 'date')} />
           </Field>
-          <Field data-invalid={hasFieldError(state, 'endDate')}>
+          <Field data-invalid={hasFieldError(state, 'endDate') || lastTooEarly}>
             <FieldLabel htmlFor="shift-end-date">Last day</FieldLabel>
             <Input
+              ref={lastDayRef}
               id="shift-end-date"
               name="endDate"
               type="date"
-              defaultValue={shift?.endDate ?? ''}
+              value={lastDay}
+              onChange={(e) => setLastDay(e.target.value)}
               min={firstDay || undefined}
+              aria-invalid={lastTooEarly || undefined}
             />
             <FieldDescription>Leave empty for a single day.</FieldDescription>
-            <FieldError errors={fieldErrors(state, 'endDate')} />
+            <FieldError
+              errors={
+                lastTooEarly ? [{ message: LAST_DAY_AFTER_FIRST }] : fieldErrors(state, 'endDate')
+              }
+            />
           </Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -172,20 +202,29 @@ function ShiftForm({
             </NativeSelect>
             <FieldError errors={fieldErrors(state, 'repeatWeeks')} />
           </Field>
-          <Field data-invalid={hasFieldError(state, 'repeatUntil')}>
+          <Field data-invalid={hasFieldError(state, 'repeatUntil') || untilTooEarly}>
             <FieldLabel htmlFor="shift-repeat-until">Repeat until</FieldLabel>
             <Input
+              ref={untilRef}
               id="shift-repeat-until"
               name="repeatUntil"
               type="date"
-              defaultValue={shift?.repeatUntil ?? ''}
+              value={until}
+              onChange={(e) => setUntil(e.target.value)}
               min={firstDay || undefined}
+              aria-invalid={untilTooEarly || undefined}
               disabled={!repeats}
             />
             <FieldDescription>
               {repeats ? 'Leave empty to keep it going.' : 'Only for a shift that repeats.'}
             </FieldDescription>
-            <FieldError errors={fieldErrors(state, 'repeatUntil')} />
+            <FieldError
+              errors={
+                untilTooEarly
+                  ? [{ message: REPEAT_UNTIL_AFTER_FIRST }]
+                  : fieldErrors(state, 'repeatUntil')
+              }
+            />
           </Field>
         </div>
         <Field>

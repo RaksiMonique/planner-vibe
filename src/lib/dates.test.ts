@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { dueStatus, greetingFor, toDateKey, todayInZone, weekDays, weekRange } from './dates';
+import {
+  dueStatus,
+  greetingFor,
+  toDateKey,
+  todayInZone,
+  weekDays,
+  weekRange,
+  moveWith,
+} from './dates';
 
 describe('todayInZone', () => {
   it('uses the local calendar date, not the UTC one', () => {
@@ -54,5 +62,18 @@ describe('greetingFor', () => {
     expect(greetingFor(6)).toBe('Good morning');
     expect(greetingFor(13)).toBe('Good afternoon');
     expect(greetingFor(20)).toBe('Good evening');
+  });
+});
+
+describe('moveWith', () => {
+  it('keeps the distance when the first day moves', () => {
+    expect(moveWith('2027-05-05', '2027-05-03', '2027-05-10')).toBe('2027-05-12');
+    expect(moveWith('2027-05-05', '2027-05-03', '2027-04-28')).toBe('2027-04-30');
+  });
+
+  it('leaves an empty or unanchored date alone', () => {
+    expect(moveWith('', '2027-05-03', '2027-05-10')).toBe('');
+    expect(moveWith('2027-05-05', '', '2027-05-10')).toBe('2027-05-05');
+    expect(moveWith('2027-05-05', '2027-05-03', '')).toBe('2027-05-05');
   });
 });

@@ -50,7 +50,10 @@ test('a shift pattern fills the job calendar and leave takes its days back out',
   await page.getByRole('button', { name: 'Add leave' }).first().click();
   const leave = page.getByRole('dialog');
   await leave.getByLabel('Start').fill(day(4));
+  await leave.getByLabel('End').fill(day(3));
+  await expect(leave.getByText('The end must be on or after the start.')).toBeVisible();
   await leave.getByLabel('End').fill(day(5));
+  await expect(leave.getByText('The end must be on or after the start.')).toBeHidden();
   await leave.getByRole('button', { name: 'Add leave' }).click();
   await expect(leave).toBeHidden();
   await expect(cell(day(4))).toHaveAttribute('data-status', 'leave');
@@ -83,7 +86,18 @@ test('a shift can cover several days and come back every week', async ({ page, i
   await page.getByRole('button', { name: 'Add shift' }).first().click();
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('First day').fill(day(0));
+  // A last day before the first is called out at once and cannot be saved.
+  await dialog.getByLabel('Last day').fill(day(-1));
+  await expect(dialog.getByText('The last day must be on or after the first.')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Add shift' }).click();
+  await expect(dialog.getByLabel('Last day')).toBeFocused();
   await dialog.getByLabel('Last day').fill(day(2));
+  await expect(dialog.getByText('The last day must be on or after the first.')).toBeHidden();
+  // Moving the first day carries the last day along, keeping the block three days long.
+  await dialog.getByLabel('First day').fill(day(7));
+  await expect(dialog.getByLabel('Last day')).toHaveValue(day(9));
+  await dialog.getByLabel('First day').fill(day(0));
+  await expect(dialog.getByLabel('Last day')).toHaveValue(day(2));
   await dialog.getByLabel('Label').fill(label);
   await dialog.getByLabel('Start').fill('20:00');
   await dialog.getByLabel('End').fill('06:00');

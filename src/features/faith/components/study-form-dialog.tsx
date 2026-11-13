@@ -37,6 +37,8 @@ type StudyOption = Pick<BibleStudy, 'id' | 'title' | 'status'>;
 export function StudyFormDialog({
   segments,
   studies,
+  inProgress = [],
+  continueId,
   study,
   defaultSegmentId,
   trigger,
@@ -46,6 +48,10 @@ export function StudyFormDialog({
   segments: SegmentRef[];
   /** Other studies, offered as prerequisites. */
   studies: StudyOption[];
+  /** Studies already under way; a new study is nudged to wait for them. */
+  inProgress?: Array<Pick<BibleStudy, 'id' | 'title'>>;
+  /** The study being continued; a new study comes after it by default. */
+  continueId?: string;
   study?: BibleStudy;
   defaultSegmentId?: string;
   trigger: React.ReactNode;
@@ -65,10 +71,19 @@ export function StudyFormDialog({
             A study, devotional series, spiritual book or course. Notes and passages attach to it.
           </DialogDescription>
         </DialogHeader>
+        {!study && inProgress.length > 0 && (
+          <p className="bg-secondary rounded-lg px-3 py-2 text-sm" data-slot="in-progress-nudge">
+            {inProgress.length === 1
+              ? `“${inProgress[0].title}” is still in progress.`
+              : `${inProgress.length} studies are still in progress: ${inProgress.map((s) => `“${s.title}”`).join(', ')}.`}{' '}
+            Finishing first keeps the shelf short; this one can come after it below.
+          </p>
+        )}
         <StudyForm
           segments={segments}
           studies={studies.filter((s) => s.id !== study?.id)}
           study={study}
+          defaultPrerequisiteId={study ? undefined : continueId}
           defaultSegmentId={defaultSegmentId}
           onDone={() => setOpen(false)}
         />
@@ -81,12 +96,14 @@ function StudyForm({
   segments,
   studies,
   study,
+  defaultPrerequisiteId,
   defaultSegmentId,
   onDone,
 }: {
   segments: SegmentRef[];
   studies: StudyOption[];
   study?: BibleStudy;
+  defaultPrerequisiteId?: string;
   defaultSegmentId?: string;
   onDone: () => void;
 }) {
@@ -171,7 +188,7 @@ function StudyForm({
             <ChoiceSelect
               id="study-prerequisite"
               name="prerequisiteId"
-              defaultValue={study?.prerequisiteId ?? 'none'}
+              defaultValue={study?.prerequisiteId ?? defaultPrerequisiteId ?? 'none'}
               options={[
                 { value: 'none', label: 'Nothing' },
                 ...studies.map((s) => ({ value: s.id, label: s.title })),

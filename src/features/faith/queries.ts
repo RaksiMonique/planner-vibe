@@ -53,16 +53,6 @@ export async function listStudies(
   return rows.map((r) => ({ ...r.study, segment: r.segment }));
 }
 
-/** Highest-priority study not yet started whose prerequisite, if any, is done. */
-export function nextUpStudy(studies: StudyRow[]): StudyRow | undefined {
-  const rank = { high: 0, medium: 1, low: 2 } as const;
-  const byId = new Map(studies.map((s) => [s.id, s]));
-  return studies
-    .filter((s) => s.status === 'not_started')
-    .filter((s) => !s.prerequisiteId || byId.get(s.prerequisiteId)?.status === 'done')
-    .sort((a, b) => rank[a.priority] - rank[b.priority])[0];
-}
-
 export async function getStudy(userId: string, id: string): Promise<StudyDetail | null> {
   const [row] = await db
     .select({ study: bibleStudies, segment: segmentRefColumns })

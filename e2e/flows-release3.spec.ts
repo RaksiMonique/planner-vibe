@@ -2,16 +2,29 @@ import { expect, test } from './test';
 
 const stamp = Date.now().toString(36);
 
-test('create a Bible study and save a passage', async ({ page }) => {
-  const title = `Gospel of Mark ${stamp}`;
+test('create a Bible study and save a passage', async ({ page, isMobile }) => {
+  const title = `Gospel of Mark ${stamp}${isMobile ? ' (phone)' : ''}`;
   await page.goto('/bible');
   await page
     .getByRole('button', { name: /new study/i })
     .first()
     .click();
   await page.getByLabel('Title').fill(title);
+  await page.getByLabel('Status').click();
+  await page.getByRole('option', { name: 'In progress' }).click();
   await page.getByRole('button', { name: 'Create study' }).click();
   await expect(page.getByText(title).first()).toBeVisible();
+
+  // What is open comes first, and a new study is nudged to wait for it.
+  await expect(page.getByText('Continue').first()).toBeVisible();
+  await page
+    .getByRole('button', { name: /new study/i })
+    .first()
+    .click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.locator('[data-slot="in-progress-nudge"]')).toContainText(title);
+  await page.keyboard.press('Escape');
+  await expect(dialog).toBeHidden();
 
   const passage = page.getByLabel('Save a passage');
   await passage.fill('Phil 4:6-7');

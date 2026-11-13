@@ -30,9 +30,9 @@ import {
   listReferences,
   listStudies,
   listStudyOptions,
-  nextUpStudy,
 } from '@/features/faith/queries';
-import { PLAN_STATUS_LABELS, STUDY_STATUS_LABELS, STUDY_STATUSES } from '@/features/faith/schema';
+import { PLAN_STATUS_LABELS, STUDY_STATUS_LABELS } from '@/features/faith/schema';
+import { STUDY_SHELF_ORDER, nextStudy } from '@/features/faith/studies';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import { listSegments } from '@/features/life-segments/service';
 import { getPreferences } from '@/features/settings/service';
@@ -57,7 +57,9 @@ export default async function BiblePage() {
     listPlans(user.id),
     listStudyOptions(user.id),
   ]);
-  const nextUp = nextUpStudy(studies);
+  const next = nextStudy(studies);
+  const nextUp = next?.study;
+  const inProgress = studies.filter((s) => s.status === 'in_progress');
   const favourites = references.filter((r) => r.isFavourite);
   const bookmarks = references.filter((r) => r.isBookmark && !r.isFavourite);
   const otherPlans = plans.filter((p) => p.id !== overview?.plan.id);
@@ -67,6 +69,8 @@ export default async function BiblePage() {
     <StudyFormDialog
       segments={segments}
       studies={studyOptions}
+      inProgress={inProgress.map((s) => ({ id: s.id, title: s.title }))}
+      continueId={next?.mode === 'continue' ? next.study.id : undefined}
       defaultSegmentId={faith?.id}
       trigger={
         <>
@@ -256,7 +260,7 @@ export default async function BiblePage() {
               <CardContent className="flex flex-wrap items-center gap-3">
                 <div className="min-w-0 flex-1">
                   <p className="tracking-eyebrow text-muted-foreground text-xs uppercase">
-                    Next up
+                    {next?.mode === 'continue' ? 'Continue' : 'Next up'}
                   </p>
                   <Link
                     href={`/bible/${nextUp.id}`}
@@ -266,7 +270,7 @@ export default async function BiblePage() {
                   </Link>
                 </div>
                 <Link href={`/bible/${nextUp.id}`} className={cn(buttonVariants({ size: 'sm' }))}>
-                  Open
+                  {next?.mode === 'continue' ? 'Continue' : 'Open'}
                 </Link>
               </CardContent>
             </Card>
@@ -279,7 +283,7 @@ export default async function BiblePage() {
               action={newStudy}
             />
           ) : (
-            STUDY_STATUSES.map((status) => {
+            STUDY_SHELF_ORDER.map((status) => {
               const group = studies.filter((s) => s.status === status);
               if (group.length === 0) return null;
               return (
@@ -293,7 +297,13 @@ export default async function BiblePage() {
                       <StudyCard
                         key={s.id}
                         study={s}
-                        highlight={s.id === nextUp?.id ? 'Next up' : undefined}
+                        highlight={
+                          s.id === nextUp?.id
+                            ? next?.mode === 'continue'
+                              ? 'Continue'
+                              : 'Next up'
+                            : undefined
+                        }
                       />
                     ))}
                   </div>

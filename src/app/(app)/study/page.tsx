@@ -115,7 +115,6 @@ export default async function StudyPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader
-        eyebrow="Faith and Learning"
         title="Study planner"
         description="Subjects, courses and lessons, with a Pomodoro timer that also tracks your time."
         actions={

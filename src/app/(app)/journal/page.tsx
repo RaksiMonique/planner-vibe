@@ -50,7 +50,6 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHeader
-        eyebrow="Reviews and reflection"
         title="Journal"
         description="A few honest lines a day, and three things to be grateful for."
       />

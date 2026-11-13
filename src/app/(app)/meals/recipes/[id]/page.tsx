@@ -33,7 +33,10 @@ export default async function RecipePage({ params }: { params: Promise<{ id: str
   return (
     <>
       <PageHeader
-        crumbs={[{ label: 'Recipes', href: '/meals/recipes' }]}
+        crumbs={[
+          { label: 'Meals', href: '/meals' },
+          { label: 'Recipes', href: '/meals/recipes' },
+        ]}
         title={recipe.title}
         description={recipe.description ?? undefined}
         actions={

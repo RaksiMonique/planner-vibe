@@ -66,7 +66,6 @@ export default async function MoodPage({ searchParams }: { searchParams: Promise
   return (
     <>
       <PageHeader
-        eyebrow="Wellness"
         title="Mood and energy"
         description="A quick check-in each day. Trends appear as the days add up."
       />

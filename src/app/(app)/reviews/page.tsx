@@ -54,7 +54,6 @@ export default async function ReviewsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Reviews and reflection"
         title="Reviews"
         description="Structured, optional check-ins: a weekly reset, and monthly, quarterly and annual looks back."
       />

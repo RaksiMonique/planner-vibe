@@ -46,7 +46,6 @@ export default async function ImportantPage({ searchParams }: { searchParams: Pr
   return (
     <>
       <PageHeader
-        eyebrow="Resources"
         title="Important information"
         description="Emergency contacts, key dates, insurance, medical and household facts, and where documents live."
         actions={

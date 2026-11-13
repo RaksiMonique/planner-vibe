@@ -111,7 +111,6 @@ export default async function GiftsPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader
-        eyebrow="Lifestyle"
         title="Gifts"
         description="Who, which occasion, what it costs, and whether it is bought, wrapped and given."
         actions={

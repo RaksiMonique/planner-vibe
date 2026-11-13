@@ -38,7 +38,6 @@ export default async function SegmentsPage({ searchParams }: PageProps<'/segment
   return (
     <>
       <PageHeader
-        eyebrow="Life Segments"
         title="Segments"
         description="The areas of life everything else belongs to. Archive a segment to hide it without losing its records."
         actions={

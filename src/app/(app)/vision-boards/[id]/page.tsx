@@ -55,7 +55,6 @@ export default async function VisionBoardPage({ params }: { params: Promise<{ id
         <ArrowLeftIcon className="size-4" aria-hidden /> All boards
       </Link>
       <PageHeader
-        crumbs={[{ label: 'Vision boards', href: '/vision-boards' }]}
         eyebrow={board.category ?? undefined}
         title={board.name}
         description={board.description ?? undefined}

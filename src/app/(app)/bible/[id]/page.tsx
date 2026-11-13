@@ -46,7 +46,6 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
         Bible study
       </Link>
       <PageHeader
-        crumbs={[{ label: 'Bible', href: '/bible' }]}
         eyebrow={STUDY_KIND_LABELS[study.kind]}
         title={study.title}
         description={study.description ?? undefined}

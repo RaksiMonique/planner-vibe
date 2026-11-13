@@ -70,7 +70,6 @@ export default async function WorkProjectsPage() {
   return (
     <>
       <PageHeader
-        crumbs={[{ label: 'Job calendar', href: '/work/calendar' }]}
         title="Work projects"
         description={`Projects in your ${segment.name} segment, with their progress worked out from tasks and milestones.`}
         actions={

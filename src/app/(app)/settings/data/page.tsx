@@ -22,7 +22,6 @@ export default async function DataPage() {
   return (
     <>
       <PageHeader
-        crumbs={[{ label: 'Settings', href: '/settings' }]}
         title="Your data"
         description="Bring in the old planner, take a full copy, or start again."
       />

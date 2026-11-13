@@ -62,7 +62,6 @@ export default async function MediaPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader
-        eyebrow="Lifestyle"
         title="Media"
         description="Books, films, series and songs: what you want to get to, what you are in the middle of, and what you thought of it."
         actions={

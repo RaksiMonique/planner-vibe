@@ -55,7 +55,6 @@ export default async function SelfCarePage() {
   return (
     <>
       <PageHeader
-        eyebrow="Wellness"
         title="Self-care"
         description="Skincare and haircare, treatments for the week, appointments, and the products behind them."
         actions={

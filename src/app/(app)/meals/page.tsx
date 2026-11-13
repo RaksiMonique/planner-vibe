@@ -45,7 +45,6 @@ export default async function MealsPage({ searchParams }: { searchParams: Promis
   return (
     <>
       <PageHeader
-        eyebrow="Lifestyle"
         title="Meal planner"
         description="A week of meals from your recipes. The grocery list follows from it."
         actions={

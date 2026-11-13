@@ -66,7 +66,6 @@ export default async function JobCalendarPage({ searchParams }: PageProps<'/work
   return (
     <>
       <PageHeader
-        eyebrow="Work"
         title="Job calendar"
         description="Shift patterns repeat on their own; add one-off or repeating shifts, leave and public holidays and the calendar works out when you are free."
         actions={

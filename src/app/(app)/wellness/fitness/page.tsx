@@ -51,7 +51,6 @@ export default async function FitnessPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHeader
-        eyebrow="Wellness"
         title="Fitness"
         description="Movement for the week, with sleep and water alongside."
       />

@@ -18,7 +18,6 @@ export default async function YearPage({ searchParams }: PageProps<'/year'>) {
   return (
     <>
       <PageHeader
-        eyebrow="Planning"
         title={`Year · ${data.range.key}`}
         description="Annual objectives, the year at a glance, the quarterly breakdown and the yearly reflection."
         actions={

@@ -80,7 +80,6 @@ export default async function BiblePage() {
   return (
     <>
       <PageHeader
-        eyebrow="Faith and Learning"
         title="Bible study"
         description="Today's reading, a devotional, your studies and the verses you keep coming back to."
         actions={

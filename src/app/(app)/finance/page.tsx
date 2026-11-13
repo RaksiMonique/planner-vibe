@@ -100,7 +100,6 @@ export default async function FinancePage() {
   return (
     <>
       <PageHeader
-        eyebrow="Resources"
         title="Financial snapshot"
         description="Savings goals, budgets and what is coming up, all entered by hand. Nothing here connects to a bank or any other service."
         actions={addBudget}

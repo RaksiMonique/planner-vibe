@@ -61,7 +61,6 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHeader
-        eyebrow="Wellness"
         title="Habits"
         description="Small repeated behaviours. Check in daily; streaks and rates follow."
         actions={

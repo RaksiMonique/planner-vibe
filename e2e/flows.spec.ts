@@ -208,11 +208,13 @@ test('quick capture lands in the Inbox and files as a task', async ({ page, isMo
 
 test('the breadcrumb goes back up and the add button follows the reader', async ({ page }) => {
   await page.goto('/settings/data');
-  await page
-    .getByRole('navigation', { name: 'Breadcrumb' })
-    .getByRole('link', { name: 'Settings' })
-    .click();
+  const trail = page.getByRole('navigation', { name: 'Breadcrumb' });
+  await trail.getByRole('link', { name: 'Settings' }).click();
   await expect(page).toHaveURL(/\/settings$/);
+  // A plain page still leads back home.
+  await page.goto('/habits');
+  await trail.getByRole('link', { name: 'Today' }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
 
   // On a long page the header scrolls away and its actions reappear in a dock.
   await page.goto('/goals');

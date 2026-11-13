@@ -35,7 +35,6 @@ export async function NotesPage({
   return (
     <>
       <PageHeader
-        eyebrow="Resources"
         title={kind === 'quote' ? 'Quotes' : 'Notes'}
         description={
           kind === 'quote'

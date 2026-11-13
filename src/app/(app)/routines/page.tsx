@@ -64,7 +64,6 @@ export default async function RoutinesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Planning"
         title="Routines"
         description="Morning, evening and custom sequences, scheduled by weekday and ticked off step by step."
         actions={newDialog}

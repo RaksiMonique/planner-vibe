@@ -31,7 +31,6 @@ export default async function TimeAnalyticsRoute({ searchParams }: { searchParam
   return (
     <>
       <PageHeader
-        eyebrow="Planning"
         title="Time analytics"
         description="Planned blocks against logged time: by day, Life Segment, project and task."
       />

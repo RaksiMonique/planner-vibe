@@ -46,7 +46,6 @@ export default async function GroceriesPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Lifestyle"
         title="Groceries"
         description="Lists built from the meal plan, plus anything you add by hand. Print one before you shop."
         actions={<NewGroceryListForm />}

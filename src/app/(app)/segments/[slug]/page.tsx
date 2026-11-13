@@ -43,7 +43,6 @@ export default async function SegmentPage({ params }: PageProps<'/segments/[slug
   return (
     <>
       <PageHeader
-        crumbs={[{ label: 'Life Segments', href: '/segments' }]}
         title={segment.name}
         description={segment.archivedAt ? 'This segment is archived.' : undefined}
         actions={

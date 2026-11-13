@@ -40,7 +40,6 @@ export default async function VisionBoardsPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Lifestyle"
         title="Vision boards"
         description="Pictures, quotes and links for the life you are building, one board per theme, linked to the goals and projects they inspire."
         actions={createDialog}

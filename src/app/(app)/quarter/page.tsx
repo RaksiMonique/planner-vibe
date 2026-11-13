@@ -18,7 +18,6 @@ export default async function QuarterPage({ searchParams }: PageProps<'/quarter'
   return (
     <>
       <PageHeader
-        eyebrow="Planning"
         title={`Quarter · ${data.range.label}`}
         description="Objectives, milestones, deadlines and progress for the quarter, with its retrospective."
         actions={

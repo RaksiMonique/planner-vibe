@@ -77,7 +77,6 @@ export default async function WellnessJournalPage({
   return (
     <>
       <PageHeader
-        eyebrow="Wellness"
         title="Wellness journal"
         description="How your body and mind are doing, by day, week or month."
         actions={

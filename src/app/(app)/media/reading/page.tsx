@@ -51,7 +51,6 @@ export default async function ReadingPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHeader
-        eyebrow="Faith and Learning"
         title="Reading list"
         description="What you are reading, want to read and have finished. Filter by segment for the spiritual reading list."
         actions={addDialog}

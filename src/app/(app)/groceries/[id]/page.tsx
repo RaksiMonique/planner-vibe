@@ -42,7 +42,6 @@ export default async function GroceryListPage({
   return (
     <>
       <PageHeader
-        crumbs={[{ label: 'Groceries', href: '/groceries' }]}
         title={list.name}
         description={`${bought} of ${list.items.length} bought`}
         actions={

@@ -41,7 +41,6 @@ export default async function PrayerPage({ searchParams }: { searchParams: Promi
   return (
     <>
       <PageHeader
-        eyebrow="Faith and Learning"
         title="Prayer"
         description="Intentions to keep praying for, and a journal of how prayer has gone."
         actions={

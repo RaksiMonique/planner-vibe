@@ -40,7 +40,6 @@ export default async function IntegrationsPage({
   return (
     <>
       <PageHeader
-        crumbs={[{ label: 'Settings', href: '/settings' }]}
         title="Integrations"
         description="Calendar subscriptions, reminder channels and connected accounts."
       />

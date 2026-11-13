@@ -14,7 +14,6 @@ export default async function AnalyticsPage({ searchParams }: PageProps<'/analyt
   return (
     <>
       <PageHeader
-        eyebrow="Reviews and Reflection"
         title="Analytics"
         description="Goal completion, habit consistency, time allocation, projects, mood and life balance for a month, quarter or year."
       />

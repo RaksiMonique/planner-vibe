@@ -59,7 +59,7 @@ export default async function ProjectPage({ params }: PageProps<'/projects/[id]'
   return (
     <>
       <PageHeader
-        eyebrow="Project"
+        crumbs={[{ label: 'Projects', href: '/projects' }]}
         title={project.title}
         actions={
           <>

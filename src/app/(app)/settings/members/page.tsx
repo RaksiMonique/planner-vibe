@@ -16,7 +16,7 @@ export default async function MembersPage() {
   return (
     <div>
       <PageHeader
-        eyebrow="Settings"
+        crumbs={[{ label: 'Settings', href: '/settings' }]}
         title="Members"
         description="Who may enter this planner. Sign-ins wait here until you approve them."
       />

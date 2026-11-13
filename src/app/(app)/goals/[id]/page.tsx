@@ -89,6 +89,7 @@ export default async function GoalPage({ params }: PageProps<'/goals/[id]'>) {
         ))}
       </nav>
       <PageHeader
+        crumbs={[{ label: 'Goals', href: '/goals' }]}
         eyebrow={HORIZON_LABELS[goal.horizon]}
         title={goal.title}
         actions={

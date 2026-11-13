@@ -206,6 +206,26 @@ test('quick capture lands in the Inbox and files as a task', async ({ page, isMo
   await expect(page.getByText(text)).toBeVisible();
 });
 
+test('the breadcrumb goes back up and the add button follows the reader', async ({ page }) => {
+  await page.goto('/settings/data');
+  await page
+    .getByRole('navigation', { name: 'Breadcrumb' })
+    .getByRole('link', { name: 'Settings' })
+    .click();
+  await expect(page).toHaveURL(/\/settings$/);
+
+  // On a long page the header scrolls away and its actions reappear in a dock.
+  await page.goto('/goals');
+  const dock = page.locator('[data-slot="action-dock"]');
+  await expect(dock).toBeHidden();
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  const tall = await page.evaluate(() => document.body.scrollHeight > window.innerHeight * 1.5);
+  if (tall) {
+    await expect(dock).toBeVisible();
+    await expect(dock.getByRole('button', { name: /new goal/i })).toBeVisible();
+  }
+});
+
 test('a capture can be filed as a note', async ({ page, isMobile }) => {
   const text = `Idea for the garden ${stamp}${isMobile ? ' (phone)' : ''}`;
   await page.goto('/dashboard');

@@ -46,7 +46,7 @@ export default async function ProjectsPage({ searchParams }: PageProps<'/project
   return (
     <>
       <PageHeader
-        eyebrow="Life Segments"
+        crumbs={[{ label: 'Life Segments', href: '/segments' }]}
         title="Projects"
         description="Defined bodies of work with an end. Each one can support several goals."
         actions={

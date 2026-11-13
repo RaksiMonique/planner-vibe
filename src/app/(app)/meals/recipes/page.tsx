@@ -47,7 +47,7 @@ export default async function RecipesPage({ searchParams }: { searchParams: Prom
   return (
     <>
       <PageHeader
-        eyebrow="Lifestyle"
+        crumbs={[{ label: 'Meals', href: '/meals' }]}
         title="Recipes"
         description="Ingredients, steps and servings. Plan them into the week and shop from them."
         actions={

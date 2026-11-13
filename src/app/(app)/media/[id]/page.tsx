@@ -72,6 +72,7 @@ export default async function MediaItemPage({ params }: { params: Promise<{ id: 
         {item.kind === 'book' ? 'Reading list' : 'Media'}
       </Link>
       <PageHeader
+        crumbs={[{ label: 'Media', href: '/media' }]}
         eyebrow={MEDIA_KIND_LABELS[item.kind]}
         title={item.title}
         description={item.creator ? `${CREATOR_LABELS[item.kind]}: ${item.creator}` : undefined}

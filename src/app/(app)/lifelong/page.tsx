@@ -23,7 +23,7 @@ export default async function LifelongPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Life Segments"
+        crumbs={[{ label: 'Life Segments', href: '/segments' }]}
         title="Lifelong goals"
         description="Long-term aspirations, the milestones on the way, and the shorter goals that serve them."
         actions={

@@ -31,8 +31,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
   return (
     <>
       <PageHeader
-        eyebrow="Reviews"
-
+        crumbs={[{ label: 'Reviews', href: '/reviews' }]}
         title={review.goalTitle ? `${template.title}: ${review.goalTitle}` : template.title}
         description={`${label}. ${template.description}`}
         actions={

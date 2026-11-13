@@ -50,7 +50,7 @@ export default async function GoalsPage({ searchParams }: PageProps<'/goals'>) {
   return (
     <>
       <PageHeader
-        eyebrow="Life Segments"
+        crumbs={[{ label: 'Life Segments', href: '/segments' }]}
         title="Goals"
         description="Lifelong aspirations broken into annual, quarterly, monthly and weekly outcomes."
         actions={

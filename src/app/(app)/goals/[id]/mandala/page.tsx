@@ -57,6 +57,10 @@ export default async function MandalaPage({ params }: PageProps<'/goals/[id]/man
         ))}
       </nav>
       <PageHeader
+        crumbs={[
+          { label: 'Goals', href: '/goals' },
+          { label: goal.title, href: `/goals/${goal.id}` },
+        ]}
         eyebrow="Mandala view"
         title={goal.title}
         description="The goal in the middle, the goals that serve it around it. Open any cell to see its own grid."

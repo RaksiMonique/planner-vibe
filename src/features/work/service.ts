@@ -1,16 +1,26 @@
 import 'server-only';
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { leavePeriods, publicHolidays, shiftPatterns, shifts } from '@/db/schema';
-import { NotFoundError } from '@/lib/errors';
+import { leavePeriods, publicHolidays, shiftKinds, shiftPatterns, shifts } from '@/db/schema';
+import { NotFoundError, ValidationError } from '@/lib/errors';
 import {
   getWorkSegment,
   type LeavePeriod,
   type PublicHoliday,
   type Shift,
+  type ShiftKindRow,
   type ShiftPattern,
 } from './queries';
-import type { HolidayInput, LeaveInput, PatternInput, ShiftInput } from './schema';
+import {
+  SHIFT_KIND_LABELS,
+  SHIFT_KINDS,
+  type HolidayInput,
+  type LeaveInput,
+  type PatternInput,
+  type ShiftInput,
+  type ShiftKind,
+  type ShiftKindInput,
+} from './schema';
 
 // Shift patterns
 
@@ -84,6 +94,97 @@ export async function removePattern(userId: string, id: string) {
     .where(and(eq(shiftPatterns.userId, userId), eq(shiftPatterns.id, id)));
 }
 
+// Shift kinds of the user's own
+
+const squeeze = (name: string) => name.trim().replace(/\s+/g, ' ');
+
+async function findKindByName(userId: string, name: string): Promise<ShiftKindRow | undefined> {
+  const [row] = await db
+    .select()
+    .from(shiftKinds)
+    .where(and(eq(shiftKinds.userId, userId), sql`lower(${shiftKinds.name}) = lower(${name})`))
+    .limit(1);
+  return row;
+}
+
+export async function getShiftKindOrThrow(userId: string, id: string): Promise<ShiftKindRow> {
+  const [row] = await db
+    .select()
+    .from(shiftKinds)
+    .where(and(eq(shiftKinds.userId, userId), eq(shiftKinds.id, id)))
+    .limit(1);
+  if (!row) throw new NotFoundError('That kind of shift does not exist.');
+  return row;
+}
+
+function assertNotBuiltIn(name: string) {
+  const taken = SHIFT_KINDS.some((k) => SHIFT_KIND_LABELS[k].toLowerCase() === name.toLowerCase());
+  if (taken) throw new ValidationError(`${name} is already a built-in kind.`);
+}
+
+export async function createShiftKind(
+  userId: string,
+  input: ShiftKindInput
+): Promise<ShiftKindRow> {
+  const name = squeeze(input.name);
+  assertNotBuiltIn(name);
+  if (await findKindByName(userId, name))
+    throw new ValidationError('You already have a kind with that name.');
+  const [row] = await db
+    .insert(shiftKinds)
+    .values({ userId, name, countsAs: input.countsAs, accent: input.accent })
+    .returning();
+  return row;
+}
+
+/** Shifts of this kind count as its new `countsAs` from now on. */
+export async function updateShiftKind(userId: string, id: string, input: ShiftKindInput) {
+  await getShiftKindOrThrow(userId, id);
+  const name = squeeze(input.name);
+  assertNotBuiltIn(name);
+  const clash = await findKindByName(userId, name);
+  if (clash && clash.id !== id)
+    throw new ValidationError('You already have a kind with that name.');
+  await db
+    .update(shiftKinds)
+    .set({ name, countsAs: input.countsAs, accent: input.accent })
+    .where(and(eq(shiftKinds.userId, userId), eq(shiftKinds.id, id)));
+  await db
+    .update(shifts)
+    .set({ kind: input.countsAs })
+    .where(and(eq(shifts.userId, userId), eq(shifts.kindId, id)));
+}
+
+/** Its shifts keep their days and fall back to the built-in kind they counted as. */
+export async function removeShiftKind(userId: string, id: string) {
+  await getShiftKindOrThrow(userId, id);
+  await db.delete(shiftKinds).where(and(eq(shiftKinds.userId, userId), eq(shiftKinds.id, id)));
+}
+
+/** The built-in kind a shift counts as, and the user's own kind behind it, if any. */
+async function resolveKind(
+  userId: string,
+  input: ShiftInput
+): Promise<{ kind: ShiftKind; kindId: string | null }> {
+  if (input.newKind) {
+    const name = squeeze(input.newKind);
+    const existing = await findKindByName(userId, name);
+    const own =
+      existing ??
+      (await createShiftKind(userId, {
+        name,
+        countsAs: input.newKindCountsAs,
+        accent: 'burgundy',
+      }));
+    return { kind: own.countsAs, kindId: own.id };
+  }
+  if (input.kind.startsWith('kind:')) {
+    const own = await getShiftKindOrThrow(userId, input.kind.slice(5));
+    return { kind: own.countsAs, kindId: own.id };
+  }
+  return { kind: input.kind as ShiftKind, kindId: null };
+}
+
 // Manual shifts
 
 export async function getShiftOrThrow(userId: string, id: string): Promise<Shift> {
@@ -96,13 +197,15 @@ export async function getShiftOrThrow(userId: string, id: string): Promise<Shift
   return row;
 }
 
-function shiftValues(input: ShiftInput) {
-  const timed = input.kind !== 'off' && input.startTime && input.endTime;
+async function shiftValues(userId: string, input: ShiftInput) {
+  const { kind, kindId } = await resolveKind(userId, input);
+  const timed = kind !== 'off' && input.startTime && input.endTime;
   const repeatUnit = input.repeatUnit === 'none' ? null : input.repeatUnit;
   return {
     date: input.date,
     endDate: input.endDate && input.endDate !== input.date ? input.endDate : null,
-    kind: input.kind,
+    kind,
+    kindId,
     label: input.label || null,
     startTime: timed ? input.startTime!.slice(0, 5) : null,
     endTime: timed ? input.endTime!.slice(0, 5) : null,
@@ -117,7 +220,7 @@ export async function createShift(userId: string, input: ShiftInput): Promise<Sh
   const segment = await getWorkSegment(userId);
   const [row] = await db
     .insert(shifts)
-    .values({ userId, lifeSegmentId: segment.id, ...shiftValues(input) })
+    .values({ userId, lifeSegmentId: segment.id, ...(await shiftValues(userId, input)) })
     .returning();
   return row;
 }
@@ -126,7 +229,7 @@ export async function updateShift(userId: string, id: string, input: ShiftInput)
   await getShiftOrThrow(userId, id);
   await db
     .update(shifts)
-    .set(shiftValues(input))
+    .set(await shiftValues(userId, input))
     .where(and(eq(shifts.userId, userId), eq(shifts.id, id)));
 }
 

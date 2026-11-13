@@ -36,6 +36,8 @@ const manual = (over: Partial<ShiftSource>): ShiftSource => ({
   repeatUnit: 'week',
   repeatUntil: null,
   kind: 'work',
+  kindName: null,
+  kindAccent: null,
   label: null,
   startTime: null,
   endTime: null,
@@ -202,6 +204,23 @@ describe('deriveWorkDays', () => {
     expect(nights[0].shifts[0]).toMatchObject({ source: 'manual', repeats: true, id: 's1' });
     // The pattern still runs on the other days.
     expect(days[0].shifts[0].source).toBe('pattern');
+  });
+
+  it('names and colours a day after the kind of its own', () => {
+    const days = deriveWorkDays(
+      { ...empty, shifts: [manual({ kind: 'on_call', kindName: 'Watch', kindAccent: 'coral' })] },
+      '2026-03-02',
+      '2026-03-02'
+    );
+    expect(days[0]).toMatchObject({ status: 'on_call' });
+    expect(days[0].shifts[0]).toMatchObject({ label: 'Watch', accent: 'coral', kind: 'on_call' });
+    // A label of the shift's own still wins.
+    const labelled = deriveWorkDays(
+      { ...empty, shifts: [manual({ kindName: 'Watch', label: 'Cover for Ana' })] },
+      '2026-03-02',
+      '2026-03-02'
+    );
+    expect(labelled[0].shifts[0].label).toBe('Cover for Ana');
   });
 
   it('lets a day placed by hand beat a repeating shift landing on it', () => {

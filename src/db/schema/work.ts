@@ -58,6 +58,26 @@ export const shiftPatterns = planner.table(
 );
 
 /**
+ * A kind of shift of the user's own, such as "Night" or "Training". It counts
+ * as one of the built-in kinds, which is what gives its days a status.
+ */
+export const shiftKinds = planner.table(
+  'shift_kinds',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: ownerId(),
+    name: text('name').notNull(),
+    countsAs: shiftKindEnum('counts_as').notNull().default('work'),
+    accent: accentEnum('accent').notNull().default('burgundy'),
+    ...timestamps(),
+  },
+  (t) => [
+    uniqueIndex('shift_kinds_user_name_idx').on(t.userId, t.name),
+    ...ownerPolicies('shift_kinds'),
+  ]
+);
+
+/**
  * Shifts placed by hand: a single day, a block of days, or a block that comes
  * back every few weeks. Any day they cover replaces the pattern for that day.
  */
@@ -74,7 +94,10 @@ export const shifts = planner.table(
     date: date('date').notNull(),
     /** Last day of a block of days; null for a single day. */
     endDate: date('end_date'),
+    /** What the day counts as; a custom kind's `countsAs` is copied here. */
     kind: shiftKindEnum('kind').notNull().default('work'),
+    /** The user's own kind, when one was chosen; removing it leaves `kind` behind. */
+    kindId: uuid('kind_id').references(() => shiftKinds.id, { onDelete: 'set null' }),
     label: text('label'),
     startTime: time('start_time'),
     endTime: time('end_time'),

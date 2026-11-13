@@ -77,6 +77,7 @@ test('a shift can cover several days and come back every week', async ({ page, i
   const monday = isMobile ? '2027-06-07' : '2027-05-03';
   const day = daysAfter(monday);
   const label = `Nights ${stamp}`;
+  const kindName = `Watch ${stamp}`;
   const cell = cellOn(page);
 
   await page.goto(`/work/calendar?month=${monday.slice(0, 7)}`);
@@ -99,6 +100,10 @@ test('a shift can cover several days and come back every week', async ({ page, i
   await dialog.getByLabel('First day').fill(day(0));
   await expect(dialog.getByLabel('Last day')).toHaveValue(day(2));
   await dialog.getByLabel('Label').fill(label);
+  // A kind of its own, made on the spot, counting as on call.
+  await dialog.getByRole('button', { name: 'New kind' }).click();
+  await dialog.getByLabel('Kind name').fill(kindName);
+  await dialog.getByLabel('Counts as').selectOption('on_call');
   await dialog.getByLabel('Start').fill('20:00');
   await dialog.getByLabel('End').fill('06:00');
   await dialog.getByLabel('Repeats').selectOption('week');
@@ -109,7 +114,7 @@ test('a shift can cover several days and come back every week', async ({ page, i
 
   // Other tests may leave a pattern running, so the shift is checked by its label.
   for (const offset of [0, 1, 2, 7, 9, 14, 16]) {
-    await expect(cell(day(offset))).toHaveAttribute('data-status', 'working');
+    await expect(cell(day(offset))).toHaveAttribute('data-status', 'on_call');
     await expect(cell(day(offset)).getByText(label)).toBeVisible();
   }
   await expect(cell(day(3)).getByText(label)).toHaveCount(0);
@@ -121,6 +126,17 @@ test('a shift can cover several days and come back every week', async ({ page, i
     .locator('li', { hasText: label })
     .filter({ hasText: `3 days · every week · until ${until}` });
   await expect(row).toHaveCount(1);
+  await expect(row.getByText(kindName)).toBeVisible();
+
+  // The kind is listed on the page; removing it leaves the shift counting as on call.
+  const kindRow = page.locator('li', { hasText: kindName }).filter({ hasText: 'On call' });
+  await expect(kindRow).toHaveCount(1);
+  await kindRow.getByRole('button', { name: `Remove ${kindName}` }).click();
+  await page.getByRole('alertdialog').getByRole('button', { name: 'Remove' }).click();
+  await expect(page.getByText(kindName)).toHaveCount(0);
+  await expect(cell(day(0))).toHaveAttribute('data-status', 'on_call');
+  await expect(row.getByText('On call')).toBeVisible();
+
   await row.getByRole('button', { name: `Remove ${label}` }).click();
   await page.getByRole('alertdialog').getByRole('button', { name: 'Remove' }).click();
   await expect(cell(day(0)).getByText(label)).toHaveCount(0);

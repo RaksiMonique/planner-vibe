@@ -11,6 +11,7 @@ import { LeavePanel } from '@/features/work/components/leave-panel';
 import { PatternFormDialog } from '@/features/work/components/pattern-form-dialog';
 import { PatternsPanel } from '@/features/work/components/patterns-panel';
 import { ShiftFormDialog } from '@/features/work/components/shift-form-dialog';
+import { ShiftKindsPanel } from '@/features/work/components/shift-kinds-panel';
 import { ShiftsPanel } from '@/features/work/components/shifts-panel';
 import { UpcomingAppointments } from '@/features/work/components/upcoming-appointments';
 import { WorkMonthGrid } from '@/features/work/components/work-month-grid';
@@ -18,6 +19,7 @@ import {
   listHolidays,
   listLeavePeriods,
   listPatterns,
+  listShiftKinds,
   listShiftsBetween,
   listUpcomingWorkAppointments,
   listWorkDays,
@@ -48,12 +50,13 @@ export default async function JobCalendarPage({ searchParams }: PageProps<'/work
   const appointmentsFrom = fromZonedTime(`${todayKey}T00:00:00`, prefs.timeZone);
   const appointmentsTo = fromZonedTime(`${toDateKey(addDays(today, 14))}T00:00:00`, prefs.timeZone);
 
-  const [gridDays, stripDays, patterns, manualShifts, leave, holidays, appointments] =
+  const [gridDays, stripDays, patterns, manualShifts, kinds, leave, holidays, appointments] =
     await Promise.all([
       listWorkDays(user.id, gridFrom, gridTo),
       listWorkDays(user.id, todayKey, stripTo),
       listPatterns(user.id, { includeInactive: true }),
       listShiftsBetween(user.id, monthStart, monthEnd),
+      listShiftKinds(user.id),
       listLeavePeriods(user.id, { from: todayKey }),
       listHolidays(user.id, { from: todayKey }),
       listUpcomingWorkAppointments(user.id, appointmentsFrom, appointmentsTo),
@@ -70,6 +73,7 @@ export default async function JobCalendarPage({ searchParams }: PageProps<'/work
           <>
             <ShiftFormDialog
               defaultDate={defaultDate}
+              kinds={kinds}
               variant="outline"
               trigger={
                 <>
@@ -111,9 +115,11 @@ export default async function JobCalendarPage({ searchParams }: PageProps<'/work
             shifts={manualShifts}
             monthLabel={format(first, 'MMMM')}
             defaultDate={defaultDate}
+            kinds={kinds}
             from={monthStart}
             to={monthEnd}
           />
+          <ShiftKindsPanel kinds={kinds} />
           <LeavePanel leave={leave} defaultDate={defaultDate} />
           <HolidaysPanel holidays={holidays} defaultDate={defaultDate} />
           <UpcomingAppointments items={appointments} timeZone={prefs.timeZone} />

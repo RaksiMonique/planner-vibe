@@ -4,12 +4,14 @@ import { revalidatePath } from 'next/cache';
 import { z } from 'zod';
 import { formValues, fromError, fromZodError, ok, type ActionResult } from '@/lib/action-result';
 import { requireUser } from '@/lib/auth';
-import { holidayInput, leaveInput, patternInput, shiftInput } from './schema';
+import { holidayInput, leaveInput, patternInput, shiftInput, shiftKindInput } from './schema';
 import {
   createLeave,
   createPattern,
   createShift,
+  createShiftKind,
   removeHoliday,
+  removeShiftKind,
   removeLeave,
   removePattern,
   removeShift,
@@ -18,6 +20,7 @@ import {
   updateLeave,
   updatePattern,
   updateShift,
+  updateShiftKind,
 } from './service';
 
 /** Shifts also show on the Life Calendar and the dashboard preview. */
@@ -63,6 +66,12 @@ export const createShiftAction = formAction(shiftInput, (userId, data) =>
 export const updateShiftAction = formAction(shiftInput, (userId, data, values) =>
   updateShift(userId, idOf(values), data)
 );
+export const createShiftKindAction = formAction(shiftKindInput, (userId, data) =>
+  createShiftKind(userId, data).then(() => undefined)
+);
+export const updateShiftKindAction = formAction(shiftKindInput, (userId, data, values) =>
+  updateShiftKind(userId, idOf(values), data)
+);
 export const createLeaveAction = formAction(leaveInput, (userId, data) =>
   createLeave(userId, data).then(() => undefined)
 );
@@ -94,6 +103,14 @@ export async function deleteShiftAction(formData: FormData): Promise<void> {
   const parsed = withId.safeParse(formValues(formData));
   if (!parsed.success) return;
   await removeShift(user.id, parsed.data.id);
+  refresh();
+}
+
+export async function deleteShiftKindAction(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const parsed = withId.safeParse(formValues(formData));
+  if (!parsed.success) return;
+  await removeShiftKind(user.id, parsed.data.id);
   refresh();
 }
 

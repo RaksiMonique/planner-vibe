@@ -1,6 +1,7 @@
 'use client';
 
 import { useActionState, useRef, useState } from 'react';
+import { PlusIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DialogClose, DialogFooter } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
@@ -12,8 +13,9 @@ import { NativeSelect } from '@/features/tasks/components/native-select';
 import type { ActionResult } from '@/lib/action-result';
 import { moveWith } from '@/lib/dates';
 import { createShiftAction, updateShiftAction } from '../actions';
-import type { Shift } from '../queries';
+import type { ShiftKindRow, ShiftRow } from '../queries';
 import {
+  KIND_NAME_MAX,
   LAST_DAY_AFTER_FIRST,
   REPEAT_UNTIL_AFTER_FIRST,
   SHIFT_KIND_LABELS,
@@ -30,12 +32,15 @@ import { DialogShell } from './dialog-shell';
 export function ShiftFormDialog({
   shift,
   defaultDate,
+  kinds,
   trigger,
   variant,
   size,
 }: {
-  shift?: Shift;
+  shift?: ShiftRow;
   defaultDate: string;
+  /** The user's own kinds, offered beside the built-in ones. */
+  kinds: ShiftKindRow[];
   trigger: React.ReactNode;
   variant?: React.ComponentProps<typeof Button>['variant'];
   size?: React.ComponentProps<typeof Button>['size'];
@@ -48,7 +53,7 @@ export function ShiftFormDialog({
       variant={variant}
       size={size}
     >
-      {(close) => <ShiftForm shift={shift} defaultDate={defaultDate} close={close} />}
+      {(close) => <ShiftForm shift={shift} defaultDate={defaultDate} kinds={kinds} close={close} />}
     </DialogShell>
   );
 }
@@ -56,10 +61,12 @@ export function ShiftFormDialog({
 function ShiftForm({
   shift,
   defaultDate,
+  kinds,
   close,
 }: {
-  shift?: Shift;
+  shift?: ShiftRow;
   defaultDate: string;
+  kinds: ShiftKindRow[];
   close: () => void;
 }) {
   const action = shift ? updateShiftAction : createShiftAction;
@@ -68,7 +75,17 @@ function ShiftForm({
     if (result.ok) close();
     return result;
   }, null);
-  const [kind, setKind] = useState<ShiftKind>(shift?.kind ?? 'work');
+  // A built-in key, or `kind:<id>` for one of the user's own.
+  const [kindChoice, setKindChoice] = useState(
+    shift?.kindId ? `kind:${shift.kindId}` : (shift?.kind ?? 'work')
+  );
+  const [addingKind, setAddingKind] = useState(false);
+  const [newKindCountsAs, setNewKindCountsAs] = useState<ShiftKind>('work');
+  const chosenKind = kinds.find((k) => `kind:${k.id}` === kindChoice);
+  /** What the days will count as, which also decides whether times make sense. */
+  const kind: ShiftKind = addingKind
+    ? newKindCountsAs
+    : (chosenKind?.countsAs ?? (kindChoice as ShiftKind));
   const [firstDay, setFirstDay] = useState(shift?.date ?? defaultDate);
   const [lastDay, setLastDay] = useState(shift?.endDate ?? '');
   const [repeatUnit, setRepeatUnit] = useState<ShiftRepeatUnit>(
@@ -135,25 +152,79 @@ function ShiftForm({
           </Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field>
-            <FieldLabel htmlFor="shift-kind">Kind</FieldLabel>
-            <NativeSelect
-              id="shift-kind"
-              name="kind"
-              value={kind}
-              onChange={(e) => setKind(e.target.value as ShiftKind)}
-            >
-              {SHIFT_KINDS.map((k) => (
-                <option key={k} value={k}>
-                  {SHIFT_KIND_LABELS[k]}
-                </option>
-              ))}
-            </NativeSelect>
+          <Field data-invalid={hasFieldError(state, 'kind') || hasFieldError(state, 'newKind')}>
+            <div className="flex items-center justify-between gap-2">
+              <FieldLabel htmlFor={addingKind ? 'shift-kind-name' : 'shift-kind'}>Kind</FieldLabel>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                className="text-primary hover:text-primary -my-1"
+                onClick={() => setAddingKind((v) => !v)}
+              >
+                {addingKind ? (
+                  'Pick existing'
+                ) : (
+                  <>
+                    <PlusIcon aria-hidden />
+                    New kind
+                  </>
+                )}
+              </Button>
+            </div>
+            <input type="hidden" name="kind" value={addingKind ? newKindCountsAs : kindChoice} />
+            {addingKind ? (
+              <div className="flex flex-col gap-2">
+                <Input
+                  id="shift-kind-name"
+                  name="newKind"
+                  aria-label="Kind name"
+                  placeholder="Early, Night, Training"
+                  maxLength={KIND_NAME_MAX}
+                  required
+                  autoFocus
+                />
+                <NativeSelect
+                  name="newKindCountsAs"
+                  aria-label="Counts as"
+                  value={newKindCountsAs}
+                  onChange={(e) => setNewKindCountsAs(e.target.value as ShiftKind)}
+                >
+                  {SHIFT_KINDS.map((k) => (
+                    <option key={k} value={k}>
+                      Counts as {SHIFT_KIND_LABELS[k].toLowerCase()}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+            ) : (
+              <NativeSelect
+                id="shift-kind"
+                value={kindChoice}
+                onChange={(e) => setKindChoice(e.target.value)}
+              >
+                {SHIFT_KINDS.map((k) => (
+                  <option key={k} value={k}>
+                    {SHIFT_KIND_LABELS[k]}
+                  </option>
+                ))}
+                {kinds.length > 0 && (
+                  <optgroup label="Your kinds">
+                    {kinds.map((k) => (
+                      <option key={k.id} value={`kind:${k.id}`}>
+                        {k.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+              </NativeSelect>
+            )}
             <FieldDescription>
               {kind === 'off'
                 ? 'Days off, even if the pattern says otherwise.'
                 : 'Replaces whatever the pattern has on those days.'}
             </FieldDescription>
+            <FieldError errors={fieldErrors(state, 'newKind') ?? fieldErrors(state, 'kind')} />
           </Field>
           <Field data-invalid={hasFieldError(state, 'label')}>
             <FieldLabel htmlFor="shift-label">Label</FieldLabel>

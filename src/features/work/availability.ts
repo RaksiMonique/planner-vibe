@@ -45,6 +45,9 @@ export type ShiftSource = {
   repeatUnit: 'week' | 'month';
   repeatUntil: string | null;
   kind: ShiftKind;
+  /** Name and colour of the user's own kind, when the shift has one. */
+  kindName: string | null;
+  kindAccent: Accent | null;
   label: string | null;
   startTime: string | null;
   endTime: string | null;
@@ -242,12 +245,13 @@ export function deriveWorkDays(sources: WorkSources, from: string, to: string): 
     if (rows && rows.length > 0) {
       const shifts: WorkShift[] = rows.map((r) => ({
         kind: r.kind,
-        label: r.label?.trim() || SHIFT_KIND_LABELS[r.kind],
+        label: r.label?.trim() || r.kindName || SHIFT_KIND_LABELS[r.kind],
         start: normaliseTime(r.startTime),
         end: normaliseTime(r.endTime),
         source: 'manual',
         patternId: r.patternId ?? undefined,
         id: r.id,
+        ...(r.kindAccent ? { accent: r.kindAccent } : {}),
         ...(r.repeatEvery > 0 ? { repeats: true } : {}),
       }));
       return { date, status: statusOf(shifts), shifts };

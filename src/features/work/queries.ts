@@ -1,16 +1,20 @@
 import 'server-only';
 import { and, asc, desc, eq, gt, gte, isNull, lte, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { leavePeriods, publicHolidays, shiftPatterns, shifts } from '@/db/schema';
+import { leavePeriods, publicHolidays, shiftKinds, shiftPatterns, shifts } from '@/db/schema';
 import { expandEvents, type CalendarItem } from '@/features/calendar/expand';
 import { listEventsBetween } from '@/features/calendar/queries';
 import { listSegments, type LifeSegment } from '@/features/life-segments/service';
+import type { Accent } from '@/lib/accents';
 import { ValidationError } from '@/lib/errors';
 import { toDateKey } from '@/lib/dates';
 import { deriveWorkDays, shiftCalendarItems, type WorkDay } from './availability';
 
 export type ShiftPattern = typeof shiftPatterns.$inferSelect;
 export type Shift = typeof shifts.$inferSelect;
+export type ShiftKindRow = typeof shiftKinds.$inferSelect;
+/** A shift with the name and colour of its own kind, when it has one. */
+export type ShiftRow = Shift & { kindName: string | null; kindAccent: Accent | null };
 export type LeavePeriod = typeof leavePeriods.$inferSelect;
 export type PublicHoliday = typeof publicHolidays.$inferSelect;
 
@@ -51,10 +55,11 @@ export async function listShiftsBetween(
   userId: string,
   from: string,
   to: string
-): Promise<Shift[]> {
-  return db
-    .select()
+): Promise<ShiftRow[]> {
+  const rows = await db
+    .select({ shift: shifts, kindName: shiftKinds.name, kindAccent: shiftKinds.accent })
     .from(shifts)
+    .leftJoin(shiftKinds, eq(shiftKinds.id, shifts.kindId))
     .where(
       and(
         eq(shifts.userId, userId),
@@ -72,6 +77,16 @@ export async function listShiftsBetween(
       )
     )
     .orderBy(asc(shifts.date), asc(shifts.startTime), asc(shifts.createdAt));
+  return rows.map((r) => ({ ...r.shift, kindName: r.kindName, kindAccent: r.kindAccent }));
+}
+
+/** The user's own shift kinds, by name. */
+export async function listShiftKinds(userId: string): Promise<ShiftKindRow[]> {
+  return db
+    .select()
+    .from(shiftKinds)
+    .where(eq(shiftKinds.userId, userId))
+    .orderBy(asc(shiftKinds.name));
 }
 
 /** Leave periods overlapping [from, to]. */

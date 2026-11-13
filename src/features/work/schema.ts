@@ -80,6 +80,23 @@ export const LAST_DAY_AFTER_FIRST = 'The last day must be on or after the first.
 export const REPEAT_UNTIL_AFTER_FIRST = 'Repeat until must be on or after the first day.';
 export const LEAVE_END_AFTER_START = 'The end must be on or after the start.';
 
+export const KIND_NAME_MAX = 40;
+const kindName = z.string().trim().min(1, 'Name the kind.').max(KIND_NAME_MAX);
+
+/** A kind of the user's own; `countsAs` decides the status of its days. */
+export const shiftKindInput = z.object({
+  name: kindName,
+  countsAs: z.enum(SHIFT_KINDS).default('work'),
+  accent: z.enum(ACCENTS).default('burgundy'),
+});
+export type ShiftKindInput = z.infer<typeof shiftKindInput>;
+
+/** A built-in kind, or `kind:<id>` for one of the user's own. */
+export const kindChoice = z
+  .string()
+  .regex(/^(work|on_call|off|kind:[0-9a-f-]{36})$/, 'Choose a kind.')
+  .default('work');
+
 /** How a manual shift comes back: not at all, or every so many weeks or months. */
 export const SHIFT_REPEAT_UNITS = ['none', 'week', 'month'] as const;
 export type ShiftRepeatUnit = (typeof SHIFT_REPEAT_UNITS)[number];
@@ -111,7 +128,10 @@ export const shiftInput = z
   .object({
     date: dateKey,
     endDate: dateKey.optional(),
-    kind: z.enum(SHIFT_KINDS).default('work'),
+    kind: kindChoice,
+    /** A kind to create on the spot; it replaces `kind`. */
+    newKind: kindName.optional(),
+    newKindCountsAs: z.enum(SHIFT_KINDS).default('work'),
     label: z.string().trim().max(60).optional(),
     startTime: timeKey.optional(),
     endTime: timeKey.optional(),

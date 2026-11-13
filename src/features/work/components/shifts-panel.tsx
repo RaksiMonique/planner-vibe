@@ -6,14 +6,14 @@ import { ConfirmActionButton } from '@/features/life-segments/components/confirm
 import { EmptyNote } from '@/features/dashboard/components/dashboard-card';
 import { deleteShiftAction } from '../actions';
 import { describeShift, expandShift } from '../availability';
-import type { Shift } from '../queries';
+import type { ShiftKindRow, ShiftRow } from '../queries';
 import { SHIFT_KIND_LABELS } from '../schema';
 import { ShiftFormDialog } from './shift-form-dialog';
 import { shiftTimeLabel } from './status';
 
 const day = (key: string, pattern = 'd MMM') => format(parseISO(key), pattern);
 
-function removalCopy(shift: Shift): { title: string; description: string } {
+function removalCopy(shift: ShiftRow): { title: string; description: string } {
   if (shift.repeatEvery > 0) {
     return {
       title: 'Remove this repeating shift?',
@@ -37,12 +37,14 @@ export function ShiftsPanel({
   shifts,
   monthLabel,
   defaultDate,
+  kinds,
   from,
   to,
 }: {
-  shifts: Shift[];
+  shifts: ShiftRow[];
   monthLabel: string;
   defaultDate: string;
+  kinds: ShiftKindRow[];
   /** First and last 'yyyy-MM-dd' of the month on show. */
   from: string;
   to: string;
@@ -54,6 +56,7 @@ export function ShiftsPanel({
         <CardAction>
           <ShiftFormDialog
             defaultDate={defaultDate}
+            kinds={kinds}
             variant="outline"
             size="xs"
             trigger={
@@ -75,7 +78,8 @@ export function ShiftsPanel({
                 start: s.startTime?.slice(0, 5),
                 end: s.endTime?.slice(0, 5),
               });
-              const name = s.label || SHIFT_KIND_LABELS[s.kind];
+              const kindName = s.kindName ?? SHIFT_KIND_LABELS[s.kind];
+              const name = s.label || kindName;
               const firstInMonth = expandShift(s, from, to)[0] ?? s.date;
               const schedule = describeShift(s);
               const removal = removalCopy(s);
@@ -95,13 +99,12 @@ export function ShiftsPanel({
                       {s.note && ` · ${s.note}`}
                     </p>
                   </div>
-                  <Badge variant={s.kind === 'off' ? 'outline' : 'secondary'}>
-                    {SHIFT_KIND_LABELS[s.kind]}
-                  </Badge>
+                  <Badge variant={s.kind === 'off' ? 'outline' : 'secondary'}>{kindName}</Badge>
                   <span className="flex items-center">
                     <ShiftFormDialog
                       shift={s}
                       defaultDate={defaultDate}
+                      kinds={kinds}
                       variant="ghost"
                       size="icon-xs"
                       trigger={

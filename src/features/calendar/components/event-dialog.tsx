@@ -40,8 +40,8 @@ import type { Accent } from '@/lib/accents';
 import type { ActionResult } from '@/lib/action-result';
 import { deleteEvent, saveEvent } from '../actions';
 import { CATEGORY_MAX_LENGTH, categoryLabel, normalizeCategory } from '../categories';
-import { RECURRENCE_LABELS, RECURRENCE_PRESETS } from '../schema';
-import { endAfterStart } from '../times';
+import { END_AFTER_START, RECURRENCE_LABELS, RECURRENCE_PRESETS } from '../schema';
+import { endAfterStart, endsTooEarly } from '../times';
 import type { EventFormValues } from '../service';
 
 export type CalendarOption = { id: string; name: string; accent: Accent };
@@ -117,6 +117,9 @@ function EventForm({
   const [allDay, setAllDay] = useState(values.isAllDay ?? false);
   const [start, setStart] = useState(values.startsAt ?? '');
   const [end, setEnd] = useState(values.endsAt ?? '');
+  // Phone pickers ignore `min`, so the rule is checked here as well.
+  const endTooEarly = !allDay && endsTooEarly(start, end);
+  const endRef = useRef<HTMLInputElement>(null);
   const [deleting, setDeleting] = useState(false);
   const [category, setCategory] = useState(values.category ?? 'general');
   const [addingCategory, setAddingCategory] = useState(false);
@@ -145,7 +148,15 @@ function EventForm({
   }
 
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form
+      action={action}
+      className="flex flex-col gap-4"
+      onSubmit={(e) => {
+        if (!endTooEarly) return;
+        e.preventDefault();
+        endRef.current?.focus();
+      }}
+    >
       {values.id && <input type="hidden" name="id" value={values.id} />}
       {values.captureId && <input type="hidden" name="captureId" value={values.captureId} />}
       <FieldGroup>
@@ -242,15 +253,19 @@ function EventForm({
             <Field>
               <FieldLabel htmlFor="event-end">Ends</FieldLabel>
               <Input
+                ref={endRef}
                 id="event-end"
                 name="endsAt"
                 type="datetime-local"
                 value={end}
                 min={start || undefined}
+                aria-invalid={endTooEarly || undefined}
                 onChange={(e) => setEnd(e.target.value)}
                 required
               />
-              <FieldError errors={fieldErrors(state, 'endsAt')} />
+              <FieldError
+                errors={endTooEarly ? [{ message: END_AFTER_START }] : fieldErrors(state, 'endsAt')}
+              />
             </Field>
           </div>
         )}

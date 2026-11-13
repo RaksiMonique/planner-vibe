@@ -19,6 +19,8 @@ const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a date.');
 /** `datetime-local` value, interpreted in the user's time zone. */
 const localDateTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/, 'Choose a time.');
 
+export const END_AFTER_START = 'The end must be after the start.';
+
 export const eventInput = z
   .object({
     id: z.uuid().optional(),
@@ -59,11 +61,7 @@ export const eventInput = z
     if (!v.endsAt)
       ctx.addIssue({ code: 'custom', path: ['endsAt'], message: 'Choose an end time.' });
     if (v.startsAt && v.endsAt && v.endsAt <= v.startsAt) {
-      ctx.addIssue({
-        code: 'custom',
-        path: ['endsAt'],
-        message: 'The end must be after the start.',
-      });
+      ctx.addIssue({ code: 'custom', path: ['endsAt'], message: END_AFTER_START });
     }
   });
 export type EventInput = z.infer<typeof eventInput>;

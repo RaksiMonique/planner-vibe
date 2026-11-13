@@ -30,6 +30,13 @@ test('an event takes a category of its own, which Settings can rename', async ({
   await dialog.getByLabel('Starts').fill('2030-01-15T14:00');
   await expect(dialog.getByLabel('Ends')).toHaveValue('2030-01-15T15:00');
   await expect(dialog.getByLabel('Ends')).toHaveAttribute('min', '2030-01-15T14:00');
+  // An end before the start is called out at once and cannot be saved.
+  await dialog.getByLabel('Ends').fill('2030-01-15T13:00');
+  await expect(dialog.getByText('The end must be after the start.')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Create event' }).click();
+  await expect(dialog.getByLabel('Ends')).toBeFocused();
+  await dialog.getByLabel('Ends').fill('2030-01-15T15:30');
+  await expect(dialog.getByText('The end must be after the start.')).toBeHidden();
   await dialog.getByRole('button', { name: 'New category' }).click();
   await dialog.getByLabel('Category name').fill(category);
   await dialog.getByRole('button', { name: 'Create event' }).click();

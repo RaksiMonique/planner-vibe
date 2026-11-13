@@ -17,3 +17,8 @@ export function endAfterStart(end: string, previousStart: string, nextStart: str
     : DEFAULT_MINUTES;
   return format(addMinutes(parseISO(nextStart), minutes), LOCAL);
 }
+
+/** True once both times are set and the end is not after the start. */
+export function endsTooEarly(start: string, end: string): boolean {
+  return Boolean(start && end) && end <= start;
+}

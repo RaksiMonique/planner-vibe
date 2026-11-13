@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { SubmitButton } from '@/components/shared/submit-button';
 import type { LifeSegment } from '@/features/life-segments/service';
 import { NativeSelect } from '@/features/tasks/components/native-select';
-import { convertCaptureToTaskAction, removeCaptureAction } from '../actions';
+import { convertCaptureAction, removeCaptureAction } from '../actions';
 import type { Capture } from '../queries';
 
 export function Inbox({ captures, segments }: { captures: Capture[]; segments: LifeSegment[] }) {
@@ -30,7 +30,7 @@ export function Inbox({ captures, segments }: { captures: Capture[]; segments: L
 
 function InboxItem({ capture, segments }: { capture: Capture; segments: LifeSegment[] }) {
   const [filing, setFiling] = useState(false);
-  const [state, action] = useActionState(convertCaptureToTaskAction, undefined);
+  const [state, action] = useActionState(convertCaptureAction, undefined);
   const [removing, startRemove] = useTransition();
 
   return (
@@ -65,8 +65,11 @@ function InboxItem({ capture, segments }: { capture: Capture; segments: LifeSegm
               </option>
             ))}
           </NativeSelect>
-          <SubmitButton size="sm" pendingLabel="Filing…">
+          <SubmitButton size="sm" name="as" value="task" pendingLabel="Filing…">
             File as task
+          </SubmitButton>
+          <SubmitButton size="sm" variant="outline" name="as" value="note" pendingLabel="Filing…">
+            File as note
           </SubmitButton>
           <Button type="button" size="sm" variant="ghost" onClick={() => setFiling(false)}>
             Cancel
@@ -78,7 +81,7 @@ function InboxItem({ capture, segments }: { capture: Capture; segments: LifeSegm
       ) : (
         <div className="flex flex-wrap items-center gap-1">
           <Button type="button" size="xs" variant="secondary" onClick={() => setFiling(true)}>
-            File as task
+            File as task or note
           </Button>
           <Link
             href={`/calendar?capture=${capture.id}`}

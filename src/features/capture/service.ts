@@ -3,6 +3,7 @@ import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db';
 import { captures } from '@/db/schema';
 import { createTask, type TaskContext } from '@/features/tasks/service';
+import { createNote } from '@/features/notes/service';
 import { NotFoundError } from '@/lib/errors';
 import type { Capture } from './queries';
 
@@ -72,6 +73,19 @@ export async function convertCaptureToTask(
   );
   await markCaptureConverted(userId, id, 'task', task.id);
   return task;
+}
+
+/** The capture's text becomes the body of a note in the chosen segment. */
+export async function convertCaptureToNote(userId: string, id: string, lifeSegmentId: string) {
+  const capture = await getCaptureOrThrow(userId, id);
+  const note = await createNote(userId, {
+    lifeSegmentId,
+    kind: 'note',
+    content: capture.text,
+    isPinned: false,
+  });
+  await markCaptureConverted(userId, id, 'note', note.id);
+  return note;
 }
 
 /** Sticky notes are captures pinned to a day (instructions.md 7.6). */

@@ -16,6 +16,7 @@ import { captureInput, convertCaptureInput, stickyInput } from './schema';
 import {
   addCapture,
   addPinnedCapture,
+  convertCaptureToNote,
   convertCaptureToTask,
   removeCapture,
   setCapturePinnedDate,
@@ -50,7 +51,8 @@ export async function removeCaptureAction(id: string): Promise<ActionResult<unde
   }
 }
 
-export async function convertCaptureToTaskAction(
+/** Files a capture as a task or a note, whichever button submitted the form. */
+export async function convertCaptureAction(
   _prev: CaptureFormState,
   formData: FormData
 ): Promise<CaptureFormState> {
@@ -61,6 +63,11 @@ export async function convertCaptureToTaskAction(
       return parsed.error.issues[0]?.path[0] === 'id'
         ? fail('Which capture?')
         : fromZodError(parsed.error);
+    if (parsed.data.as === 'note') {
+      const note = await convertCaptureToNote(user.id, parsed.data.id, parsed.data.lifeSegmentId);
+      revalidatePath('/', 'layout');
+      return ok({ id: note.id });
+    }
     const prefs = await getPreferences(user.id);
     const task = await convertCaptureToTask(
       user.id,

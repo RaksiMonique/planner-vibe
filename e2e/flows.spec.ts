@@ -187,8 +187,9 @@ test('pickers list the most used segments and projects first', async ({ page }) 
   expect(projects.indexOf(busy.project)).toBeLessThan(projects.indexOf(quiet.project));
 });
 
-test('quick capture lands in the Inbox and files as a task', async ({ page }) => {
-  const text = `Buy stamps ${stamp}`;
+test('quick capture lands in the Inbox and files as a task', async ({ page, isMobile }) => {
+  // Desktop and mobile share the Inbox, so each captures its own text.
+  const text = `Buy stamps ${stamp}${isMobile ? ' (phone)' : ''}`;
   await page.goto('/dashboard');
   const input = page.getByLabel('Quick capture');
   await input.fill(text);
@@ -196,12 +197,30 @@ test('quick capture lands in the Inbox and files as a task', async ({ page }) =>
   const item = page.locator('li', { hasText: text }).first();
   await expect(item).toBeVisible();
 
-  await item.getByRole('button', { name: /file/i }).click();
+  await item.getByRole('button', { name: 'File as task or note' }).click();
   await item.getByLabel('Life Segment').selectOption({ label: 'Finance' });
-  await item.getByRole('button', { name: /file/i }).last().click();
+  await item.getByRole('button', { name: 'File as task' }).click();
   await expect(page.locator('li', { hasText: text })).toHaveCount(0);
 
   await page.goto('/tasks?segment=finance');
+  await expect(page.getByText(text)).toBeVisible();
+});
+
+test('a capture can be filed as a note', async ({ page, isMobile }) => {
+  const text = `Idea for the garden ${stamp}${isMobile ? ' (phone)' : ''}`;
+  await page.goto('/dashboard');
+  const input = page.getByLabel('Quick capture');
+  await input.fill(text);
+  await input.press('Enter');
+  const item = page.locator('li', { hasText: text }).first();
+  await expect(item).toBeVisible();
+
+  await item.getByRole('button', { name: 'File as task or note' }).click();
+  await item.getByLabel('Life Segment').selectOption({ label: 'Finance' });
+  await item.getByRole('button', { name: 'File as note' }).click();
+  await expect(page.locator('li', { hasText: text })).toHaveCount(0);
+
+  await page.goto('/notes?segment=finance');
   await expect(page.getByText(text)).toBeVisible();
 });
 

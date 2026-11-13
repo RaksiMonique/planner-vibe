@@ -8,6 +8,8 @@ export const convertCaptureInput = z.object({
   id: z.uuid(),
   lifeSegmentId: z.uuid('Choose a Life Segment.'),
   title: z.string().trim().min(1).max(200).optional(),
+  /** What the capture becomes; the Inbox offers both. */
+  as: z.enum(['task', 'note']).default('task'),
 });
 
 /** A sticky note: a capture pinned to a day on the time-blocking view. */

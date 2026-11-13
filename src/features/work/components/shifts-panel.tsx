@@ -14,7 +14,7 @@ import { shiftTimeLabel } from './status';
 const day = (key: string, pattern = 'd MMM') => format(parseISO(key), pattern);
 
 function removalCopy(shift: Shift): { title: string; description: string } {
-  if (shift.repeatWeeks > 0) {
+  if (shift.repeatEvery > 0) {
     return {
       title: 'Remove this repeating shift?',
       description: 'Every day it covers goes back to the pattern.',

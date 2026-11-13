@@ -32,7 +32,8 @@ const manual = (over: Partial<ShiftSource>): ShiftSource => ({
   id: 's1',
   date: '2026-03-02',
   endDate: null,
-  repeatWeeks: 0,
+  repeatEvery: 0,
+  repeatUnit: 'week',
   repeatUntil: null,
   kind: 'work',
   label: null,
@@ -92,7 +93,7 @@ describe('expandShift', () => {
     const weekly = manual({
       date: '2026-03-02',
       endDate: '2026-03-04',
-      repeatWeeks: 1,
+      repeatEvery: 1,
       repeatUntil: '2026-03-17',
     });
     expect(expandShift(weekly, '2026-03-01', '2026-03-31')).toEqual([
@@ -108,7 +109,7 @@ describe('expandShift', () => {
   });
 
   it('keeps the weekday when the range starts long after the first block', () => {
-    const fortnightly = manual({ date: '2026-03-02', repeatWeeks: 2 });
+    const fortnightly = manual({ date: '2026-03-02', repeatEvery: 2 });
     // 2 Mar 2026 is a Monday; every other Monday a year later is 1, 15 and 29 Mar 2027.
     expect(expandShift(fortnightly, '2027-03-01', '2027-03-31')).toEqual([
       '2027-03-01',
@@ -118,12 +119,43 @@ describe('expandShift', () => {
   });
 
   it('includes a block that began before the range', () => {
-    const weekly = manual({ date: '2026-03-02', endDate: '2026-03-04', repeatWeeks: 1 });
+    const weekly = manual({ date: '2026-03-02', endDate: '2026-03-04', repeatEvery: 1 });
     expect(expandShift(weekly, '2026-03-10', '2026-03-11')).toEqual(['2026-03-10', '2026-03-11']);
   });
 
+  it('comes back every six weeks', () => {
+    const sixWeekly = manual({ date: '2026-03-02', repeatEvery: 6 });
+    expect(expandShift(sixWeekly, '2026-03-01', '2026-06-30')).toEqual([
+      '2026-03-02',
+      '2026-04-13',
+      '2026-05-25',
+    ]);
+  });
+
+  it('keeps its day of the month when monthly, landing on the last day of short months', () => {
+    const monthly = manual({ date: '2026-01-31', repeatEvery: 1, repeatUnit: 'month' });
+    expect(expandShift(monthly, '2026-01-01', '2026-04-30')).toEqual([
+      '2026-01-31',
+      '2026-02-28',
+      '2026-03-31',
+      '2026-04-30',
+    ]);
+    const quarterly = manual({
+      date: '2026-01-15',
+      endDate: '2026-01-16',
+      repeatEvery: 3,
+      repeatUnit: 'month',
+    });
+    expect(expandShift(quarterly, '2027-01-01', '2027-04-30')).toEqual([
+      '2027-01-15',
+      '2027-01-16',
+      '2027-04-15',
+      '2027-04-16',
+    ]);
+  });
+
   it('is empty once the end date has passed', () => {
-    const ended = manual({ date: '2026-03-02', repeatWeeks: 1, repeatUntil: '2026-03-20' });
+    const ended = manual({ date: '2026-03-02', repeatEvery: 1, repeatUntil: '2026-03-20' });
     expect(expandShift(ended, '2026-04-01', '2026-04-30')).toEqual([]);
   });
 });
@@ -135,13 +167,15 @@ describe('describeShift', () => {
 
   it('spells out blocks, repeats and the end date', () => {
     expect(describeShift(manual({ endDate: '2026-03-04' }))).toBe('3 days');
-    expect(describeShift(manual({ repeatWeeks: 1 }))).toBe('every week');
+    expect(describeShift(manual({ repeatEvery: 1 }))).toBe('every week');
     expect(
-      describeShift(manual({ endDate: '2026-03-03', repeatWeeks: 2, repeatUntil: '2026-05-20' }))
+      describeShift(manual({ endDate: '2026-03-03', repeatEvery: 2, repeatUntil: '2026-05-20' }))
     ).toBe('2 days · every 2 weeks · until 20 May');
-    expect(describeShift(manual({ repeatWeeks: 4, repeatUntil: '2027-01-04' }))).toBe(
+    expect(describeShift(manual({ repeatEvery: 4, repeatUntil: '2027-01-04' }))).toBe(
       'every 4 weeks · until 4 Jan 2027'
     );
+    expect(describeShift(manual({ repeatEvery: 1, repeatUnit: 'month' }))).toBe('every month');
+    expect(describeShift(manual({ repeatEvery: 6, repeatUnit: 'month' }))).toBe('every 6 months');
   });
 });
 
@@ -152,7 +186,7 @@ describe('deriveWorkDays', () => {
         ...empty,
         patterns: [twoOnTwoOff],
         shifts: [
-          manual({ date: '2026-03-04', endDate: '2026-03-05', repeatWeeks: 1, label: 'Nights' }),
+          manual({ date: '2026-03-04', endDate: '2026-03-05', repeatEvery: 1, label: 'Nights' }),
         ],
       },
       '2026-03-02',
@@ -175,7 +209,7 @@ describe('deriveWorkDays', () => {
       {
         ...empty,
         shifts: [
-          manual({ id: 'series', date: '2026-03-02', repeatWeeks: 1, label: 'Nights' }),
+          manual({ id: 'series', date: '2026-03-02', repeatEvery: 1, label: 'Nights' }),
           manual({ id: 'swap', date: '2026-03-09', kind: 'off', label: 'Swapped' }),
         ],
       },
@@ -360,7 +394,7 @@ describe('shiftCalendarItems', () => {
     expect(
       shiftCalendarItems(
         deriveWorkDays(
-          { ...empty, shifts: [manual({ repeatWeeks: 1 })] },
+          { ...empty, shifts: [manual({ repeatEvery: 1 })] },
           '2026-03-02',
           '2026-03-02'
         ),

@@ -18,9 +18,12 @@ import {
   REPEAT_UNTIL_AFTER_FIRST,
   SHIFT_KIND_LABELS,
   SHIFT_KINDS,
-  SHIFT_REPEAT_LABELS,
-  SHIFT_REPEAT_WEEKS,
+  SHIFT_REPEAT_MAX,
+  SHIFT_REPEAT_UNIT_LABELS,
+  SHIFT_REPEAT_UNITS,
+  repeatLabel,
   type ShiftKind,
+  type ShiftRepeatUnit,
 } from '../schema';
 import { DialogShell } from './dialog-shell';
 
@@ -68,9 +71,13 @@ function ShiftForm({
   const [kind, setKind] = useState<ShiftKind>(shift?.kind ?? 'work');
   const [firstDay, setFirstDay] = useState(shift?.date ?? defaultDate);
   const [lastDay, setLastDay] = useState(shift?.endDate ?? '');
-  const [repeatWeeks, setRepeatWeeks] = useState(String(shift?.repeatWeeks ?? 0));
+  const [repeatUnit, setRepeatUnit] = useState<ShiftRepeatUnit>(
+    shift && shift.repeatEvery > 0 ? shift.repeatUnit : 'none'
+  );
+  const [repeatEvery, setRepeatEvery] = useState(String(shift?.repeatEvery || 1));
   const [until, setUntil] = useState(shift?.repeatUntil ?? '');
-  const repeats = repeatWeeks !== '0';
+  const repeats = repeatUnit !== 'none';
+  const everyLabel = repeats ? repeatLabel(Number(repeatEvery) || 1, repeatUnit) : '';
   // Phone pickers ignore `min`, so the order of the days is checked here as well.
   const lastTooEarly = Boolean(lastDay) && lastDay < firstDay;
   const untilTooEarly = repeats && Boolean(until) && until < firstDay;
@@ -186,22 +193,44 @@ function ShiftForm({
           </Field>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <Field data-invalid={hasFieldError(state, 'repeatWeeks')}>
+          <Field data-invalid={hasFieldError(state, 'repeatUnit')}>
             <FieldLabel htmlFor="shift-repeat">Repeats</FieldLabel>
             <NativeSelect
               id="shift-repeat"
-              name="repeatWeeks"
-              value={repeatWeeks}
-              onChange={(e) => setRepeatWeeks(e.target.value)}
+              name="repeatUnit"
+              value={repeatUnit}
+              onChange={(e) => setRepeatUnit(e.target.value as ShiftRepeatUnit)}
             >
-              {SHIFT_REPEAT_WEEKS.map((weeks) => (
-                <option key={weeks} value={weeks}>
-                  {SHIFT_REPEAT_LABELS[weeks]}
+              {SHIFT_REPEAT_UNITS.map((unit) => (
+                <option key={unit} value={unit}>
+                  {SHIFT_REPEAT_UNIT_LABELS[unit]}
                 </option>
               ))}
             </NativeSelect>
-            <FieldError errors={fieldErrors(state, 'repeatWeeks')} />
+            <FieldError errors={fieldErrors(state, 'repeatUnit')} />
           </Field>
+          <Field data-invalid={hasFieldError(state, 'repeatEvery')}>
+            <FieldLabel htmlFor="shift-repeat-every">Every</FieldLabel>
+            <Input
+              id="shift-repeat-every"
+              name="repeatEvery"
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={SHIFT_REPEAT_MAX}
+              value={repeatEvery}
+              onChange={(e) => setRepeatEvery(e.target.value)}
+              disabled={!repeats}
+            />
+            <FieldDescription>
+              {repeats
+                ? everyLabel.charAt(0).toUpperCase() + everyLabel.slice(1)
+                : 'How many weeks or months apart.'}
+            </FieldDescription>
+            <FieldError errors={fieldErrors(state, 'repeatEvery')} />
+          </Field>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2">
           <Field data-invalid={hasFieldError(state, 'repeatUntil') || untilTooEarly}>
             <FieldLabel htmlFor="shift-repeat-until">Repeat until</FieldLabel>
             <Input

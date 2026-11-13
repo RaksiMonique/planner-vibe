@@ -61,11 +61,11 @@ export async function listShiftsBetween(
         lte(shifts.date, to),
         or(
           and(
-            eq(shifts.repeatWeeks, 0),
+            eq(shifts.repeatEvery, 0),
             gte(sql`coalesce(${shifts.endDate}, ${shifts.date})`, from)
           ),
           and(
-            gt(shifts.repeatWeeks, 0),
+            gt(shifts.repeatEvery, 0),
             or(isNull(shifts.repeatUntil), gte(shifts.repeatUntil, from))
           )
         )

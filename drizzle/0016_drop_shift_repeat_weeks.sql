@@ -1,0 +1,1 @@
+ALTER TABLE "planner"."shifts" DROP COLUMN "repeat_weeks";

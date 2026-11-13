@@ -80,15 +80,26 @@ export const LAST_DAY_AFTER_FIRST = 'The last day must be on or after the first.
 export const REPEAT_UNTIL_AFTER_FIRST = 'Repeat until must be on or after the first day.';
 export const LEAVE_END_AFTER_START = 'The end must be on or after the start.';
 
-/** How often a manual shift comes back; 0 is a one-off. */
-export const SHIFT_REPEAT_WEEKS = [0, 1, 2, 3, 4] as const;
-export const SHIFT_REPEAT_LABELS: Record<(typeof SHIFT_REPEAT_WEEKS)[number], string> = {
-  0: 'Does not repeat',
-  1: 'Every week',
-  2: 'Every 2 weeks',
-  3: 'Every 3 weeks',
-  4: 'Every 4 weeks',
+/** How a manual shift comes back: not at all, or every so many weeks or months. */
+export const SHIFT_REPEAT_UNITS = ['none', 'week', 'month'] as const;
+export type ShiftRepeatUnit = (typeof SHIFT_REPEAT_UNITS)[number];
+export const SHIFT_REPEAT_UNIT_LABELS: Record<ShiftRepeatUnit, string> = {
+  none: 'Does not repeat',
+  week: 'Weekly',
+  month: 'Monthly',
 };
+export const SHIFT_REPEAT_MAX = 52;
+
+/** "every week", "every 6 weeks", "every month"; '' for a one-off. */
+export function repeatLabel(every: number, unit: 'week' | 'month'): string {
+  if (every <= 0) return '';
+  return every === 1 ? `every ${unit}` : `every ${every} ${unit}s`;
+}
+
+/** The most days a block can cover before its repeats would overlap. */
+export function repeatSpanLimit(every: number, unit: 'week' | 'month'): number {
+  return (unit === 'month' ? 28 : 7) * every;
+}
 
 /** Days in the block from `date` to `endDate` inclusive; 1 without an end. */
 export function shiftSpanDays(date: string, endDate?: string | null): number {
@@ -104,7 +115,8 @@ export const shiftInput = z
     label: z.string().trim().max(60).optional(),
     startTime: timeKey.optional(),
     endTime: timeKey.optional(),
-    repeatWeeks: z.coerce.number().int().min(0).max(4).default(0),
+    repeatUnit: z.enum(SHIFT_REPEAT_UNITS).default('none'),
+    repeatEvery: z.coerce.number().int().min(1).max(SHIFT_REPEAT_MAX).default(1),
     repeatUntil: dateKey.optional(),
     note: z.string().trim().max(2000).optional(),
   })
@@ -119,14 +131,14 @@ export const shiftInput = z
     if (v.endDate && v.endDate < v.date) {
       ctx.addIssue({ code: 'custom', path: ['endDate'], message: LAST_DAY_AFTER_FIRST });
     }
-    if (v.repeatWeeks > 0) {
-      const most = 7 * v.repeatWeeks;
+    if (v.repeatUnit !== 'none') {
+      const most = repeatSpanLimit(v.repeatEvery, v.repeatUnit);
       if (shiftSpanDays(v.date, v.endDate) > most) {
-        const every = v.repeatWeeks === 1 ? 'week' : `${v.repeatWeeks} weeks`;
+        const every = repeatLabel(v.repeatEvery, v.repeatUnit);
         ctx.addIssue({
           code: 'custom',
           path: ['endDate'],
-          message: `A shift that comes back every ${every} can cover at most ${most} days.`,
+          message: `A shift that comes back ${every} can cover at most ${most} days.`,
         });
       }
       if (v.repeatUntil && v.repeatUntil < v.date) {

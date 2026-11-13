@@ -101,7 +101,8 @@ test('a shift can cover several days and come back every week', async ({ page, i
   await dialog.getByLabel('Label').fill(label);
   await dialog.getByLabel('Start').fill('20:00');
   await dialog.getByLabel('End').fill('06:00');
-  await dialog.getByLabel('Repeats').selectOption('1');
+  await dialog.getByLabel('Repeats').selectOption('week');
+  await expect(dialog.getByLabel('Every')).toHaveValue('1');
   await dialog.getByLabel('Repeat until').fill(day(17));
   await dialog.getByRole('button', { name: 'Add shift' }).click();
   await expect(dialog).toBeHidden();

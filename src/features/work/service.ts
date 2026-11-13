@@ -98,7 +98,7 @@ export async function getShiftOrThrow(userId: string, id: string): Promise<Shift
 
 function shiftValues(input: ShiftInput) {
   const timed = input.kind !== 'off' && input.startTime && input.endTime;
-  const repeats = input.repeatWeeks > 0;
+  const repeatUnit = input.repeatUnit === 'none' ? null : input.repeatUnit;
   return {
     date: input.date,
     endDate: input.endDate && input.endDate !== input.date ? input.endDate : null,
@@ -106,8 +106,9 @@ function shiftValues(input: ShiftInput) {
     label: input.label || null,
     startTime: timed ? input.startTime!.slice(0, 5) : null,
     endTime: timed ? input.endTime!.slice(0, 5) : null,
-    repeatWeeks: repeats ? input.repeatWeeks : 0,
-    repeatUntil: repeats && input.repeatUntil ? input.repeatUntil : null,
+    repeatEvery: repeatUnit ? input.repeatEvery : 0,
+    repeatUnit: repeatUnit ?? 'week',
+    repeatUntil: repeatUnit && input.repeatUntil ? input.repeatUntil : null,
     note: input.note || null,
   };
 }

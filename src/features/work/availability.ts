@@ -1,10 +1,18 @@
-import { addDays, differenceInCalendarDays, format, parseISO } from 'date-fns';
+import {
+  addDays,
+  addMonths,
+  differenceInCalendarDays,
+  differenceInCalendarMonths,
+  format,
+  parseISO,
+} from 'date-fns';
 import { fromZonedTime } from 'date-fns-tz';
 import type { PatternDay } from '@/db/schema/work';
 import type { CalendarItem } from '@/features/calendar/expand';
 import type { Accent } from '@/lib/accents';
 import {
   SHIFT_KIND_LABELS,
+  repeatLabel,
   shiftSpanDays,
   type LeaveKind,
   type LeaveStatus,
@@ -32,8 +40,9 @@ export type ShiftSource = {
   /** First day; `endDate` closes a block of days (null for one day). */
   date: string;
   endDate: string | null;
-  /** 0 for a one-off; otherwise the block comes back every this many weeks until `repeatUntil`. */
-  repeatWeeks: number;
+  /** 0 for a one-off; otherwise the block comes back every this many weeks or months until `repeatUntil`. */
+  repeatEvery: number;
+  repeatUnit: 'week' | 'month';
   repeatUntil: string | null;
   kind: ShiftKind;
   label: string | null;
@@ -71,7 +80,7 @@ export type WorkShift = {
   accent?: Accent;
   /** The `shifts` row behind a manual entry. */
   id?: string;
-  /** A manual shift that comes back every few weeks. */
+  /** A manual shift that comes back every so many weeks or months. */
   repeats?: boolean;
 };
 
@@ -104,28 +113,39 @@ export function dateKeysBetween(from: string, to: string): string[] {
 const laterOf = (a: string, b: string) => (a > b ? a : b);
 const earlierOf = (a: string, b: string) => (a < b ? a : b);
 
-type ShiftSpan = Pick<ShiftSource, 'date' | 'endDate' | 'repeatWeeks' | 'repeatUntil'>;
+type ShiftSpan = Pick<
+  ShiftSource,
+  'date' | 'endDate' | 'repeatEvery' | 'repeatUnit' | 'repeatUntil'
+>;
 
 /**
  * The dates in [from, to] a manual shift covers: its block of days, and when
- * it repeats, that block again every `repeatWeeks` weeks, never past
- * `repeatUntil`.
+ * it repeats, that block again every `repeatEvery` weeks or months, never
+ * past `repeatUntil`. A monthly shift keeps its day of the month, landing on
+ * the last day of months that are too short.
  */
 export function expandShift(shift: ShiftSpan, from: string, to: string): string[] {
   const length = shiftSpanDays(shift.date, shift.endDate);
   const lastDay = (startKey: string) => toKey(addDays(parseISO(startKey), length - 1));
-  if (shift.repeatWeeks <= 0) {
+  if (shift.repeatEvery <= 0) {
     return dateKeysBetween(laterOf(shift.date, from), earlierOf(lastDay(shift.date), to));
   }
   const last = shift.repeatUntil ? earlierOf(shift.repeatUntil, to) : to;
-  const step = 7 * shift.repeatWeeks;
   const first = parseISO(shift.date);
-  // Jump straight to the first block that can reach `from`.
-  const behind = differenceInCalendarDays(parseISO(from), first) - (length - 1);
-  let block = behind > 0 ? Math.ceil(behind / step) : 0;
+  const monthly = shift.repeatUnit === 'month';
+  const startOfBlock = (block: number) =>
+    monthly
+      ? addMonths(first, block * shift.repeatEvery)
+      : addDays(first, block * 7 * shift.repeatEvery);
+  // Jump close to the first block that can reach `from`, never past it.
+  const reach = addDays(parseISO(from), -(length - 1));
+  const behind = monthly
+    ? Math.floor(differenceInCalendarMonths(reach, first) / shift.repeatEvery) - 1
+    : Math.ceil(differenceInCalendarDays(reach, first) / (7 * shift.repeatEvery));
+  let block = Math.max(0, behind);
   const dates: string[] = [];
   for (;;) {
-    const start = toKey(addDays(first, block * step));
+    const start = toKey(startOfBlock(block));
     if (start > last) break;
     dates.push(...dateKeysBetween(laterOf(start, from), earlierOf(lastDay(start), last)));
     block += 1;
@@ -138,9 +158,9 @@ export function describeShift(shift: ShiftSpan): string | null {
   const parts: string[] = [];
   const length = shiftSpanDays(shift.date, shift.endDate);
   if (length > 1) parts.push(`${length} days`);
-  if (shift.repeatWeeks === 1) parts.push('every week');
-  else if (shift.repeatWeeks > 1) parts.push(`every ${shift.repeatWeeks} weeks`);
-  if (shift.repeatWeeks > 0 && shift.repeatUntil) {
+  const every = repeatLabel(shift.repeatEvery, shift.repeatUnit);
+  if (every) parts.push(every);
+  if (shift.repeatEvery > 0 && shift.repeatUntil) {
     const sameYear = shift.repeatUntil.slice(0, 4) === shift.date.slice(0, 4);
     parts.push(`until ${format(parseISO(shift.repeatUntil), sameYear ? 'd MMM' : 'd MMM yyyy')}`);
   }
@@ -191,7 +211,7 @@ export function deriveWorkDays(sources: WorkSources, from: string, to: string): 
   const placed = new Map<string, ShiftSource[]>();
   const repeating = new Map<string, ShiftSource[]>();
   for (const s of sources.shifts) {
-    const into = s.repeatWeeks > 0 ? repeating : placed;
+    const into = s.repeatEvery > 0 ? repeating : placed;
     for (const date of expandShift(s, from, to)) {
       const list = into.get(date) ?? [];
       list.push(s);
@@ -228,7 +248,7 @@ export function deriveWorkDays(sources: WorkSources, from: string, to: string): 
         source: 'manual',
         patternId: r.patternId ?? undefined,
         id: r.id,
-        ...(r.repeatWeeks > 0 ? { repeats: true } : {}),
+        ...(r.repeatEvery > 0 ? { repeats: true } : {}),
       }));
       return { date, status: statusOf(shifts), shifts };
     }

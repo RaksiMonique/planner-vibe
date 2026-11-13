@@ -234,7 +234,7 @@ erDiagram
 
 ## Release 5 tables
 
-- Work (job calendar, 8.18): `shift_patterns` (a repeating `cycle` of days from an `anchor_date`), `shifts` (hand-placed shifts that replace the pattern for the days they cover: one day, a block to `end_date`, or a block that comes back every `repeat_weeks` weeks until `repeat_until`; kind `off` is a day off; a day placed by hand beats a repeating shift landing on it), `leave_periods`, `public_holidays` (reference records, no segment). Availability is derived from all four in `src/features/work/availability.ts`, never stored. Work appointments are events on a calendar of kind `work`.
+- Work (job calendar, 8.18): `shift_patterns` (a repeating `cycle` of days from an `anchor_date`), `shifts` (hand-placed shifts that replace the pattern for the days they cover: one day, a block to `end_date`, or a block that comes back every `repeat_every` weeks or months (`repeat_unit`) until `repeat_until`; kind `off` is a day off; a day placed by hand beats a repeating shift landing on it), `leave_periods`, `public_holidays` (reference records, no segment). Availability is derived from all four in `src/features/work/availability.ts`, never stored. Work appointments are events on a calendar of kind `work`.
 - Finance (8.22): `budgets` (segment required; `limit_amount`, `spent_amount` entered by hand, `period` monthly or annual). Financial goals are goals in the Finance segment with measurable fields; upcoming financial actions are tasks and events in that segment. Nothing connects to any other application.
 - The quarterly, annual and lifelong views, goal timelines and the Mandala view read the existing `goals`, `milestones`, `tasks`, `projects`, `events`, `reviews` and `vision_boards` tables; no new storage.
 

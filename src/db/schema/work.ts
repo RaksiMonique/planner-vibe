@@ -78,8 +78,11 @@ export const shifts = planner.table(
     label: text('label'),
     startTime: time('start_time'),
     endTime: time('end_time'),
-    /** 0 for a one-off; otherwise the block comes back every this many weeks. */
-    repeatWeeks: integer('repeat_weeks').notNull().default(0),
+    /** 0 for a one-off; otherwise the block comes back every this many weeks or months. */
+    repeatEvery: integer('repeat_every').notNull().default(0),
+    repeatUnit: text('repeat_unit', { enum: ['week', 'month'] })
+      .notNull()
+      .default('week'),
     /** No day after this one is produced; null repeats for good. */
     repeatUntil: date('repeat_until'),
     note: text('note'),

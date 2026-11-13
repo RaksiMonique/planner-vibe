@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { PlusIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { ProgressBar } from '@/components/shared/progress-bar';
+import { GoalProgress } from '@/features/goals/components/goal-progress';
 import { GoalFormDialog } from '@/features/goals/components/goal-form-dialog';
 import { HORIZON_ORDER } from '@/features/goals/progress';
 import type { GoalOption, GoalRow } from '@/features/goals/queries';
@@ -41,11 +41,7 @@ export function MandalaGrid({
                   {HORIZON_LABELS[center.horizon]}
                 </Badge>
                 <p className="font-heading text-base leading-snug sm:text-lg">{center.title}</p>
-                <ProgressBar
-                  value={center.progress}
-                  valueText={`${center.progress}%`}
-                  valueClassName="text-xs"
-                />
+                <GoalProgress progress={center.progress} valueClassName="text-xs" />
                 <Link
                   href={`/goals/${center.id}`}
                   className="text-xs underline-offset-4 hover:underline"
@@ -64,11 +60,7 @@ export function MandalaGrid({
                 <span className="line-clamp-3 text-sm leading-snug font-medium">
                   {cell.goal.title}
                 </span>
-                <ProgressBar
-                  value={cell.goal.progress}
-                  valueText={`${cell.goal.progress}%`}
-                  valueClassName="text-xs"
-                />
+                <GoalProgress progress={cell.goal.progress} valueClassName="text-xs" />
               </Link>
             ) : (
               <div

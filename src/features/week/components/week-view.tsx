@@ -4,7 +4,7 @@ import { ChevronLeftIcon, ChevronRightIcon, TargetIcon, ListChecksIcon } from 'l
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ProgressBar } from '@/components/shared/progress-bar';
+import { GoalProgress } from '@/features/goals/components/goal-progress';
 import { SegmentDot } from '@/components/shared/segment-badge';
 import { cn } from '@/lib/utils';
 import type { WeekData, WeekDay } from '../queries';
@@ -243,7 +243,7 @@ export function WeekView({ data }: { data: WeekData }) {
                       </Link>
                       <Badge variant="outline">{HORIZON_LABEL[g.horizon] ?? g.horizon}</Badge>
                     </div>
-                    <ProgressBar value={g.progress} />
+                    <GoalProgress progress={g.progress} />
                   </li>
                 ))}
               </ul>

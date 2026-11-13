@@ -151,7 +151,7 @@ export async function updateGoalProgress(
   });
   const [row] = await db
     .update(goals)
-    .set({ currentValue: value, progress })
+    .set({ currentValue: value, progress: progress ?? 0 })
     .where(and(eq(goals.userId, userId), eq(goals.id, id)))
     .returning();
   return row;

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { progressText } from '@/features/goals/progress';
 import { HORIZON_LABELS } from '@/features/goals/schema';
 import { cn } from '@/lib/utils';
 import { monthLabel } from '../periods';
@@ -68,7 +69,7 @@ export function GoalTimeline({
                     )}
                   >
                     <span className="block truncate">{goal.title}</span>
-                    <span className="text-muted-foreground">{goal.progress}%</span>
+                    <span className="text-muted-foreground">{progressText(goal.progress)}</span>
                   </Link>
                 ))}
               </div>

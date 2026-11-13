@@ -1,4 +1,4 @@
-import { ProgressBar } from '@/components/shared/progress-bar';
+import { GoalProgress } from '@/features/goals/components/goal-progress';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -144,11 +144,16 @@ export default async function GoalPage({ params }: PageProps<'/goals/[id]'>) {
                 </Badge>
               )}
             </div>
-            <ProgressBar
-              value={goal.progress}
+            <GoalProgress
+              progress={goal.progress}
               valueText={`${goal.progress}% complete`}
               valueClassName="text-sm"
             />
+            {goal.progress === null && (
+              <p className="text-muted-foreground text-sm">
+                Give it a target, sub-goals or milestones and progress appears here.
+              </p>
+            )}
             {goal.targetValue !== null && Number(goal.targetValue) > 0 && (
               <p className="text-muted-foreground text-sm">
                 {Number(goal.currentValue ?? 0)} of {Number(goal.targetValue)} {goal.unit ?? ''}

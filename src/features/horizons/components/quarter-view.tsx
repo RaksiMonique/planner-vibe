@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { progressText } from '@/features/goals/progress';
 import { TargetIcon } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -111,7 +112,9 @@ export function QuarterView({ data }: { data: QuarterData }) {
                           >
                             {g.title}
                           </Link>
-                          <span className="text-muted-foreground text-xs">{g.progress}%</span>
+                          <span className="text-muted-foreground text-xs">
+                            {progressText(g.progress)}
+                          </span>
                         </li>
                       ))}
                     </ul>

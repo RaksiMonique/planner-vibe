@@ -3,7 +3,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import type { ReviewLink } from '../queries';
 
 type Stats = {
-  goalProgress: number;
+  goalProgress: number | null;
   milestonesDone: number;
   milestonesTotal: number;
   tasksDone: number;
@@ -34,7 +34,11 @@ export function PeriodStats({
 }) {
   return (
     <dl className="mb-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <Tile label="Objectives" value={`${stats.goalProgress}%`} detail="average progress" />
+      <Tile
+        label="Objectives"
+        value={stats.goalProgress === null ? '—' : `${stats.goalProgress}%`}
+        detail={stats.goalProgress === null ? 'nothing measured yet' : 'average progress'}
+      />
       <Tile
         label="Milestones"
         value={`${stats.milestonesDone}/${stats.milestonesTotal}`}

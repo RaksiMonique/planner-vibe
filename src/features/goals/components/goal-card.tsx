@@ -3,9 +3,9 @@ import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { SegmentBadge } from '@/components/shared/segment-badge';
-import { ProgressBar } from '@/components/shared/progress-bar';
 import { cn } from '@/lib/utils';
 import type { GoalRow } from '../queries';
+import { GoalProgress } from './goal-progress';
 import { GOAL_STATUS_LABELS, HORIZON_LABELS } from '../schema';
 
 export function GoalCard({ goal, todayKey }: { goal: GoalRow; todayKey: string }) {
@@ -26,7 +26,7 @@ export function GoalCard({ goal, todayKey }: { goal: GoalRow; todayKey: string }
             )}
           </div>
           <p className="font-heading text-lg leading-snug">{goal.title}</p>
-          <ProgressBar value={goal.progress} />
+          <GoalProgress progress={goal.progress} />
           <div className="text-muted-foreground mt-auto flex flex-wrap gap-x-3 gap-y-1 text-xs">
             {goal.targetDate && (
               <span className={cn(overdue && 'text-destructive')}>

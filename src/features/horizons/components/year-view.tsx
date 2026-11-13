@@ -3,7 +3,7 @@ import { TargetIcon } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/empty-state';
-import { ProgressBar } from '@/components/shared/progress-bar';
+import { GoalProgress } from '@/features/goals/components/goal-progress';
 import { GoalCard } from '@/features/goals/components/goal-card';
 import { cn } from '@/lib/utils';
 import type { YearData } from '../queries';
@@ -130,11 +130,7 @@ export function YearView({ data }: { data: YearData }) {
                       {q.range.label}
                     </Link>
                   </h3>
-                  <ProgressBar
-                    value={q.progress}
-                    valueText={`${q.progress}%`}
-                    valueClassName="text-xs"
-                  />
+                  <GoalProgress progress={q.progress} valueClassName="text-xs" />
                   <p className="text-muted-foreground text-xs">
                     {q.goals.length} objectives · {q.milestones} milestones
                   </p>

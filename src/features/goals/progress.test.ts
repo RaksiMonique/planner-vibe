@@ -20,13 +20,19 @@ describe('computeGoalProgress', () => {
       computeGoalProgress({ ...base, targetValue: 10, currentValue: 25 }, [], { total: 0, done: 0 })
     ).toBe(100);
   });
-  it('averages children before counting milestones', () => {
+  it('averages measured children before counting milestones', () => {
     expect(computeGoalProgress(base, [20, 40], { total: 2, done: 2 })).toBe(30);
+    expect(computeGoalProgress(base, [20, null, 40], { total: 2, done: 2 })).toBe(30);
+    expect(computeGoalProgress(base, [null, null], { total: 4, done: 1 })).toBe(25);
     expect(computeGoalProgress(base, [], { total: 4, done: 1 })).toBe(25);
   });
-  it('falls back to the stored percentage, clamped', () => {
+  it('falls back to a stored percentage above zero, clamped', () => {
     expect(computeGoalProgress({ ...base, progress: 42 }, [], { total: 0, done: 0 })).toBe(42);
     expect(computeGoalProgress({ ...base, progress: 140 }, [], { total: 0, done: 0 })).toBe(100);
+  });
+  it('is not measured when nothing measures it', () => {
+    expect(computeGoalProgress(base, [], { total: 0, done: 0 })).toBeNull();
+    expect(computeGoalProgress(base, [null], { total: 0, done: 0 })).toBeNull();
   });
 });
 

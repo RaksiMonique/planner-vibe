@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ProgressBar } from '@/components/shared/progress-bar';
+import { GoalProgress } from '@/features/goals/components/goal-progress';
 import type { ReviewStats } from '../service';
 
 const HORIZON: Record<string, string> = {
@@ -36,7 +36,7 @@ export function ReviewStatsBlock({ stats }: { stats: ReviewStats }) {
                     {HORIZON[g.horizon] ?? g.horizon}
                   </span>
                 </span>
-                <ProgressBar value={g.progress} />
+                <GoalProgress progress={g.progress} />
               </li>
             ))}
           </ul>

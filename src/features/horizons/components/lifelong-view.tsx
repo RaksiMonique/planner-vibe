@@ -1,11 +1,12 @@
 import Link from 'next/link';
+import { progressText } from '@/features/goals/progress';
 import { format, parseISO } from 'date-fns';
 import { Grid3x3Icon, ImagesIcon, MountainIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/empty-state';
-import { ProgressBar } from '@/components/shared/progress-bar';
+import { GoalProgress } from '@/features/goals/components/goal-progress';
 import { SegmentBadge } from '@/components/shared/segment-badge';
 import { GoalFormDialog } from '@/features/goals/components/goal-form-dialog';
 import type { GoalOption } from '@/features/goals/queries';
@@ -69,7 +70,7 @@ export function LifelongView({
                       </Badge>
                     )}
                   </div>
-                  <ProgressBar value={g.progress} valueText={`${g.progress}% complete`} />
+                  <GoalProgress progress={g.progress} valueText={`${g.progress}% complete`} />
                   <div className="text-sm">
                     <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">
                       Next steps
@@ -89,7 +90,7 @@ export function LifelongView({
                               {c.title}
                             </Link>
                             <span className="text-muted-foreground shrink-0 text-xs">
-                              {HORIZON_LABELS[c.horizon]} · {c.progress}%
+                              {HORIZON_LABELS[c.horizon]} · {progressText(c.progress)}
                             </span>
                           </li>
                         ))}

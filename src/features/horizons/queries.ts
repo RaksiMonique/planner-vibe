@@ -30,7 +30,7 @@ export type ReviewLink = { id: string; completedAt: Date | null } | null;
 export type MilestoneRow = Milestone & { goalTitle: string | null; projectTitle: string | null };
 
 type PeriodStats = {
-  goalProgress: number;
+  goalProgress: number | null;
   milestonesDone: number;
   milestonesTotal: number;
   tasksDone: number;
@@ -40,8 +40,10 @@ type PeriodStats = {
 const CLOSED = new Set(['achieved', 'abandoned']);
 const isOpen = (g: GoalRow) => !CLOSED.has(g.status);
 
-function average(values: number[]): number {
-  return values.length ? Math.round(values.reduce((a, b) => a + b, 0) / values.length) : 0;
+/** Mean of the measured values; null when none is measured. */
+function average(values: Array<number | null>): number | null {
+  const measured = values.filter((v): v is number => v !== null);
+  return measured.length ? Math.round(measured.reduce((a, b) => a + b, 0) / measured.length) : null;
 }
 
 function withTitles(rows: Milestone[], goals: GoalRow[], projects: ProjectRow[]): MilestoneRow[] {
@@ -169,7 +171,7 @@ export type YearData = {
     range: QuarterRange;
     goals: GoalRow[];
     milestones: number;
-    progress: number;
+    progress: number | null;
     isCurrent: boolean;
   }>;
   months: Array<{

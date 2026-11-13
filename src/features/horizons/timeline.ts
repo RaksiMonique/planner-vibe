@@ -8,7 +8,7 @@ export type TimelineGoal = {
   title: string;
   horizon: Horizon;
   targetDate: string | null;
-  progress: number;
+  progress: number | null;
   status: string;
   parentGoalId: string | null;
 };

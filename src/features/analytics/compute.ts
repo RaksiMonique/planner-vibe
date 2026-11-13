@@ -32,6 +32,10 @@ export function average(values: number[]): number {
   return values.length === 0 ? 0 : round(sum(values) / values.length);
 }
 
+/** The progress figures that exist; unmeasured goals do not drag an average down. */
+const measured = (rows: Array<{ progress: number | null }>): number[] =>
+  rows.map((g) => g.progress).filter((p): p is number => p !== null);
+
 /** Width of a bar as a whole percentage of the largest value, 0–100. */
 export function shareOf(value: number, max: number): number {
   if (max <= 0 || value <= 0) return 0;
@@ -66,7 +70,8 @@ export type GoalInput = {
   title: string;
   horizon: Horizon;
   status: string;
-  progress: number;
+  /** Null when nothing measures the goal yet; left out of averages. */
+  progress: number | null;
   targetDate: string | null;
   /** Local date of the last update; places an achievement in time. */
   updatedKey: string;
@@ -102,7 +107,7 @@ export function goalCompletion(goals: GoalInput[], range: DateRange): GoalComple
       horizon,
       total: rows.length,
       achieved: rows.filter(isAchieved).length,
-      averageProgress: average(rows.map((g) => g.progress)),
+      averageProgress: average(measured(rows)),
     };
   }).filter((r) => r.total > 0);
   const achieved = due.filter(isAchieved).length;
@@ -118,7 +123,7 @@ export function goalCompletion(goals: GoalInput[], range: DateRange): GoalComple
     total: due.length,
     achieved,
     rate: ratio(achieved, due.length),
-    averageProgress: average(due.map((g) => g.progress)),
+    averageProgress: average(measured(due)),
     byHorizon,
     achievedInPeriod,
     isEmpty: due.length === 0 && achievedInPeriod.length === 0,

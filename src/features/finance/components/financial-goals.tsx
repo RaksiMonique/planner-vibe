@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
-import { ProgressBar } from '@/components/shared/progress-bar';
+import { GoalProgress } from '@/features/goals/components/goal-progress';
 import type { GoalRow } from '@/features/goals/queries';
 import { HORIZON_LABELS } from '@/features/goals/schema';
 import { updateGoalProgressAction } from '../actions';
@@ -28,12 +28,12 @@ export function FinancialGoals({ goals, todayKey }: { goals: GoalRow[]; todayKey
               </h3>
               <Badge variant="outline">{HORIZON_LABELS[g.horizon]}</Badge>
             </div>
-            <ProgressBar
-              value={g.progress}
+            <GoalProgress
+              progress={g.progress}
               valueText={
                 measurable
                   ? `${formatAmount(g.currentValue)} / ${formatAmount(g.targetValue)}${g.unit ? ` ${g.unit}` : ''}`
-                  : `${g.progress}%`
+                  : undefined
               }
               valueClassName="text-foreground"
             />

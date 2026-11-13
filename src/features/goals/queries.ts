@@ -8,10 +8,10 @@ import { computeGoalProgress, type Horizon } from './progress';
 
 export type Goal = typeof goals.$inferSelect;
 export type Milestone = typeof milestones.$inferSelect;
-export type GoalRow = Goal & {
+export type GoalRow = Omit<Goal, 'progress'> & {
   segment: SegmentRef;
-  /** Computed on read, see progress.ts. */
-  progress: number;
+  /** Computed on read, see progress.ts; null when nothing measures the goal yet. */
+  progress: number | null;
   childCount: number;
   milestoneTotal: number;
   milestoneDone: number;
@@ -57,8 +57,8 @@ export async function listGoals(userId: string, filters: GoalFilters = {}): Prom
       children.set(goal.parentGoalId, list);
     }
   }
-  const memo = new Map<string, number>();
-  const progressOf = (goal: Goal): number => {
+  const memo = new Map<string, number | null>();
+  const progressOf = (goal: Goal): number | null => {
     const cached = memo.get(goal.id);
     if (cached !== undefined) return cached;
     const kids = children.get(goal.id) ?? [];

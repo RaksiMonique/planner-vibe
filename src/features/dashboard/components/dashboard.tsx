@@ -21,7 +21,7 @@ import { QuickCapture } from '@/features/capture/components/quick-capture';
 import { JobScheduleCard } from '@/features/work/components/job-schedule-card';
 import { TaskRow } from '@/features/tasks/components/task-row';
 import { ACCENT_BG } from '@/lib/accents';
-import { ProgressBar } from '@/components/shared/progress-bar';
+import { GoalProgress } from '@/features/goals/components/goal-progress';
 import { cn } from '@/lib/utils';
 import type { DashboardLayout, EnabledModules } from '@/db/schema';
 import { visibleCards, type DashboardCardKey } from '../layout';
@@ -220,7 +220,7 @@ export function Dashboard({
                   </Link>
                   <Badge variant="outline">{HORIZON_LABEL[g.horizon]}</Badge>
                 </div>
-                <ProgressBar value={g.progress} />
+                <GoalProgress progress={g.progress} />
               </li>
             ))}
           </ul>

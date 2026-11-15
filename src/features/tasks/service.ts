@@ -6,7 +6,7 @@ import { goals, lifeSegments, milestones, projects, taskDependencies, tasks } fr
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { findCycles } from './dependencies';
 import type { Task } from './queries';
-import { dateKeyToUtc, nextOccurrence, presetToRrule } from './recurrence';
+import { buildTaskRrule, dateKeyToUtc, nextOccurrence } from './recurrence';
 import type { TaskInput } from './schema';
 
 export type TaskContext = { timeZone: string; todayKey: string };
@@ -120,7 +120,7 @@ function toDueAt(dueDate: string | undefined, dueTime: string | undefined, timeZ
 }
 
 function toValues(input: TaskInput, ctx: TaskContext) {
-  const rrule = input.dueDate ? presetToRrule(input.recurrence, input.dueDate) : null;
+  const rrule = input.dueDate ? buildTaskRrule(input, input.dueDate) : null;
   return {
     title: input.title,
     notes: input.notes ?? null,

@@ -33,11 +33,13 @@ export function RecurrenceFields({
   initial,
   start,
   state,
+  idPrefix = 'event',
 }: {
   initial?: Partial<Fields>;
-  /** Local yyyy-MM-dd (or yyyy-MM-ddTHH:mm) of the event's start. */
+  /** Local yyyy-MM-dd (or yyyy-MM-ddTHH:mm) of the start, or the due date for a task. */
   start: string;
   state: ActionResult<unknown> | null;
+  idPrefix?: string;
 }) {
   const [recurrence, setRecurrence] = useState<RecurrencePreset>(
     initial?.recurrence ?? DEFAULT_RECURRENCE.recurrence
@@ -77,9 +79,9 @@ export function RecurrenceFields({
     <div className="flex flex-col gap-3">
       <div className="grid gap-4 sm:grid-cols-2">
         <Field>
-          <FieldLabel htmlFor="event-recurrence">Repeats</FieldLabel>
+          <FieldLabel htmlFor={`${idPrefix}-recurrence`}>Repeats</FieldLabel>
           <NativeSelect
-            id="event-recurrence"
+            id={`${idPrefix}-recurrence`}
             name="recurrence"
             value={recurrence}
             onChange={(e) => setRecurrence(e.target.value as RecurrencePreset)}
@@ -93,10 +95,10 @@ export function RecurrenceFields({
         </Field>
         {repeats && (
           <Field data-invalid={Boolean(fieldErrors(state, 'recurrenceInterval'))}>
-            <FieldLabel htmlFor="event-recurrence-interval">Every</FieldLabel>
+            <FieldLabel htmlFor={`${idPrefix}-recurrence-interval`}>Every</FieldLabel>
             <div className="flex items-center gap-2">
               <Input
-                id="event-recurrence-interval"
+                id={`${idPrefix}-recurrence-interval`}
                 name="recurrenceInterval"
                 type="number"
                 inputMode="numeric"
@@ -147,9 +149,9 @@ export function RecurrenceFields({
 
       {repeats && recurrence === 'monthly' && startDate && (
         <Field>
-          <FieldLabel htmlFor="event-recurrence-monthly">On</FieldLabel>
+          <FieldLabel htmlFor={`${idPrefix}-recurrence-monthly`}>On</FieldLabel>
           <NativeSelect
-            id="event-recurrence-monthly"
+            id={`${idPrefix}-recurrence-monthly`}
             name="recurrenceMonthly"
             value={monthly}
             onChange={(e) => setMonthly(e.target.value as MonthlyMode)}
@@ -166,9 +168,9 @@ export function RecurrenceFields({
       {repeats && (
         <div className="grid gap-4 sm:grid-cols-2">
           <Field>
-            <FieldLabel htmlFor="event-recurrence-end">Repeat ends</FieldLabel>
+            <FieldLabel htmlFor={`${idPrefix}-recurrence-end`}>Repeat ends</FieldLabel>
             <NativeSelect
-              id="event-recurrence-end"
+              id={`${idPrefix}-recurrence-end`}
               name="recurrenceEnd"
               value={end}
               onChange={(e) => setEnd(e.target.value as RecurrenceEnd)}
@@ -180,9 +182,9 @@ export function RecurrenceFields({
           </Field>
           {end === 'until' && (
             <Field data-invalid={Boolean(fieldErrors(state, 'recurrenceUntil'))}>
-              <FieldLabel htmlFor="event-recurrence-until">Last day</FieldLabel>
+              <FieldLabel htmlFor={`${idPrefix}-recurrence-until`}>Last day</FieldLabel>
               <Input
-                id="event-recurrence-until"
+                id={`${idPrefix}-recurrence-until`}
                 name="recurrenceUntil"
                 type="date"
                 value={until}
@@ -195,9 +197,9 @@ export function RecurrenceFields({
           )}
           {end === 'count' && (
             <Field data-invalid={Boolean(fieldErrors(state, 'recurrenceCount'))}>
-              <FieldLabel htmlFor="event-recurrence-count">Times</FieldLabel>
+              <FieldLabel htmlFor={`${idPrefix}-recurrence-count`}>Times</FieldLabel>
               <Input
-                id="event-recurrence-count"
+                id={`${idPrefix}-recurrence-count`}
                 name="recurrenceCount"
                 type="number"
                 inputMode="numeric"

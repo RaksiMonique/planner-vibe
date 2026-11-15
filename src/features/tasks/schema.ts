@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { reminderFields } from '@/features/reminders/schema';
-import { RECURRENCE_PRESETS } from './recurrence';
+import { MONTHLY_MODES, RECURRENCE_ENDS, WEEKDAY_CODES } from '@/features/calendar/recurrence';
+import { RECURRENCE_PRESETS } from '@/features/calendar/schema';
 
 export const TASK_STATUSES = ['todo', 'in_progress', 'done'] as const;
 export const PRIORITIES = ['low', 'medium', 'high'] as const;
@@ -34,6 +35,12 @@ export const taskInput = z
     dueDate: dateKey.optional(),
     dueTime: timeKey.optional(),
     recurrence: z.enum(RECURRENCE_PRESETS).default('none'),
+    recurrenceInterval: z.coerce.number().int().min(1).max(99).default(1),
+    recurrenceDays: z.array(z.enum(WEEKDAY_CODES)).default([]),
+    recurrenceMonthly: z.enum(MONTHLY_MODES).default('day'),
+    recurrenceEnd: z.enum(RECURRENCE_ENDS).default('never'),
+    recurrenceUntil: dateKey.optional(),
+    recurrenceCount: z.coerce.number().int().min(1).max(999).optional(),
     blockedByIds: z.array(z.uuid()).default([]),
     ...reminderFields,
   })
@@ -44,6 +51,25 @@ export const taskInput = z
   .refine((d) => !(d.recurrence !== 'none' && !d.dueDate), {
     message: 'Repeating tasks need a due date.',
     path: ['dueDate'],
+  })
+  .refine((d) => !(d.recurrence !== 'none' && d.recurrenceEnd === 'until' && !d.recurrenceUntil), {
+    message: 'Choose the last day.',
+    path: ['recurrenceUntil'],
+  })
+  .refine(
+    (d) =>
+      !(
+        d.recurrence !== 'none' &&
+        d.recurrenceEnd === 'until' &&
+        d.recurrenceUntil &&
+        d.dueDate &&
+        d.recurrenceUntil < d.dueDate
+      ),
+    { message: 'The last day must be on or after the due date.', path: ['recurrenceUntil'] }
+  )
+  .refine((d) => !(d.recurrence !== 'none' && d.recurrenceEnd === 'count' && !d.recurrenceCount), {
+    message: 'How many times?',
+    path: ['recurrenceCount'],
   })
   .refine((d) => !(d.dueTime && !d.dueDate), {
     message: 'A time needs a date.',

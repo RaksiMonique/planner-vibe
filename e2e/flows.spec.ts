@@ -260,6 +260,30 @@ test('an undated task waits in its own matrix box and the No date filter finds i
   await expect(page.getByRole('link', { name: /open tasks? ha(s|ve) no date/ })).toBeVisible();
 });
 
+test('a repeating task comes back until its end, then stops', async ({ page, isMobile }) => {
+  const title = `Water the ferns ${stamp}${isMobile ? ' (phone)' : ''}`;
+  await page.goto('/tasks?new=1');
+  const sheet = page.getByRole('dialog', { name: 'New task' });
+  await sheet.getByLabel('Title').fill(title);
+  await sheet.getByLabel('Due date').fill('2030-01-15'); // a Tuesday
+  await sheet.getByLabel('Repeats').selectOption('weekly');
+  await sheet.getByText('Fri', { exact: true }).click();
+  await sheet.getByLabel('Repeat ends').selectOption('count');
+  await sheet.getByLabel('Times').fill('2');
+  await expect(sheet.getByText('Every week on Tue, Fri, 2 times')).toBeVisible();
+  await sheet.getByRole('button', { name: 'Add task' }).click();
+  await expect(sheet).toBeHidden();
+
+  // Completing it brings the next one (Friday); completing that ends the run.
+  const row = () => page.getByRole('link', { name: title });
+  await expect(row()).toHaveCount(1);
+  await page.getByRole('checkbox', { name: `Complete ${title}` }).click();
+  await expect(page.getByText('18 Jan').first()).toBeVisible();
+  await expect(row()).toHaveCount(1);
+  await page.getByRole('checkbox', { name: `Complete ${title}` }).click();
+  await expect(row()).toHaveCount(0);
+});
+
 test('a capture can be filed as a note', async ({ page, isMobile }) => {
   const text = `Idea for the garden ${stamp}${isMobile ? ' (phone)' : ''}`;
   await page.goto('/dashboard');

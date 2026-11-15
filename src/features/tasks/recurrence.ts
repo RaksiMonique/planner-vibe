@@ -1,15 +1,18 @@
-import { RRule, Weekday } from 'rrule';
+import { RRule, type Options } from 'rrule';
+import {
+  DEFAULT_RECURRENCE,
+  WEEKDAY_CODES,
+  type RecurrenceFields,
+  type WeekdayCode,
+} from '@/features/calendar/recurrence';
+import type { RecurrencePreset } from '@/features/calendar/schema';
 
-export const RECURRENCE_PRESETS = ['none', 'daily', 'weekdays', 'weekly', 'monthly'] as const;
-export type RecurrencePreset = (typeof RECURRENCE_PRESETS)[number];
-
-export const RECURRENCE_LABELS: Record<RecurrencePreset, string> = {
-  none: 'Does not repeat',
-  daily: 'Every day',
-  weekdays: 'Every weekday',
-  weekly: 'Every week',
-  monthly: 'Every month',
-};
+/**
+ * Task repeats share the calendar's fields (every N days, weeks, months or
+ * years; weekdays; same day or weekday of the month; an end). Tasks work on
+ * whole dates, so the rule runs in floating UTC time anchored on the due
+ * date, and completing an occurrence creates the next one.
+ */
 
 const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -23,38 +26,76 @@ export function utcToDateKey(date: Date): string {
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}`;
 }
 
-const WEEKDAYS = [RRule.MO, RRule.TU, RRule.WE, RRule.TH, RRule.FR];
+const FREQ: Record<Exclude<RecurrencePreset, 'none'>, number> = {
+  daily: RRule.DAILY,
+  weekly: RRule.WEEKLY,
+  monthly: RRule.MONTHLY,
+  yearly: RRule.YEARLY,
+};
+const codeOf = (utcDay: number): WeekdayCode => WEEKDAY_CODES[(utcDay + 6) % 7];
 
-/** Builds the stored rule string (DTSTART + RRULE lines) for a preset anchored on the due date. */
-export function presetToRrule(preset: RecurrencePreset, dueDateKey: string): string | null {
-  if (preset === 'none') return null;
+/** The stored rule (DTSTART + RRULE lines) for the fields, anchored on the due date. */
+export function buildTaskRrule(fields: RecurrenceFields, dueDateKey: string): string | null {
+  if (fields.recurrence === 'none') return null;
   const dtstart = dateKeyToUtc(dueDateKey);
-  // rrule weekday index: 0 = Monday … 6 = Sunday
-  const weekday = new Weekday((dtstart.getUTCDay() + 6) % 7);
-  const options = {
-    daily: { freq: RRule.DAILY },
-    weekdays: { freq: RRule.WEEKLY, byweekday: WEEKDAYS },
-    weekly: { freq: RRule.WEEKLY, byweekday: [weekday] },
-    monthly: { freq: RRule.MONTHLY, bymonthday: [dtstart.getUTCDate()] },
-  }[preset];
-  return new RRule({ ...options, dtstart }).toString();
+  const options: Partial<Options> = {
+    freq: FREQ[fields.recurrence],
+    dtstart,
+    interval: Math.max(1, fields.recurrenceInterval),
+  };
+  if (fields.recurrence === 'weekly') {
+    const days =
+      fields.recurrenceDays.length > 0 ? fields.recurrenceDays : [codeOf(dtstart.getUTCDay())];
+    options.byweekday = days.map((c) => RRule[c]);
+  }
+  if (fields.recurrence === 'monthly') {
+    if (fields.recurrenceMonthly === 'weekday') {
+      const nth = Math.ceil(dtstart.getUTCDate() / 7);
+      options.byweekday = [RRule[codeOf(dtstart.getUTCDay())].nth(nth >= 5 ? -1 : nth)];
+    } else {
+      options.bymonthday = [dtstart.getUTCDate()];
+    }
+  }
+  if (fields.recurrenceEnd === 'until' && fields.recurrenceUntil) {
+    options.until = dateKeyToUtc(fields.recurrenceUntil);
+  }
+  if (fields.recurrenceEnd === 'count' && fields.recurrenceCount) {
+    options.count = fields.recurrenceCount;
+  }
+  return new RRule(options).toString();
 }
 
-/** Recognises the preset a stored rule came from, for the edit form. */
-export function presetFromRrule(rrule: string | null | undefined): RecurrencePreset {
-  if (!rrule) return 'none';
+/** The fields behind a stored rule, for the edit form. */
+export function fieldsFromRrule(rrule: string | null | undefined): RecurrenceFields {
+  if (!rrule) return { ...DEFAULT_RECURRENCE };
   try {
-    const { freq, byweekday, bymonthday } = RRule.fromString(rrule).origOptions;
-    if (freq === RRule.DAILY) return 'daily';
-    if (freq === RRule.MONTHLY && bymonthday) return 'monthly';
-    if (freq === RRule.WEEKLY) {
-      const days = Array.isArray(byweekday) ? byweekday : byweekday ? [byweekday] : [];
-      return days.length === 5 ? 'weekdays' : 'weekly';
-    }
+    const { freq, interval, byweekday, until, count } = RRule.fromString(rrule).origOptions;
+    const recurrence = (Object.keys(FREQ) as Array<keyof typeof FREQ>).find(
+      (k) => FREQ[k] === freq
+    );
+    if (!recurrence) return { ...DEFAULT_RECURRENCE };
+    const raw = Array.isArray(byweekday) ? byweekday : byweekday ? [byweekday] : [];
+    // rrule accepts a number, a code such as 'MO', or a Weekday with an optional position.
+    const days = raw.map((d) =>
+      typeof d === 'number'
+        ? { index: d, position: 0 }
+        : typeof d === 'string'
+          ? { index: WEEKDAY_CODES.indexOf(d as WeekdayCode), position: 0 }
+          : { index: d.weekday, position: d.n ?? 0 }
+    );
+    const positioned = days.some((d) => d.position !== 0);
+    return {
+      recurrence,
+      recurrenceInterval: interval ?? 1,
+      recurrenceDays: recurrence === 'weekly' ? days.map((d) => WEEKDAY_CODES[d.index]) : [],
+      recurrenceMonthly: recurrence === 'monthly' && positioned ? 'weekday' : 'day',
+      recurrenceEnd: until ? 'until' : count ? 'count' : 'never',
+      recurrenceUntil: until ? utcToDateKey(until) : undefined,
+      recurrenceCount: count ?? undefined,
+    };
   } catch {
-    // unreadable rule: treat as a one-off
+    return { ...DEFAULT_RECURRENCE };
   }
-  return 'none';
 }
 
 /** The first occurrence strictly after `afterKey`, as 'yyyy-MM-dd', or null when the rule ends. */
@@ -65,7 +106,7 @@ export function nextOccurrence(rrule: string, afterKey: string): string | null {
 }
 
 export function describeRrule(rrule: string | null | undefined): string {
-  if (!rrule) return RECURRENCE_LABELS.none;
+  if (!rrule) return 'Does not repeat';
   try {
     const text = RRule.fromString(rrule).toText();
     return text.charAt(0).toUpperCase() + text.slice(1);

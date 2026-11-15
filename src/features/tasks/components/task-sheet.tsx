@@ -44,7 +44,8 @@ import {
   type TaskFormState,
 } from '../actions';
 import type { BlockerOption, TaskRow } from '../queries';
-import { presetFromRrule, RECURRENCE_LABELS, RECURRENCE_PRESETS } from '../recurrence';
+import { RecurrenceFields } from '@/features/calendar/components/recurrence-fields';
+import { fieldsFromRrule } from '../recurrence';
 import { PRIORITIES, PRIORITY_LABELS, STATUS_LABELS, TASK_STATUSES } from '../schema';
 import { NativeSelect } from './native-select';
 import { NewOptionDialog } from './new-option-dialog';
@@ -98,6 +99,7 @@ export function TaskSheet(props: TaskSheetProps) {
   const pathname = usePathname();
   const params = useSearchParams();
   const [state, action] = useActionState(task ? updateTaskAction : createTaskAction, undefined);
+  const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
   const [deleting, startDelete] = useTransition();
   const [goalId, setGoalId] = useState(task?.goalId ?? '');
   const [projectId, setProjectId] = useState(task?.projectId ?? defaults.projectId ?? '');
@@ -220,7 +222,8 @@ export function TaskSheet(props: TaskSheetProps) {
                   id="task-due"
                   name="dueDate"
                   type="date"
-                  defaultValue={task?.dueDate ?? ''}
+                  value={dueDate}
+                  onChange={(e) => setDueDate(e.target.value)}
                 />
                 <FieldError errors={fieldErrors(state, 'dueDate')} />
               </Field>
@@ -260,20 +263,12 @@ export function TaskSheet(props: TaskSheetProps) {
               Important
               <span className="text-muted-foreground text-xs">Moves it up in the matrix view</span>
             </label>
-            <Field>
-              <FieldLabel htmlFor="task-recurrence">Repeat</FieldLabel>
-              <NativeSelect
-                id="task-recurrence"
-                name="recurrence"
-                defaultValue={presetFromRrule(task?.rrule)}
-              >
-                {RECURRENCE_PRESETS.map((p) => (
-                  <option key={p} value={p}>
-                    {RECURRENCE_LABELS[p]}
-                  </option>
-                ))}
-              </NativeSelect>
-            </Field>
+            <RecurrenceFields
+              idPrefix="task"
+              initial={fieldsFromRrule(task?.rrule)}
+              start={dueDate}
+              state={state ?? null}
+            />
             <ReminderField entityType="task" entityId={task?.id} idPrefix="task" />
             <Field>
               <div className="flex items-center justify-between gap-2">

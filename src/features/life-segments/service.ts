@@ -5,6 +5,7 @@ import { lifeSegments, tasks } from '@/db/schema';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { slugify, type SegmentInput } from './schema';
 import { orderByUsage } from './usage';
+import { events } from '@/db/schema';
 
 export type LifeSegment = typeof lifeSegments.$inferSelect;
 
@@ -50,18 +51,27 @@ export async function listSegments(
 
 /**
  * Active segments with the most used first, for pickers: usage is the number
- * of tasks ever filed under the segment. Unused segments keep their own order.
+ * of tasks and events ever filed under the segment. Unused segments keep
+ * their own order.
  */
 export async function listSegmentsByUsage(userId: string): Promise<LifeSegment[]> {
-  const [segments, usage] = await Promise.all([
+  const [segments, taskUsage, eventUsage] = await Promise.all([
     listSegments(userId),
     db
       .select({ id: tasks.lifeSegmentId, n: count() })
       .from(tasks)
       .where(and(eq(tasks.userId, userId), isNull(tasks.deletedAt)))
       .groupBy(tasks.lifeSegmentId),
+    db
+      .select({ id: events.lifeSegmentId, n: count() })
+      .from(events)
+      .where(and(eq(events.userId, userId), isNull(events.deletedAt)))
+      .groupBy(events.lifeSegmentId),
   ]);
-  return orderByUsage(segments, new Map(usage.map((row) => [row.id, row.n])));
+  const usage = new Map<string, number>();
+  for (const row of [...taskUsage, ...eventUsage])
+    usage.set(row.id, (usage.get(row.id) ?? 0) + row.n);
+  return orderByUsage(segments, usage);
 }
 
 export async function getSegmentBySlug(userId: string, slug: string): Promise<LifeSegment> {

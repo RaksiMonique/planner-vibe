@@ -29,6 +29,7 @@ import {
   type ProjectsAndMilestones,
   type Summary,
   type TimeAllocation,
+  scheduledMinutesBySegment,
 } from './compute';
 import { resolvePeriod, type ResolvedPeriod } from './period';
 
@@ -199,7 +200,8 @@ export async function getAnalyticsData(
       segments.map((s) => ({ id: s.id, name: s.name, accent: s.accent, weight: s.weight })),
       openTasksBySegment,
       Object.fromEntries(timeData.analytics.bySegment.map((r) => [r.key, r.actual])),
-      countBy(goals.filter((g) => isOpenGoal(g.status)).map((g) => g.lifeSegmentId))
+      countBy(goals.filter((g) => isOpenGoal(g.status)).map((g) => g.lifeSegmentId)),
+      scheduledMinutesBySegment(expandEvents(eventRows, from, to), from, to)
     ),
   };
 }

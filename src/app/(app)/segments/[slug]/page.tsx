@@ -11,12 +11,17 @@ import { listGoals } from '@/features/goals/queries';
 import { GoalTimeline } from '@/features/horizons/components/goal-timeline';
 import { SegmentFormDialog } from '@/features/life-segments/components/segment-form-dialog';
 import { TaskPreviewList } from '@/features/life-segments/components/task-preview-list';
+import { UpcomingEventsList } from '@/features/life-segments/components/upcoming-events-list';
+import { expandEvents } from '@/features/calendar/expand';
+import { listEventsBetween } from '@/features/calendar/queries';
 import { getSegmentBySlug, type LifeSegment } from '@/features/life-segments/service';
 import { ProjectCard } from '@/features/projects/components/project-card';
 import { listProjects } from '@/features/projects/queries';
 import { getPreferences } from '@/features/settings/service';
 import { listTasks } from '@/features/tasks/queries';
 import { requireUser } from '@/lib/auth';
+import { addDays } from 'date-fns';
+import { fromZonedTime } from 'date-fns-tz';
 import { toDateKey, todayInZone } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 
@@ -32,13 +37,20 @@ export default async function SegmentPage({ params }: PageProps<'/segments/[slug
   } catch {
     notFound();
   }
-  const [goals, projects, tasks, prefs] = await Promise.all([
+  const prefs = await getPreferences(user.id);
+  const today = todayInZone(prefs.timeZone);
+  const todayKey = toDateKey(today);
+  const eventsFrom = fromZonedTime(`${todayKey}T00:00:00`, prefs.timeZone);
+  const eventsTo = fromZonedTime(`${toDateKey(addDays(today, 14))}T00:00:00`, prefs.timeZone);
+  const [goals, projects, tasks, eventRows] = await Promise.all([
     listGoals(user.id, { lifeSegmentId: segment.id }),
     listProjects(user.id, { lifeSegmentId: segment.id }),
     listTasks(user.id, { lifeSegmentId: segment.id, parentTaskId: null }),
-    getPreferences(user.id),
+    listEventsBetween(user.id, eventsFrom, eventsTo),
   ]);
-  const todayKey = toDateKey(todayInZone(prefs.timeZone));
+  const upcoming = expandEvents(eventRows, eventsFrom, eventsTo)
+    .filter((item) => item.segmentId === segment.id)
+    .sort((a, b) => a.start.localeCompare(b.start));
 
   return (
     <>
@@ -77,6 +89,7 @@ export default async function SegmentPage({ params }: PageProps<'/segments/[slug
       <div className="text-muted-foreground -mt-4 mb-6 flex items-center gap-2 text-sm">
         <SegmentDot accent={segment.accent} className="size-3" />
         {goals.length} active goals · {projects.length} active projects · {tasks.length} open tasks
+        · {upcoming.length} events in the next 14 days
       </div>
 
       <div className="flex flex-col gap-8">
@@ -125,6 +138,15 @@ export default async function SegmentPage({ params }: PageProps<'/segments/[slug
             tasks={tasks}
             todayKey={todayKey}
             allHref={`/tasks?segment=${segment.slug}`}
+          />
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <h3 className="font-heading text-xl">Coming up</h3>
+          <UpcomingEventsList
+            items={upcoming}
+            timeZone={prefs.timeZone}
+            allHref={`/calendar?segment=${segment.id}`}
           />
         </section>
       </div>

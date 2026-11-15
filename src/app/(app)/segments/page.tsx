@@ -10,7 +10,13 @@ import { SegmentFormDialog } from '@/features/life-segments/components/segment-f
 import { listSegments } from '@/features/life-segments/service';
 import { listProjects } from '@/features/projects/queries';
 import { countOpenTasksBySegment } from '@/features/tasks/queries';
+import { addDays } from 'date-fns';
+import { fromZonedTime } from 'date-fns-tz';
+import { expandEvents } from '@/features/calendar/expand';
+import { listEventsBetween } from '@/features/calendar/queries';
+import { getPreferences } from '@/features/settings/service';
 import { requireUser } from '@/lib/auth';
+import { toDateKey, todayInZone } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 
 export const metadata: Metadata = { title: 'Life Segments' };
@@ -26,12 +32,21 @@ export default async function SegmentsPage({ searchParams }: PageProps<'/segment
   const user = await requireUser();
   const params = await searchParams;
   const showArchived = params.archived === '1';
-  const [segments, taskCounts, goals, projects] = await Promise.all([
+  const prefs = await getPreferences(user.id);
+  const today = todayInZone(prefs.timeZone);
+  const eventsFrom = fromZonedTime(`${toDateKey(today)}T00:00:00`, prefs.timeZone);
+  const eventsTo = fromZonedTime(`${toDateKey(addDays(today, 14))}T00:00:00`, prefs.timeZone);
+  const [segments, taskCounts, goals, projects, eventRows] = await Promise.all([
     listSegments(user.id, { includeArchived: showArchived }),
     countOpenTasksBySegment(user.id),
     listGoals(user.id),
     listProjects(user.id),
+    listEventsBetween(user.id, eventsFrom, eventsTo),
   ]);
+  const eventCounts = countBy(
+    expandEvents(eventRows, eventsFrom, eventsTo).filter((i) => i.segmentId),
+    (i) => i.segmentId as string
+  );
   const goalCounts = countBy(goals, (g) => g.lifeSegmentId);
   const projectCounts = countBy(projects, (p) => p.lifeSegmentId);
 
@@ -74,6 +89,7 @@ export default async function SegmentsPage({ searchParams }: PageProps<'/segment
               openTasks={taskCounts[s.id] ?? 0}
               activeGoals={goalCounts[s.id] ?? 0}
               activeProjects={projectCounts[s.id] ?? 0}
+              upcomingEvents={eventCounts[s.id] ?? 0}
             />
           ))}
         </div>

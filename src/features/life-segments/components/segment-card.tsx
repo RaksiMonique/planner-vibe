@@ -13,17 +13,21 @@ export function SegmentCard({
   openTasks,
   activeGoals,
   activeProjects,
+  upcomingEvents,
 }: {
   segment: LifeSegment;
   openTasks: number;
   activeGoals: number;
   activeProjects: number;
+  /** Events in the next 14 days. */
+  upcomingEvents: number;
 }) {
   const archived = !!segment.archivedAt;
   const stats: Array<[string, number]> = [
     ['Open tasks', openTasks],
     ['Goals', activeGoals],
     ['Projects', activeProjects],
+    ['Events, 14 days', upcomingEvents],
   ];
   return (
     <Card size="sm" className={cn('h-full', archived && 'opacity-70')}>
@@ -51,7 +55,7 @@ export function SegmentCard({
         </CardAction>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
-        <dl className="grid grid-cols-3 gap-2">
+        <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {stats.map(([label, value]) => (
             <div key={label} className="bg-muted/60 rounded-lg px-2 py-1.5 text-center">
               <dt className="text-muted-foreground text-[11px]">{label}</dt>

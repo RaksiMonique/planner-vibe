@@ -44,6 +44,7 @@ const localDate = (d: Date) => localDateTime(d).slice(0, 10);
 export function CalendarPage({
   calendars,
   segments,
+  initialSegmentId,
   customCategories,
   initialRange,
   weekStartsOn,
@@ -53,6 +54,8 @@ export function CalendarPage({
 }: {
   calendars: (CalendarOption & { isEnabled: boolean })[];
   segments: SegmentOption[];
+  /** Segment to filter by on first paint, from `?segment=`. */
+  initialSegmentId?: string;
   /** Category labels the user has typed before. */
   customCategories: string[];
   initialRange: Range;
@@ -68,7 +71,9 @@ export function CalendarPage({
   const [enabledCalendars, setEnabledCalendars] = useState<Set<string>>(
     () => new Set(calendars.filter((c) => c.isEnabled).map((c) => c.id))
   );
-  const [segmentId, setSegmentId] = useState<string>('all');
+  const [segmentId, setSegmentId] = useState<string>(
+    initialSegmentId && segments.some((s) => s.id === initialSegmentId) ? initialSegmentId : 'all'
+  );
   const [showTasks, setShowTasks] = useState(true);
   const [addedCategories, setAddedCategories] = useState<string[]>([]);
   const categories = categoryChoices([...customCategories, ...addedCategories]);

@@ -784,7 +784,7 @@ function BalanceSection({ balance }: { balance: LifeBalance }) {
         <SectionEmpty
           icon={ScaleIcon}
           title="Nothing to weigh yet"
-          description="Open tasks, logged time and goals per Life Segment appear here next to the weight you gave each segment."
+          description="Open tasks, logged time, scheduled events and goals per Life Segment appear here next to the weight you gave each segment."
           href="/segments"
           cta="Go to segments"
         />
@@ -797,6 +797,7 @@ function BalanceSection({ balance }: { balance: LifeBalance }) {
       r.weightShare,
       r.taskShare ?? 0,
       r.timeShare ?? 0,
+      r.eventShare ?? 0,
       r.goalShare ?? 0,
     ])
   );
@@ -804,13 +805,13 @@ function BalanceSection({ balance }: { balance: LifeBalance }) {
     <Section
       id="balance"
       title="Life balance"
-      description="How open tasks, logged time and goals spread across your Life Segments, next to each segment's share of the weights."
+      description="How open tasks, logged time, scheduled events and goals spread across your Life Segments, next to each segment's share of the weights."
       className={span}
     >
       <Legend
         items={[
           { tone: 'soft', label: 'Weight share' },
-          { tone: 'full', label: 'Share of tasks, time or goals' },
+          { tone: 'full', label: 'Share of tasks, time, events or goals' },
         ]}
       />
       <Table>
@@ -821,6 +822,7 @@ function BalanceSection({ balance }: { balance: LifeBalance }) {
             <TableHead className="text-right">Weight</TableHead>
             <TableHead className="hidden text-right md:table-cell">Tasks</TableHead>
             <TableHead className="hidden text-right md:table-cell">Time</TableHead>
+            <TableHead className="hidden text-right md:table-cell">Events</TableHead>
             <TableHead className="hidden text-right md:table-cell">Goals</TableHead>
             <TableHead className="text-right">Attention</TableHead>
           </TableRow>
@@ -834,8 +836,8 @@ function BalanceSection({ balance }: { balance: LifeBalance }) {
                   <span className="min-w-0 flex-1 truncate">{r.name}</span>
                 </div>
                 <p className="text-muted-foreground mt-0.5 text-xs tabular-nums md:hidden">
-                  Tasks {formatPercent(r.taskShare)} · Time {formatPercent(r.timeShare)} · Goals{' '}
-                  {formatPercent(r.goalShare)}
+                  Tasks {formatPercent(r.taskShare)} · Time {formatPercent(r.timeShare)} · Events{' '}
+                  {formatPercent(r.eventShare)} · Goals {formatPercent(r.goalShare)}
                 </p>
                 <div className="mt-1.5 flex flex-col gap-0.5 md:hidden">
                   <Bar value={r.weightShare} max={max} tone="soft" />
@@ -858,6 +860,9 @@ function BalanceSection({ balance }: { balance: LifeBalance }) {
               </TableCell>
               <TableCell className="hidden align-top md:table-cell">
                 <ShareCell value={r.timeShare} max={max} />
+              </TableCell>
+              <TableCell className="hidden align-top md:table-cell">
+                <ShareCell value={r.eventShare} max={max} />
               </TableCell>
               <TableCell className="hidden align-top md:table-cell">
                 <ShareCell value={r.goalShare} max={max} />

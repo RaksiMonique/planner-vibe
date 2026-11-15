@@ -9,6 +9,7 @@ import {
   habitConsistency,
   lifeBalance,
   moodTrend,
+  scheduledMinutesBySegment,
   projectsAndMilestones,
   ratio,
   shareOf,
@@ -376,7 +377,7 @@ describe('lifeBalance', () => {
       { a: 60, b: 60 },
       { a: 2, zzz: 9 }
     );
-    expect(r.totals).toEqual({ tasks: 5, minutes: 120, goals: 2 });
+    expect(r.totals).toEqual({ tasks: 5, minutes: 120, eventMinutes: 0, goals: 2 });
     expect(r.rows[0]).toMatchObject({
       name: 'Faith',
       weightShare: 60,
@@ -396,7 +397,7 @@ describe('lifeBalance', () => {
     });
     expect(r.rows[2]).toMatchObject({ weightShare: 20, attentionShare: 7, gap: -13 });
     expect(r.note).toBe(
-      'Widest gap: Health receives 37% of your attention (open tasks, logged time and goals) against a weight share of 20%.'
+      'Widest gap: Health receives 37% of your attention (open tasks, logged time, scheduled events and goals) against a weight share of 20%.'
     );
     expect(r.isEmpty).toBe(false);
   });
@@ -412,6 +413,13 @@ describe('lifeBalance', () => {
       gap: 0,
     });
     expect(r.note).toBe('Your attention is spread close to the weights you gave each segment.');
+  });
+
+  it('counts scheduled events as a fourth share', () => {
+    const r = lifeBalance([{ ...faith, weight: 1 }, health], {}, {}, {}, { a: 90, b: 30 });
+    expect(r.totals.eventMinutes).toBe(120);
+    expect(r.rows[0]).toMatchObject({ eventMinutes: 90, eventShare: 75, attentionShare: 75 });
+    expect(r.isEmpty).toBe(false);
   });
 
   it('is empty without any activity or segments', () => {
@@ -437,5 +445,40 @@ describe('formatting', () => {
     expect(formatChange(3)).toBe('+3');
     expect(formatChange(-2)).toBe('−2');
     expect(formatChange(0)).toBe('no change');
+  });
+});
+
+describe('scheduledMinutesBySegment', () => {
+  const from = new Date('2026-03-02T00:00:00Z');
+  const to = new Date('2026-03-09T00:00:00Z');
+  it('sums timed events per segment, clips to the range and counts all-day ones as an hour', () => {
+    expect(
+      scheduledMinutesBySegment(
+        [
+          {
+            segmentId: 'a',
+            allDay: false,
+            start: '2026-03-02T09:00:00Z',
+            end: '2026-03-02T10:30:00Z',
+          },
+          { segmentId: 'a', allDay: true, start: '2026-03-03', end: null },
+          // Starts before the range: only the part inside counts.
+          {
+            segmentId: 'b',
+            allDay: false,
+            start: '2026-03-01T23:00:00Z',
+            end: '2026-03-02T01:00:00Z',
+          },
+          {
+            segmentId: null,
+            allDay: false,
+            start: '2026-03-02T09:00:00Z',
+            end: '2026-03-02T10:00:00Z',
+          },
+        ],
+        from,
+        to
+      )
+    ).toEqual({ a: 150, b: 60 });
   });
 });

@@ -445,10 +445,13 @@ export type BalanceRow = {
   weightShare: number;
   tasks: number;
   minutes: number;
+  /** Minutes of scheduled events in the period. */
+  eventMinutes: number;
   goals: number;
   /** Percentages of the totals; null when a measure has no data at all. */
   taskShare: number | null;
   timeShare: number | null;
+  eventShare: number | null;
   goalShare: number | null;
   /** Mean of the shares that have data: what the segment actually receives. */
   attentionShare: number | null;
@@ -458,7 +461,7 @@ export type BalanceRow = {
 
 export type LifeBalance = {
   rows: BalanceRow[];
-  totals: { tasks: number; minutes: number; goals: number };
+  totals: { tasks: number; minutes: number; eventMinutes: number; goals: number };
   /** One sentence on the widest gap between weight and attention. */
   note: string | null;
   isEmpty: boolean;
@@ -466,33 +469,71 @@ export type LifeBalance = {
 
 const GAP_THRESHOLD = 5;
 
+/** An all-day event counts as this much scheduled time, so a birthday does not swamp a week. */
+export const ALL_DAY_EVENT_MINUTES = 60;
+
+type ScheduledItem = {
+  segmentId: string | null;
+  allDay: boolean;
+  /** ISO instant, or yyyy-MM-dd when all-day. */
+  start: string;
+  end: string | null;
+};
+
 /**
- * Share of open tasks, logged time and goals per segment against its
- * normalised weight. Shares are rounded for display; the note is picked on
- * the unrounded gaps.
+ * Minutes of scheduled events per segment inside [from, to), clipped to the
+ * range. Items without a segment are skipped.
+ */
+export function scheduledMinutesBySegment(
+  items: ScheduledItem[],
+  from: Date,
+  to: Date
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const item of items) {
+    if (!item.segmentId) continue;
+    let minutes = ALL_DAY_EVENT_MINUTES;
+    if (!item.allDay) {
+      const start = Math.max(new Date(item.start).getTime(), from.getTime());
+      const end = Math.min(new Date(item.end ?? item.start).getTime(), to.getTime());
+      minutes = Math.max(0, Math.round((end - start) / 60_000));
+    }
+    if (minutes > 0) out[item.segmentId] = (out[item.segmentId] ?? 0) + minutes;
+  }
+  return out;
+}
+
+/**
+ * Share of open tasks, logged time, scheduled events and goals per segment
+ * against its normalised weight. Shares are rounded for display; the note is
+ * picked on the unrounded gaps.
  */
 export function lifeBalance(
   segments: BalanceSegment[],
   tasksBySegment: Record<string, number>,
   minutesBySegment: Record<string, number>,
-  goalsBySegment: Record<string, number>
+  goalsBySegment: Record<string, number>,
+  eventMinutesBySegment: Record<string, number> = {}
 ): LifeBalance {
   const weightTotal = sum(segments.map((s) => Math.max(0, s.weight)));
   const totals = {
     tasks: sum(segments.map((s) => tasksBySegment[s.id] ?? 0)),
     minutes: sum(segments.map((s) => minutesBySegment[s.id] ?? 0)),
+    eventMinutes: sum(segments.map((s) => eventMinutesBySegment[s.id] ?? 0)),
     goals: sum(segments.map((s) => goalsBySegment[s.id] ?? 0)),
   };
   const share = (value: number, total: number) => (total > 0 ? (value / total) * 100 : null);
   const raw = segments.map((s) => {
     const tasks = tasksBySegment[s.id] ?? 0;
     const minutes = minutesBySegment[s.id] ?? 0;
+    const eventMinutes = eventMinutesBySegment[s.id] ?? 0;
     const goals = goalsBySegment[s.id] ?? 0;
     const weightShare =
       weightTotal > 0 ? (Math.max(0, s.weight) / weightTotal) * 100 : 100 / segments.length;
     const shares = [
       share(tasks, totals.tasks),
       share(minutes, totals.minutes),
+      share(eventMinutes, totals.eventMinutes),
       share(goals, totals.goals),
     ];
     const present = shares.filter((x): x is number => x !== null);
@@ -505,10 +546,12 @@ export function lifeBalance(
       weightShare,
       tasks,
       minutes,
+      eventMinutes,
       goals,
       taskShare: shares[0],
       timeShare: shares[1],
-      goalShare: shares[2],
+      eventShare: shares[2],
+      goalShare: shares[3],
       attentionShare: attention,
       gap: attention === null ? null : attention - weightShare,
     };
@@ -519,19 +562,21 @@ export function lifeBalance(
     weightShare: round(r.weightShare),
     taskShare: roundOrNull(r.taskShare),
     timeShare: roundOrNull(r.timeShare),
+    eventShare: roundOrNull(r.eventShare),
     goalShare: roundOrNull(r.goalShare),
     attentionShare: roundOrNull(r.attentionShare),
     gap: roundOrNull(r.gap),
   }));
   const isEmpty =
-    segments.length === 0 || (totals.tasks === 0 && totals.minutes === 0 && totals.goals === 0);
+    segments.length === 0 ||
+    (totals.tasks === 0 && totals.minutes === 0 && totals.eventMinutes === 0 && totals.goals === 0);
   let note: string | null = null;
   if (!isEmpty) {
     const widest = raw
       .filter((r) => r.gap !== null)
       .sort((a, b) => Math.abs(b.gap ?? 0) - Math.abs(a.gap ?? 0))[0];
     if (widest && widest.gap !== null && Math.abs(widest.gap) >= GAP_THRESHOLD) {
-      note = `Widest gap: ${widest.name} receives ${round(widest.attentionShare ?? 0)}% of your attention (open tasks, logged time and goals) against a weight share of ${round(widest.weightShare)}%.`;
+      note = `Widest gap: ${widest.name} receives ${round(widest.attentionShare ?? 0)}% of your attention (open tasks, logged time, scheduled events and goals) against a weight share of ${round(widest.weightShare)}%.`;
     } else {
       note = 'Your attention is spread close to the weights you gave each segment.';
     }

@@ -63,6 +63,7 @@ export default async function CalendarRoute({ searchParams }: { searchParams: Se
           isEnabled: c.isEnabled,
         }))}
         segments={segments.map((s) => ({ id: s.id, name: s.name, accent: s.accent }))}
+        initialSegmentId={typeof params.segment === 'string' ? params.segment : undefined}
         customCategories={customCategories}
         initialRange={{ from: from.toISOString(), to: to.toISOString(), items }}
         weekStartsOn={prefs.weekStartsOn}

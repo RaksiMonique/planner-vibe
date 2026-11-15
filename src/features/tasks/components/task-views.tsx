@@ -130,7 +130,7 @@ export function TaskMatrixView({ tasks, today, weekStartsOn, subtaskCounts, edit
         </section>
       ))}
       <p className="text-muted-foreground text-xs md:col-span-2">
-        Urgent means due today or overdue. Mark importance on each task.{' '}
+        Due today or overdue counts as due now. Tick Important on a task to move it up.{' '}
         <Link href="?view=list" className="underline">
           Back to the list
         </Link>

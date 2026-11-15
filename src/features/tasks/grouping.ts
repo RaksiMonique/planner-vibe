@@ -29,10 +29,10 @@ export function groupForList<T extends Groupable>(
 
 export type Quadrant = 'do' | 'schedule' | 'delegate' | 'eliminate';
 export const QUADRANTS: Array<{ key: Quadrant; label: string; hint: string }> = [
-  { key: 'do', label: 'Do first', hint: 'Urgent and important' },
-  { key: 'schedule', label: 'Schedule', hint: 'Important, not urgent' },
-  { key: 'delegate', label: 'Delegate', hint: 'Urgent, not important' },
-  { key: 'eliminate', label: 'Eliminate', hint: 'Neither' },
+  { key: 'do', label: 'Do today', hint: 'Due now and marked important' },
+  { key: 'schedule', label: 'Plan a slot', hint: 'Important, not due yet' },
+  { key: 'delegate', label: 'Clear quickly', hint: 'Due now, not marked important' },
+  { key: 'eliminate', label: 'Someday', hint: 'Not due, not marked important' },
 ];
 
 /** Urgent means due today or overdue; importance is the task's own flag. */

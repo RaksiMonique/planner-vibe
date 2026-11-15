@@ -257,7 +257,8 @@ export function TaskSheet(props: TaskSheetProps) {
             </div>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox name="isImportant" defaultChecked={task?.isImportant ?? false} />
-              Important (Eisenhower)
+              Important
+              <span className="text-muted-foreground text-xs">Moves it up in the matrix view</span>
             </label>
             <Field>
               <FieldLabel htmlFor="task-recurrence">Repeat</FieldLabel>

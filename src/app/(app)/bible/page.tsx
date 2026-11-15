@@ -86,6 +86,198 @@ export default async function BiblePage() {
     />
   );
 
+  // Whoever is doing the work takes the top-left spot: the reading plan when one
+  // is running, otherwise the study.
+  const studyFirst = !overview && Boolean(nextUp);
+  const readingCard = (
+    <Card className={studyFirst ? 'lg:col-span-5' : 'lg:col-span-7'}>
+      <CardHeader>
+        <CardTitle className="font-heading flex items-center gap-2 text-lg">
+          <BookOpenIcon className="text-primary size-4" aria-hidden />
+          Today&apos;s reading
+        </CardTitle>
+        {overview && (
+          <CardAction className="flex gap-1">
+            <form action={setPlanStatusAction}>
+              <input type="hidden" name="id" value={overview.plan.id} />
+              <input type="hidden" name="status" value="paused" />
+              <Button type="submit" variant="ghost" size="xs">
+                Pause
+              </Button>
+            </form>
+            <form action={setPlanStatusAction}>
+              <input type="hidden" name="id" value={overview.plan.id} />
+              <input type="hidden" name="status" value="done" />
+              <Button type="submit" variant="ghost" size="xs">
+                Finish
+              </Button>
+            </form>
+          </CardAction>
+        )}
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {overview ? (
+          <>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <p className="font-heading text-xl">{overview.plan.name}</p>
+              <p className="text-muted-foreground text-xs">
+                {overview.plan.chaptersPerDay} a day ·{' '}
+                {overview.progress.behind > 0
+                  ? `${overview.progress.behind} chapters behind`
+                  : overview.progress.behind < 0
+                    ? `${-overview.progress.behind} chapters ahead`
+                    : 'on schedule'}{' '}
+                · about {overview.progress.remainingDays} days left
+              </p>
+            </div>
+            {overview.today.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Every chapter is read. Finish the plan above.
+              </p>
+            ) : (
+              <ReadingToday
+                key={overview.today.map((c) => `${c.bookId}:${c.chapter}:${c.read}`).join('|')}
+                planId={overview.plan.id}
+                dateKey={todayKey}
+                chapters={overview.today}
+              />
+            )}
+            {overview.scheduled.length > 0 && (
+              <p className="text-muted-foreground text-xs">
+                The schedule has {describeChapters(overview.scheduled)} for today.
+              </p>
+            )}
+            <ProgressBar
+              value={overview.progress.percent}
+              label="Plan progress"
+              valueText={`${overview.progress.read} of ${overview.progress.total} chapters`}
+            />
+          </>
+        ) : (
+          <EmptyState
+            icon={BookOpenIcon}
+            title="No active reading plan"
+            description="Pick the whole Bible, the New Testament, the Gospels, the Psalms or your own books, and how many chapters a day."
+            action={
+              <PlanFormDialog
+                segments={segments}
+                defaultSegmentId={faith?.id}
+                todayKey={todayKey}
+                queueAfter={queueAfter}
+                variant="default"
+                trigger={
+                  <>
+                    <PlusIcon data-icon="inline-start" />
+                    Start a reading plan
+                  </>
+                }
+              />
+            }
+          />
+        )}
+        {otherPlans.length > 0 && (
+          <ul className="text-muted-foreground flex flex-col gap-1 border-t pt-3 text-xs">
+            {otherPlans.map((p) => {
+              const behind = queuedBehind(p, plans);
+              return (
+                <li key={p.id} className="flex items-center gap-2">
+                  <span className="min-w-0 truncate">{p.name}</span>
+                  <Badge variant="outline" className="min-w-0 flex-1 justify-start truncate">
+                    {behind ? `Queued after ${behind.name}` : PLAN_STATUS_LABELS[p.status]}
+                  </Badge>
+                  {p.status !== 'done' && !behind && (
+                    <form action={setPlanStatusAction}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <input type="hidden" name="status" value="active" />
+                      <Button type="submit" variant="ghost" size="xs">
+                        Resume
+                      </Button>
+                    </form>
+                  )}
+                  {p.status !== 'done' && (
+                    <form action={setPlanStatusAction}>
+                      <input type="hidden" name="id" value={p.id} />
+                      <input type="hidden" name="status" value="done" />
+                      <Button type="submit" variant="ghost" size="xs">
+                        Finish
+                      </Button>
+                    </form>
+                  )}
+                  <ConfirmActionButton
+                    action={deletePlanAction}
+                    fields={{ id: p.id }}
+                    title="Delete this reading plan?"
+                    description="Its chapter history goes with it."
+                    variant="ghost"
+                    size="xs"
+                    trigger="Delete"
+                  />
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+  const studyCard = (
+    <Card className={studyFirst ? 'lg:col-span-7' : 'lg:col-span-5'}>
+      <CardHeader>
+        <CardTitle className="font-heading flex items-center gap-2 text-lg">
+          <BookMarkedIcon className="text-primary size-4" aria-hidden />
+          Your study
+        </CardTitle>
+        {inProgress.length > 1 && (
+          <CardAction>
+            <span className="text-muted-foreground text-xs">{inProgress.length} in progress</span>
+          </CardAction>
+        )}
+      </CardHeader>
+      <CardContent className="flex flex-col gap-3">
+        {nextUp ? (
+          <>
+            <div>
+              <p className="tracking-eyebrow text-muted-foreground text-xs uppercase">
+                {next?.mode === 'continue' ? 'Continue' : 'Next up'}
+              </p>
+              <Link
+                href={`/bible/${nextUp.id}`}
+                className="font-heading text-xl leading-snug hover:underline"
+              >
+                {nextUp.title}
+              </Link>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {STUDY_KIND_LABELS[nextUp.kind]}
+                {nextUp.lastStudiedAt
+                  ? ` · last studied ${format(nextUp.lastStudiedAt, 'd MMM')}`
+                  : next?.mode === 'continue'
+                    ? ' · no notes yet'
+                    : ' · not started'}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link href={`/bible/${nextUp.id}`} className={cn(buttonVariants({ size: 'sm' }))}>
+                {next?.mode === 'continue' ? 'Continue' : 'Start'}
+              </Link>
+              <Link
+                href={`/bible/${nextUp.id}#notes`}
+                className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+              >
+                Add a note
+              </Link>
+            </div>
+          </>
+        ) : (
+          <p className="text-muted-foreground text-sm">
+            {studies.length === 0
+              ? 'No studies yet. A study holds the notes and passages of a book, series or course.'
+              : 'Everything on the shelf is done. Start something new below.'}
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  );
+
   return (
     <>
       <PageHeader
@@ -111,193 +303,8 @@ export default async function BiblePage() {
       />
 
       <div className="grid gap-4 lg:grid-cols-12">
-        <Card className="lg:col-span-7">
-          <CardHeader>
-            <CardTitle className="font-heading flex items-center gap-2 text-lg">
-              <BookOpenIcon className="text-primary size-4" aria-hidden />
-              Today&apos;s reading
-            </CardTitle>
-            {overview && (
-              <CardAction className="flex gap-1">
-                <form action={setPlanStatusAction}>
-                  <input type="hidden" name="id" value={overview.plan.id} />
-                  <input type="hidden" name="status" value="paused" />
-                  <Button type="submit" variant="ghost" size="xs">
-                    Pause
-                  </Button>
-                </form>
-                <form action={setPlanStatusAction}>
-                  <input type="hidden" name="id" value={overview.plan.id} />
-                  <input type="hidden" name="status" value="done" />
-                  <Button type="submit" variant="ghost" size="xs">
-                    Finish
-                  </Button>
-                </form>
-              </CardAction>
-            )}
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {overview ? (
-              <>
-                <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <p className="font-heading text-xl">{overview.plan.name}</p>
-                  <p className="text-muted-foreground text-xs">
-                    {overview.plan.chaptersPerDay} a day ·{' '}
-                    {overview.progress.behind > 0
-                      ? `${overview.progress.behind} chapters behind`
-                      : overview.progress.behind < 0
-                        ? `${-overview.progress.behind} chapters ahead`
-                        : 'on schedule'}{' '}
-                    · about {overview.progress.remainingDays} days left
-                  </p>
-                </div>
-                {overview.today.length === 0 ? (
-                  <p className="text-muted-foreground text-sm">
-                    Every chapter is read. Finish the plan above.
-                  </p>
-                ) : (
-                  <ReadingToday
-                    key={overview.today.map((c) => `${c.bookId}:${c.chapter}:${c.read}`).join('|')}
-                    planId={overview.plan.id}
-                    dateKey={todayKey}
-                    chapters={overview.today}
-                  />
-                )}
-                {overview.scheduled.length > 0 && (
-                  <p className="text-muted-foreground text-xs">
-                    The schedule has {describeChapters(overview.scheduled)} for today.
-                  </p>
-                )}
-                <ProgressBar
-                  value={overview.progress.percent}
-                  label="Plan progress"
-                  valueText={`${overview.progress.read} of ${overview.progress.total} chapters`}
-                />
-              </>
-            ) : (
-              <EmptyState
-                icon={BookOpenIcon}
-                title="No active reading plan"
-                description="Pick the whole Bible, the New Testament, the Gospels, the Psalms or your own books, and how many chapters a day."
-                action={
-                  <PlanFormDialog
-                    segments={segments}
-                    defaultSegmentId={faith?.id}
-                    todayKey={todayKey}
-                    queueAfter={queueAfter}
-                    variant="default"
-                    trigger={
-                      <>
-                        <PlusIcon data-icon="inline-start" />
-                        Start a reading plan
-                      </>
-                    }
-                  />
-                }
-              />
-            )}
-            {otherPlans.length > 0 && (
-              <ul className="text-muted-foreground flex flex-col gap-1 border-t pt-3 text-xs">
-                {otherPlans.map((p) => {
-                  const behind = queuedBehind(p, plans);
-                  return (
-                    <li key={p.id} className="flex items-center gap-2">
-                      <span className="min-w-0 truncate">{p.name}</span>
-                      <Badge variant="outline" className="min-w-0 flex-1 justify-start truncate">
-                        {behind ? `Queued after ${behind.name}` : PLAN_STATUS_LABELS[p.status]}
-                      </Badge>
-                      {p.status !== 'done' && !behind && (
-                        <form action={setPlanStatusAction}>
-                          <input type="hidden" name="id" value={p.id} />
-                          <input type="hidden" name="status" value="active" />
-                          <Button type="submit" variant="ghost" size="xs">
-                            Resume
-                          </Button>
-                        </form>
-                      )}
-                      {p.status !== 'done' && (
-                        <form action={setPlanStatusAction}>
-                          <input type="hidden" name="id" value={p.id} />
-                          <input type="hidden" name="status" value="done" />
-                          <Button type="submit" variant="ghost" size="xs">
-                            Finish
-                          </Button>
-                        </form>
-                      )}
-                      <ConfirmActionButton
-                        action={deletePlanAction}
-                        fields={{ id: p.id }}
-                        title="Delete this reading plan?"
-                        description="Its chapter history goes with it."
-                        variant="ghost"
-                        size="xs"
-                        trigger="Delete"
-                      />
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card className="lg:col-span-5">
-          <CardHeader>
-            <CardTitle className="font-heading flex items-center gap-2 text-lg">
-              <BookMarkedIcon className="text-primary size-4" aria-hidden />
-              Your study
-            </CardTitle>
-            {inProgress.length > 1 && (
-              <CardAction>
-                <span className="text-muted-foreground text-xs">
-                  {inProgress.length} in progress
-                </span>
-              </CardAction>
-            )}
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            {nextUp ? (
-              <>
-                <div>
-                  <p className="tracking-eyebrow text-muted-foreground text-xs uppercase">
-                    {next?.mode === 'continue' ? 'Continue' : 'Next up'}
-                  </p>
-                  <Link
-                    href={`/bible/${nextUp.id}`}
-                    className="font-heading text-xl leading-snug hover:underline"
-                  >
-                    {nextUp.title}
-                  </Link>
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    {STUDY_KIND_LABELS[nextUp.kind]}
-                    {nextUp.lastStudiedAt
-                      ? ` · last studied ${format(nextUp.lastStudiedAt, 'd MMM')}`
-                      : next?.mode === 'continue'
-                        ? ' · no notes yet'
-                        : ' · not started'}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Link href={`/bible/${nextUp.id}`} className={cn(buttonVariants({ size: 'sm' }))}>
-                    {next?.mode === 'continue' ? 'Continue' : 'Start'}
-                  </Link>
-                  <Link
-                    href={`/bible/${nextUp.id}#notes`}
-                    className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
-                  >
-                    Add a note
-                  </Link>
-                </div>
-              </>
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                {studies.length === 0
-                  ? 'No studies yet. A study holds the notes and passages of a book, series or course.'
-                  : 'Everything on the shelf is done. Start something new below.'}
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        {studyFirst ? studyCard : readingCard}
+        {studyFirst ? readingCard : studyCard}
 
         <div className="flex flex-col gap-4 lg:col-span-7">
           {studies.length === 0 ? (

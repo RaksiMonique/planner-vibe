@@ -151,7 +151,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
           </CardContent>
         </Card>
 
-        <Card className="lg:col-span-8">
+        <Card id="notes" className="scroll-mt-4 lg:col-span-8">
           <CardHeader>
             <CardTitle className="font-heading text-lg">Notes</CardTitle>
           </CardHeader>

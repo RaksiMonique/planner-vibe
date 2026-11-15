@@ -16,7 +16,8 @@ test('create a Bible study and save a passage', async ({ page, isMobile }) => {
   await expect(page.getByText(title).first()).toBeVisible();
 
   // What is open comes first, and a new study is nudged to wait for it.
-  await expect(page.getByText('Continue').first()).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Continue', exact: true })).toBeVisible();
+  await expect(page.getByText('Your study', { exact: true })).toBeVisible();
   await page
     .getByRole('button', { name: /new study/i })
     .first()

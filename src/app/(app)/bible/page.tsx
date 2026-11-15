@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { format } from 'date-fns';
 import {
   BookMarkedIcon,
   BookOpenIcon,
@@ -31,7 +32,11 @@ import {
   listStudies,
   listStudyOptions,
 } from '@/features/faith/queries';
-import { PLAN_STATUS_LABELS, STUDY_STATUS_LABELS } from '@/features/faith/schema';
+import {
+  PLAN_STATUS_LABELS,
+  STUDY_KIND_LABELS,
+  STUDY_STATUS_LABELS,
+} from '@/features/faith/schema';
 import { STUDY_SHELF_ORDER, nextStudy } from '@/features/faith/studies';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import { listSegments } from '@/features/life-segments/service';
@@ -239,42 +244,62 @@ export default async function BiblePage() {
         <Card className="lg:col-span-5">
           <CardHeader>
             <CardTitle className="font-heading flex items-center gap-2 text-lg">
-              <SparklesIcon className="text-primary size-4" aria-hidden />
-              Today&apos;s devotional
+              <BookMarkedIcon className="text-primary size-4" aria-hidden />
+              Your study
             </CardTitle>
+            {inProgress.length > 1 && (
+              <CardAction>
+                <span className="text-muted-foreground text-xs">
+                  {inProgress.length} in progress
+                </span>
+              </CardAction>
+            )}
           </CardHeader>
-          <CardContent>
-            <DevotionalForm
-              dateKey={todayKey}
-              segments={segments}
-              defaultSegmentId={faith?.id}
-              entry={devotional}
-              compact
-            />
-          </CardContent>
-        </Card>
-
-        <div className="flex flex-col gap-4 lg:col-span-7">
-          {nextUp && (
-            <Card className="bg-secondary ring-0">
-              <CardContent className="flex flex-wrap items-center gap-3">
-                <div className="min-w-0 flex-1">
+          <CardContent className="flex flex-col gap-3">
+            {nextUp ? (
+              <>
+                <div>
                   <p className="tracking-eyebrow text-muted-foreground text-xs uppercase">
                     {next?.mode === 'continue' ? 'Continue' : 'Next up'}
                   </p>
                   <Link
                     href={`/bible/${nextUp.id}`}
-                    className="font-heading text-lg hover:underline"
+                    className="font-heading text-xl leading-snug hover:underline"
                   >
                     {nextUp.title}
                   </Link>
+                  <p className="text-muted-foreground mt-1 text-sm">
+                    {STUDY_KIND_LABELS[nextUp.kind]}
+                    {nextUp.lastStudiedAt
+                      ? ` · last studied ${format(nextUp.lastStudiedAt, 'd MMM')}`
+                      : next?.mode === 'continue'
+                        ? ' · no notes yet'
+                        : ' · not started'}
+                  </p>
                 </div>
-                <Link href={`/bible/${nextUp.id}`} className={cn(buttonVariants({ size: 'sm' }))}>
-                  {next?.mode === 'continue' ? 'Continue' : 'Open'}
-                </Link>
-              </CardContent>
-            </Card>
-          )}
+                <div className="flex flex-wrap gap-2">
+                  <Link href={`/bible/${nextUp.id}`} className={cn(buttonVariants({ size: 'sm' }))}>
+                    {next?.mode === 'continue' ? 'Continue' : 'Start'}
+                  </Link>
+                  <Link
+                    href={`/bible/${nextUp.id}#notes`}
+                    className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
+                  >
+                    Add a note
+                  </Link>
+                </div>
+              </>
+            ) : (
+              <p className="text-muted-foreground text-sm">
+                {studies.length === 0
+                  ? 'No studies yet. A study holds the notes and passages of a book, series or course.'
+                  : 'Everything on the shelf is done. Start something new below.'}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="flex flex-col gap-4 lg:col-span-7">
           {studies.length === 0 ? (
             <EmptyState
               icon={BookMarkedIcon}
@@ -314,6 +339,23 @@ export default async function BiblePage() {
         </div>
 
         <div className="flex flex-col gap-4 lg:col-span-5">
+          <Card>
+            <CardHeader>
+              <CardTitle className="font-heading flex items-center gap-2 text-lg">
+                <SparklesIcon className="text-primary size-4" aria-hidden />
+                Today&apos;s devotional
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DevotionalForm
+                dateKey={todayKey}
+                segments={segments}
+                defaultSegmentId={faith?.id}
+                entry={devotional}
+                compact
+              />
+            </CardContent>
+          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="font-heading flex items-center gap-2 text-lg">

@@ -15,13 +15,8 @@ import { toDateKey } from '@/lib/dates';
 import { isBuiltInCategory, normalizeCategory } from './categories';
 import { expandEvents, type CalendarItem } from './expand';
 import { listCalendars, listEventsBetween, type Event } from './queries';
-import {
-  presetToRRule,
-  rruleToPreset,
-  type EventInput,
-  type MoveInput,
-  type RecurrencePreset,
-} from './schema';
+import { buildRRule, parseRRule, utcDayShift, type RecurrenceFields } from './recurrence';
+import type { EventInput, MoveInput } from './schema';
 
 async function assertOwnedRefs(userId: string, calendarId: string, lifeSegmentId: string) {
   const [cal] = await db
@@ -40,16 +35,19 @@ async function assertOwnedRefs(userId: string, calendarId: string, lifeSegmentId
 
 /** Converts validated form input into the column values the events table stores. */
 function toColumns(input: EventInput, timeZone: string) {
-  const rrule = presetToRRule(input.recurrence);
+  const repeats = input.recurrence !== 'none';
+  const untilKey = repeats && input.recurrenceEnd === 'until' ? input.recurrenceUntil : undefined;
   if (input.isAllDay) {
     const allDayDate = input.allDayDate!;
+    const dtstart = new Date(`${allDayDate}T00:00:00Z`);
     return {
       isAllDay: true,
       allDayDate,
       startsAt: null,
       endsAt: null,
-      rrule,
-      dtstart: rrule ? new Date(`${allDayDate}T00:00:00Z`) : null,
+      rrule: buildRRule(input, { dtstart, dayShift: 0 }),
+      dtstart: repeats ? dtstart : null,
+      until: untilKey ? new Date(`${untilKey}T23:59:59Z`) : null,
     };
   }
   const startsAt = fromZonedTime(input.startsAt!, timeZone);
@@ -59,8 +57,12 @@ function toColumns(input: EventInput, timeZone: string) {
     allDayDate: null,
     startsAt,
     endsAt,
-    rrule,
-    dtstart: rrule ? startsAt : null,
+    rrule: buildRRule(input, {
+      dtstart: startsAt,
+      dayShift: utcDayShift(input.startsAt!.slice(0, 10), startsAt),
+    }),
+    dtstart: repeats ? startsAt : null,
+    until: untilKey ? fromZonedTime(`${untilKey}T23:59:59`, timeZone) : null,
   };
 }
 
@@ -191,8 +193,7 @@ export type EventFormValues = {
   endsAt: string;
   location: string;
   description: string;
-  recurrence: RecurrencePreset;
-};
+} & RecurrenceFields;
 
 export function toFormValues(row: Event, timeZone: string): EventFormValues {
   const local = (d: Date | null) => (d ? formatInTimeZone(d, timeZone, "yyyy-MM-dd'T'HH:mm") : '');
@@ -208,7 +209,16 @@ export function toFormValues(row: Event, timeZone: string): EventFormValues {
     endsAt: local(row.endsAt),
     location: row.location ?? '',
     description: row.description ?? '',
-    recurrence: rruleToPreset(row.rrule),
+    ...parseRRule(row.rrule, {
+      dayShift:
+        row.isAllDay || !row.startsAt
+          ? 0
+          : utcDayShift(
+              formatInTimeZone(row.startsAt, timeZone, 'yyyy-MM-dd'),
+              row.dtstart ?? row.startsAt
+            ),
+      until: row.until ? formatInTimeZone(row.until, timeZone, 'yyyy-MM-dd') : null,
+    }),
   };
 }
 

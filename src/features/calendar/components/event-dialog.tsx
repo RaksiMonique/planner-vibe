@@ -40,8 +40,9 @@ import type { Accent } from '@/lib/accents';
 import type { ActionResult } from '@/lib/action-result';
 import { deleteEvent, saveEvent } from '../actions';
 import { CATEGORY_MAX_LENGTH, categoryLabel, normalizeCategory } from '../categories';
-import { END_AFTER_START, RECURRENCE_LABELS, RECURRENCE_PRESETS } from '../schema';
+import { END_AFTER_START } from '../schema';
 import { endAfterStart, endsTooEarly } from '../times';
+import { RecurrenceFields } from './recurrence-fields';
 import type { EventFormValues } from '../service';
 
 export type CalendarOption = { id: string; name: string; accent: Accent };
@@ -117,6 +118,9 @@ function EventForm({
   const [allDay, setAllDay] = useState(values.isAllDay ?? false);
   const [start, setStart] = useState(values.startsAt ?? '');
   const [end, setEnd] = useState(values.endsAt ?? '');
+  const [allDayDate, setAllDayDate] = useState(
+    values.allDayDate || (values.startsAt ?? '').slice(0, 10)
+  );
   // Phone pickers ignore `min`, so the rule is checked here as well.
   const endTooEarly = !allDay && endsTooEarly(start, end);
   const endRef = useRef<HTMLInputElement>(null);
@@ -227,7 +231,8 @@ function EventForm({
               id="event-date"
               name="allDayDate"
               type="date"
-              defaultValue={values.allDayDate || start.slice(0, 10)}
+              value={allDayDate}
+              onChange={(e) => setAllDayDate(e.target.value)}
               required
             />
             <FieldError errors={fieldErrors(state, 'allDayDate')} />
@@ -325,26 +330,14 @@ function EventForm({
             )}
             <FieldError errors={fieldErrors(state, 'category')} />
           </Field>
-          <Field>
-            <FieldLabel htmlFor="event-recurrence">Repeats</FieldLabel>
-            <Select
-              name="recurrence"
-              defaultValue={values.recurrence ?? 'none'}
-              items={RECURRENCE_PRESETS.map((p) => ({ value: p, label: RECURRENCE_LABELS[p] }))}
-            >
-              <SelectTrigger id="event-recurrence" className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {RECURRENCE_PRESETS.map((p) => (
-                  <SelectItem key={p} value={p}>
-                    {RECURRENCE_LABELS[p]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
         </div>
+
+        <RecurrenceFields
+          key={`${values.id ?? 'new'}:${values.recurrence ?? 'none'}`}
+          initial={values}
+          start={allDay ? allDayDate : start}
+          state={state}
+        />
 
         <ReminderField entityType="event" entityId={values.id} idPrefix="event" />
         <Field>

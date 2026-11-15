@@ -39,6 +39,14 @@ test('an event takes a category of its own, which Settings can rename', async ({
   await expect(dialog.getByText('The end must be after the start.')).toBeHidden();
   await dialog.getByRole('button', { name: 'New category' }).click();
   await dialog.getByLabel('Category name').fill(category);
+  // Repeats: every 2 weeks on Tuesday (the start) and Thursday, three times.
+  await dialog.getByLabel('Repeats').selectOption('weekly');
+  await dialog.getByLabel('Every').fill('2');
+  await dialog.getByText('Thu', { exact: true }).click();
+  await expect(dialog.getByLabel('Thu')).toBeChecked();
+  await dialog.getByLabel('Repeat ends').selectOption('count');
+  await dialog.getByLabel('Times').fill('3');
+  await expect(dialog.getByText('Every 2 weeks on Tue, Thu, 3 times')).toBeVisible();
   await dialog.getByRole('button', { name: 'Create event' }).click();
   await expect(dialog).toBeHidden();
 

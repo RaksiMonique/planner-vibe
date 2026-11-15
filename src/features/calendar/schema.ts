@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { reminderFields } from '@/features/reminders/schema';
 import { CATEGORY_MAX_LENGTH, normalizeCategory } from './categories';
+import { MONTHLY_MODES, RECURRENCE_ENDS, WEEKDAY_CODES } from './recurrence';
 
 export { CATEGORY_LABELS, EVENT_CATEGORIES } from './categories';
 
@@ -20,6 +21,7 @@ const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Choose a date.');
 const localDateTime = z.string().regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/, 'Choose a time.');
 
 export const END_AFTER_START = 'The end must be after the start.';
+export const REPEAT_UNTIL_AFTER_START = 'The last day must be on or after the first.';
 
 export const eventInput = z
   .object({
@@ -39,6 +41,12 @@ export const eventInput = z
     location: z.string().trim().max(200).optional(),
     description: z.string().trim().max(4000).optional(),
     recurrence: z.enum(RECURRENCE_PRESETS).default('none'),
+    recurrenceInterval: z.coerce.number().int().min(1).max(99).default(1),
+    recurrenceDays: z.array(z.enum(WEEKDAY_CODES)).default([]),
+    recurrenceMonthly: z.enum(MONTHLY_MODES).default('day'),
+    recurrenceEnd: z.enum(RECURRENCE_ENDS).default('never'),
+    recurrenceUntil: dateKey.optional(),
+    recurrenceCount: z.coerce.number().int().min(1).max(999).optional(),
     /** Capture this event was filed from; marked converted on save. */
     captureId: z.uuid().optional(),
     ...reminderFields,
@@ -62,6 +70,27 @@ export const eventInput = z
       ctx.addIssue({ code: 'custom', path: ['endsAt'], message: 'Choose an end time.' });
     if (v.startsAt && v.endsAt && v.endsAt <= v.startsAt) {
       ctx.addIssue({ code: 'custom', path: ['endsAt'], message: END_AFTER_START });
+    }
+    if (v.recurrence !== 'none') {
+      const startDay = v.isAllDay ? v.allDayDate : v.startsAt?.slice(0, 10);
+      if (v.recurrenceEnd === 'until') {
+        if (!v.recurrenceUntil) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['recurrenceUntil'],
+            message: 'Choose the last day.',
+          });
+        } else if (startDay && v.recurrenceUntil < startDay) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['recurrenceUntil'],
+            message: REPEAT_UNTIL_AFTER_START,
+          });
+        }
+      }
+      if (v.recurrenceEnd === 'count' && !v.recurrenceCount) {
+        ctx.addIssue({ code: 'custom', path: ['recurrenceCount'], message: 'How many times?' });
+      }
     }
   });
 export type EventInput = z.infer<typeof eventInput>;

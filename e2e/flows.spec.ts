@@ -228,6 +228,30 @@ test('the breadcrumb goes back up and the add button follows the reader', async 
   }
 });
 
+test('an undated task waits in its own matrix box and the No date filter finds it', async ({
+  page,
+  isMobile,
+}) => {
+  const title = `Sort the attic ${stamp}${isMobile ? ' (phone)' : ''}`;
+  await page.goto('/tasks?new=1');
+  const sheet = page.getByRole('dialog', { name: 'New task' });
+  await sheet.getByLabel('Title').fill(title);
+  await sheet.getByRole('button', { name: 'Add task' }).click();
+  await expect(sheet).toBeHidden();
+
+  await page.goto('/tasks?view=matrix');
+  const box = page.locator('section', { hasText: 'Give it a date' });
+  await expect(box.getByRole('link', { name: title })).toBeVisible();
+
+  await page.goto('/tasks?due=none');
+  await expect(page.getByRole('link', { name: title })).toBeVisible();
+  await page.goto('/tasks?due=dated');
+  await expect(page.getByRole('link', { name: title })).toHaveCount(0);
+
+  await page.goto('/dashboard');
+  await expect(page.getByRole('link', { name: /open tasks? ha(s|ve) no date/ })).toBeVisible();
+});
+
 test('a capture can be filed as a note', async ({ page, isMobile }) => {
   const text = `Idea for the garden ${stamp}${isMobile ? ' (phone)' : ''}`;
   await page.goto('/dashboard');

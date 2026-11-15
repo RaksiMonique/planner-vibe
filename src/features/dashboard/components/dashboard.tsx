@@ -164,6 +164,18 @@ export function Dashboard({
               </li>
             ))}
           </ul>
+          {data.undatedCount > 0 && (
+            <p className="text-muted-foreground mt-2 text-xs">
+              <Link
+                href="/tasks?due=none"
+                className="hover:text-foreground underline-offset-4 hover:underline"
+              >
+                {data.undatedCount} open {data.undatedCount === 1 ? 'task has' : 'tasks have'} no
+                date
+              </Link>
+              . They never show up here until they get one.
+            </p>
+          )}
         </DashboardCard>
       ),
     },

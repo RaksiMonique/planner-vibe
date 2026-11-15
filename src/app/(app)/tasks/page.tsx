@@ -37,6 +37,7 @@ export default async function TasksPage({ searchParams }: PageProps<'/tasks'>) {
   const parentId = one(sp.parent);
   const isNew = one(sp.new) === '1';
   const blocked = one(sp.blocked);
+  const due = one(sp.due);
 
   const [prefs, segments, projects, goals] = await Promise.all([
     getPreferences(user.id),
@@ -63,12 +64,18 @@ export default async function TasksPage({ searchParams }: PageProps<'/tasks'>) {
       taskId || isNew ? listBlockerOptions(user.id, taskId) : Promise.resolve([]),
       taskId ? listDependencyIds(user.id, taskId) : Promise.resolve([]),
     ]);
-  const tasks =
+  const byBlocking =
     blocked === 'hide'
       ? allTasks.filter((t) => t.blockedBy.length === 0)
       : blocked === 'only'
         ? allTasks.filter((t) => t.blockedBy.length > 0)
         : allTasks;
+  const tasks =
+    due === 'none'
+      ? byBlocking.filter((t) => !t.dueDate)
+      : due === 'dated'
+        ? byBlocking.filter((t) => Boolean(t.dueDate))
+        : byBlocking;
   const subtasks = editing
     ? await listTasks(user.id, { parentTaskId: editing.id, status: 'all' })
     : [];

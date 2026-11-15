@@ -31,11 +31,13 @@ describe('quadrantOf and groupForMatrix', () => {
     expect(quadrantOf(t(null, true), today, 1)).toBe('schedule');
     expect(quadrantOf(t('2026-03-04', false), today, 1)).toBe('delegate');
     expect(quadrantOf(t('2026-03-20', false), today, 1)).toBe('eliminate');
+    expect(quadrantOf(t(null, false), today, 1)).toBe('undated');
   });
-  it('groups into four quadrants', () => {
-    const g = groupForMatrix([t('2026-03-04', true), t('2026-03-20')], today, 1);
+  it('groups into five boxes, undated tasks apart', () => {
+    const g = groupForMatrix([t('2026-03-04', true), t('2026-03-20'), t(null)], today, 1);
     expect(g.do).toHaveLength(1);
     expect(g.eliminate).toHaveLength(1);
+    expect(g.undated).toHaveLength(1);
     expect(g.schedule).toHaveLength(0);
   });
 });

@@ -130,7 +130,8 @@ export function TaskMatrixView({ tasks, today, weekStartsOn, subtaskCounts, edit
         </section>
       ))}
       <p className="text-muted-foreground text-xs md:col-span-2">
-        Due today or overdue counts as due now. Tick Important on a task to move it up.{' '}
+        Due today or overdue counts as due now. Tick Important on a task to move it up; give an
+        undated task a date and it finds its box.{' '}
         <Link href="?view=list" className="underline">
           Back to the list
         </Link>

@@ -119,6 +119,16 @@ export function TasksToolbar({
           ))}
         </NativeSelect>
         <NativeSelect
+          aria-label="Due date"
+          value={params.get('due') ?? ''}
+          onChange={(e) => setParam('due', e.target.value || null)}
+          className="sm:w-36"
+        >
+          <option value="">Any due date</option>
+          <option value="none">No date</option>
+          <option value="dated">Has a date</option>
+        </NativeSelect>
+        <NativeSelect
           aria-label="Blocking"
           value={params.get('blocked') ?? ''}
           onChange={(e) => setParam('blocked', e.target.value || null)}

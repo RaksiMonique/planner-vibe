@@ -27,21 +27,27 @@ export function groupForList<T extends Groupable>(
   return groups;
 }
 
-export type Quadrant = 'do' | 'schedule' | 'delegate' | 'eliminate';
+export type Quadrant = 'do' | 'schedule' | 'delegate' | 'eliminate' | 'undated';
 export const QUADRANTS: Array<{ key: Quadrant; label: string; hint: string }> = [
   { key: 'do', label: 'Do today', hint: 'Due now and marked important' },
   { key: 'schedule', label: 'Plan a slot', hint: 'Important, not due yet' },
   { key: 'delegate', label: 'Clear quickly', hint: 'Due now, not marked important' },
-  { key: 'eliminate', label: 'Someday', hint: 'Not due, not marked important' },
+  { key: 'eliminate', label: 'Someday', hint: 'Due later, not marked important' },
+  { key: 'undated', label: 'Give it a date', hint: 'No due date and not marked important' },
 ];
 
-/** Urgent means due today or overdue; importance is the task's own flag. */
+/**
+ * Urgent means due today or overdue; importance is the task's own flag. A
+ * task with no date is not "someday" by choice, so unless it is marked
+ * important it sits apart, waiting for a date.
+ */
 export function quadrantOf(task: Groupable, today: Date, weekStartsOn: WeekStartsOn): Quadrant {
   const status = dueStatus(task.dueDate, today, weekStartsOn);
   const urgent = status === 'overdue' || status === 'today';
   if (urgent && task.isImportant) return 'do';
   if (task.isImportant) return 'schedule';
   if (urgent) return 'delegate';
+  if (status === 'none') return 'undated';
   return 'eliminate';
 }
 
@@ -50,7 +56,13 @@ export function groupForMatrix<T extends Groupable>(
   today: Date,
   weekStartsOn: WeekStartsOn
 ): Record<Quadrant, T[]> {
-  const groups: Record<Quadrant, T[]> = { do: [], schedule: [], delegate: [], eliminate: [] };
+  const groups: Record<Quadrant, T[]> = {
+    do: [],
+    schedule: [],
+    delegate: [],
+    eliminate: [],
+    undated: [],
+  };
   for (const t of tasks) groups[quadrantOf(t, today, weekStartsOn)].push(t);
   return groups;
 }

@@ -44,6 +44,8 @@ export type DashboardData = {
   priorities: Array<TaskRow & { due: DueStatus }>;
   dueThisWeek: Array<TaskRow & { due: DueStatus }>;
   overdue: Array<TaskRow & { due: DueStatus }>;
+  /** Open tasks with no due date, which no other card shows. */
+  undatedCount: number;
   openCount: number;
   doneTodayCount: number;
   goals: GoalRow[];
@@ -110,6 +112,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     .sort(byPriority);
   const overdue = classified.filter((t) => t.due === 'overdue');
   const dueThisWeek = classified.filter((t) => t.due === 'this_week');
+  const undatedCount = classified.filter((t) => t.due === 'none').length;
 
   const eventDay = (e: EventRow) =>
     e.isAllDay
@@ -154,6 +157,7 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     priorities,
     dueThisWeek,
     overdue,
+    undatedCount,
     openCount: openTasks.length,
     doneTodayCount,
     goals: topGoals,

@@ -9,6 +9,8 @@ import { PERIOD_NOUN } from '../schema';
 import { habitAccent, streakLabel } from './habit-card';
 import { HabitToggle } from './habit-toggle';
 
+const PREVIEW = 8;
+
 /** Today's habit checklist with streaks. */
 export async function HabitsDashboardCard({
   userId,
@@ -20,6 +22,11 @@ export async function HabitsDashboardCard({
   const prefs = await getPreferences(userId);
   const habits = await getHabitOverview(userId, todayKey, prefs.weekStartsOn);
   const done = habits.filter((h) => h.doneToday).length;
+  // A preview: unchecked habits first; the page has the rest.
+  const shown = [...habits]
+    .sort((a, b) => Number(a.doneToday) - Number(b.doneToday))
+    .slice(0, PREVIEW);
+  const more = habits.length - shown.length;
 
   return (
     <DashboardCard title="Habits today" icon={ActivityIcon} href="/habits" release={2}>
@@ -36,7 +43,7 @@ export async function HabitsDashboardCard({
             {done} of {habits.length} checked in today.
           </p>
           <ul className="flex flex-col gap-1.5">
-            {habits.map((h) => (
+            {shown.map((h) => (
               <li key={h.id} className="flex items-center gap-2.5 text-sm">
                 <HabitToggle
                   key={`${h.id}:${todayKey}:${h.doneToday}`}
@@ -64,6 +71,11 @@ export async function HabitsDashboardCard({
               </li>
             ))}
           </ul>
+          {more > 0 && (
+            <Link href="/habits" className="text-primary text-xs hover:underline">
+              {more} more on the Habits page
+            </Link>
+          )}
         </>
       )}
     </DashboardCard>

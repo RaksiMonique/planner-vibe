@@ -60,20 +60,20 @@ export function Dashboard({
   const cards: Record<DashboardCardKey, { span: string; node: React.ReactNode } | null> = {
     job: data.workDays
       ? {
-          span: 'lg:col-span-5',
+          span: 'lg:col-span-1',
           node: <JobScheduleCard days={data.workDays} />,
         }
       : null,
     routines: {
-      span: 'lg:col-span-4',
+      span: 'lg:col-span-1',
       node: <RoutinesDashboardCard userId={userId} todayKey={data.todayKey} />,
     },
     habits: {
-      span: 'lg:col-span-4',
+      span: 'lg:col-span-1',
       node: <HabitsDashboardCard userId={userId} todayKey={data.todayKey} />,
     },
     time: {
-      span: 'lg:col-span-4',
+      span: 'lg:col-span-1',
       node: (
         <TimeDashboardCard
           userId={userId}
@@ -84,19 +84,19 @@ export function Dashboard({
       ),
     },
     faith: {
-      span: 'lg:col-span-6',
+      span: 'lg:col-span-1',
       node: <BibleDashboardCard userId={userId} todayKey={data.todayKey} />,
     },
     journal: {
-      span: 'lg:col-span-6',
+      span: 'lg:col-span-1',
       node: <JournalDashboardCard userId={userId} todayKey={data.todayKey} />,
     },
     mood: {
-      span: 'lg:col-span-4',
+      span: 'lg:col-span-1',
       node: <MoodDashboardCard userId={userId} todayKey={data.todayKey} />,
     },
     week: {
-      span: 'lg:col-span-12',
+      span: 'lg:col-span-3',
       node: (
         <DashboardCard title="Weekly schedule" icon={CalendarDaysIcon} href="/calendar" release={1}>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
@@ -149,7 +149,7 @@ export function Dashboard({
       ),
     },
     due: {
-      span: 'lg:col-span-3',
+      span: 'lg:col-span-1',
       node: (
         <DashboardCard title="Due this week" icon={CalendarDaysIcon} href="/tasks" release={1}>
           {data.dueThisWeek.length === 0 && <EmptyNote>Nothing else due this week.</EmptyNote>}
@@ -170,7 +170,7 @@ export function Dashboard({
       ),
     },
     goals: {
-      span: 'lg:col-span-4',
+      span: 'lg:col-span-1',
       node: (
         <DashboardCard title="Active goals" icon={TargetIcon} href="/goals" release={1}>
           {data.goals.length === 0 && (
@@ -194,9 +194,9 @@ export function Dashboard({
       ),
     },
     appointments: {
-      span: 'lg:col-span-4',
+      span: 'lg:col-span-1',
       node: (
-        <DashboardCard title="Upcoming appointments" icon={ClockIcon} href="/calendar" release={1}>
+        <DashboardCard title="Appointments" icon={ClockIcon} href="/calendar" release={1}>
           {data.appointments.length === 0 && (
             <EmptyNote>No appointments in the next seven days.</EmptyNote>
           )}
@@ -224,15 +224,20 @@ export function Dashboard({
       ),
     },
     inbox: {
-      span: 'lg:col-span-4',
+      span: 'lg:col-span-1',
       node: (
         <DashboardCard title="Inbox" icon={InboxIcon} href="/tasks" release={1}>
-          <Inbox captures={data.captures} segments={data.segments} />
+          <Inbox captures={data.captures.slice(0, 6)} segments={data.segments} />
+          {data.captures.length > 6 && (
+            <Link href="/tasks" className="text-primary text-xs hover:underline">
+              {data.captures.length - 6} more in the inbox
+            </Link>
+          )}
         </DashboardCard>
       ),
     },
     quote: {
-      span: 'lg:col-span-4',
+      span: 'lg:col-span-1',
       node: (
         <Card className="bg-secondary h-full ring-0">
           <CardContent className="h-full py-4">
@@ -251,11 +256,11 @@ export function Dashboard({
       ),
     },
     segments: {
-      span: 'lg:col-span-8',
+      span: 'lg:col-span-3',
       node: (
         <DashboardCard title="Life Segments" icon={ChartPieIcon} href="/segments" release={1}>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {data.segments.map((s) => (
+            {data.segments.slice(0, 10).map((s) => (
               <Link
                 key={s.id}
                 href={`/segments/${s.slug}`}
@@ -267,6 +272,11 @@ export function Dashboard({
               </Link>
             ))}
           </div>
+          {data.segments.length > 10 && (
+            <Link href="/segments" className="text-primary text-xs hover:underline">
+              All {data.segments.length} segments
+            </Link>
+          )}
         </DashboardCard>
       ),
     },
@@ -295,8 +305,8 @@ export function Dashboard({
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-12">
-        <Card className="lg:col-span-12">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <Card className="lg:col-span-3">
           <CardContent className="flex flex-col gap-2 py-2">
             <p className="tracking-eyebrow text-muted-foreground text-xs uppercase">
               {data.dateLabel}

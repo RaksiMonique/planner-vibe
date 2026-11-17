@@ -7,6 +7,8 @@ import { listRoutinesWithCompletions } from '../queries';
 import { ROUTINE_KIND_LABELS } from '../schema';
 import { RoutineChecklist } from './routine-checklist';
 
+const PREVIEW = 3;
+
 /** Today's routines with step toggles. */
 export async function RoutinesDashboardCard({
   userId,
@@ -16,13 +18,17 @@ export async function RoutinesDashboardCard({
   todayKey: string;
 }) {
   const routines = await listRoutinesWithCompletions(userId, todayKey);
-  const finished = routines.filter(
-    (r) =>
-      routineProgress(
-        r.steps.map((s) => s.id),
-        r.completion?.completedStepIds ?? []
-      ).complete
-  ).length;
+  const isFinished = (r: (typeof routines)[number]) =>
+    routineProgress(
+      r.steps.map((s) => s.id),
+      r.completion?.completedStepIds ?? []
+    ).complete;
+  const finished = routines.filter(isFinished).length;
+  // A preview: the first few still to do, then finished ones; the page has the rest.
+  const shown = [...routines]
+    .sort((a, b) => Number(isFinished(a)) - Number(isFinished(b)))
+    .slice(0, PREVIEW);
+  const more = routines.length - shown.length;
 
   return (
     <DashboardCard title="Routines" icon={RepeatIcon} href="/routines" release={2}>
@@ -39,7 +45,7 @@ export async function RoutinesDashboardCard({
             {finished} of {routines.length} finished today.
           </p>
           <div className="flex flex-col gap-3">
-            {routines.map((r) => {
+            {shown.map((r) => {
               const completedIds = r.completion?.completedStepIds ?? [];
               return (
                 <div key={r.id} className="flex flex-col gap-1">
@@ -63,6 +69,11 @@ export async function RoutinesDashboardCard({
               );
             })}
           </div>
+          {more > 0 && (
+            <Link href="/routines" className="text-primary text-xs hover:underline">
+              {more} more on the Routines page
+            </Link>
+          )}
         </>
       )}
     </DashboardCard>

@@ -41,7 +41,7 @@ export const DASHBOARD_CARDS: CardDefinition[] = [
   { key: 'mood', label: 'Mood and energy', module: 'wellness' },
   { key: 'due', label: 'Due this week', module: 'planning' },
   { key: 'goals', label: 'Active goals', module: 'life-segments' },
-  { key: 'appointments', label: 'Upcoming appointments', module: 'planning' },
+  { key: 'appointments', label: 'Appointments', module: 'planning' },
   { key: 'inbox', label: 'Inbox', module: 'planning' },
   { key: 'quote', label: 'Quote of the day', module: 'notes' },
   { key: 'segments', label: 'Life Segments', module: 'life-segments' },

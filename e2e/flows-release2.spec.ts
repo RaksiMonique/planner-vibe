@@ -58,7 +58,7 @@ test('a task reminder in the past becomes a notification', async ({ page }) => {
   await page.getByLabel('Remind me').selectOption('custom');
   await page.getByLabel('Reminder date and time').fill(local);
   await page.getByRole('button', { name: 'Add task' }).click();
-  await expect(page.getByText(title)).toBeVisible();
+  await expect(page.getByText(title).first()).toBeVisible();
 
   await page.goto('/dashboard');
   const bell = page.getByRole('button', { name: /notifications, \d+ unread/i });

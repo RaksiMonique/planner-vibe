@@ -94,7 +94,7 @@ export async function TodayBlock({
   const todayCount = events.length + dueToday.length + habits.length + (moodPending ? 1 : 0);
 
   return (
-    <Card className="lg:col-span-12" data-slot="today-block">
+    <Card className="lg:col-span-3" data-slot="today-block">
       <CardContent className="flex flex-col gap-5">
         <Section
           title="Today"

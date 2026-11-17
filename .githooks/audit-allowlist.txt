@@ -7,3 +7,5 @@
 #
 # `watch: <package> <minimum-safe-version>` lines make the pre-push hook
 # nudge when a deferred upgrade becomes available (cached 24h).
+GHSA-fc5q-39xc-vjpf # picomatch ReDoS; no patched release yet (4.0.7 is latest); build-time tooling only. See docs/fixes.md.
+watch: picomatch 4.0.8

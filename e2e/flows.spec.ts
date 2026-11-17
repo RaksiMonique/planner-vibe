@@ -257,7 +257,9 @@ test('an undated task waits in its own matrix box and the No date filter finds i
   await expect(page.getByRole('link', { name: title })).toHaveCount(0);
 
   await page.goto('/dashboard');
-  await expect(page.getByRole('link', { name: /open tasks? ha(s|ve) no date/ })).toBeVisible();
+  await expect(page.getByRole('link', { name: /without a date/ })).toBeVisible();
+  // The block lists the first few undated tasks and links to all of them.
+  await expect(page.getByRole('region', { name: 'To schedule' })).toBeVisible();
 });
 
 test('a repeating task comes back until its end, then stops', async ({ page, isMobile }) => {

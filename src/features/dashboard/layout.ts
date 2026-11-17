@@ -14,9 +14,7 @@ export type DashboardCardKey =
   | 'journal'
   | 'mood'
   | 'week'
-  | 'priorities'
   | 'due'
-  | 'overdue'
   | 'goals'
   | 'appointments'
   | 'inbox'
@@ -41,9 +39,7 @@ export const DASHBOARD_CARDS: CardDefinition[] = [
   { key: 'faith', label: 'Bible study', module: 'faith' },
   { key: 'journal', label: 'Journal', module: 'journal' },
   { key: 'mood', label: 'Mood and energy', module: 'wellness' },
-  { key: 'priorities', label: "Today's priorities", module: 'planning' },
   { key: 'due', label: 'Due this week', module: 'planning' },
-  { key: 'overdue', label: 'Overdue', module: 'planning' },
   { key: 'goals', label: 'Active goals', module: 'life-segments' },
   { key: 'appointments', label: 'Upcoming appointments', module: 'planning' },
   { key: 'inbox', label: 'Inbox', module: 'planning' },

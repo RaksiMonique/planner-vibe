@@ -41,10 +41,13 @@ export type DashboardData = {
   todayKey: string;
   weekStartsOn: WeekStartsOn;
   week: DayCell[];
+  /** Due today or overdue, most important first. */
   priorities: Array<TaskRow & { due: DueStatus }>;
+  dueToday: Array<TaskRow & { due: DueStatus }>;
   dueThisWeek: Array<TaskRow & { due: DueStatus }>;
   overdue: Array<TaskRow & { due: DueStatus }>;
-  /** Open tasks with no due date, which no other card shows. */
+  /** Open tasks with no due date: the first few, and how many there are. */
+  undated: Array<TaskRow & { due: DueStatus }>;
   undatedCount: number;
   openCount: number;
   doneTodayCount: number;
@@ -110,9 +113,12 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
   const priorities = classified
     .filter((t) => t.due === 'today' || t.due === 'overdue')
     .sort(byPriority);
-  const overdue = classified.filter((t) => t.due === 'overdue');
+  const dueToday = classified.filter((t) => t.due === 'today').sort(byPriority);
+  const overdue = classified.filter((t) => t.due === 'overdue').sort(byPriority);
   const dueThisWeek = classified.filter((t) => t.due === 'this_week');
-  const undatedCount = classified.filter((t) => t.due === 'none').length;
+  const undatedAll = classified.filter((t) => t.due === 'none').sort(byPriority);
+  const undated = undatedAll.slice(0, 6);
+  const undatedCount = undatedAll.length;
 
   const eventDay = (e: EventRow) =>
     e.isAllDay
@@ -155,8 +161,10 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
     weekStartsOn: prefs.weekStartsOn,
     week,
     priorities,
+    dueToday,
     dueThisWeek,
     overdue,
+    undated,
     undatedCount,
     openCount: openTasks.length,
     doneTodayCount,

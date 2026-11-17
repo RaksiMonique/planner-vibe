@@ -6,11 +6,9 @@ import {
   ChartPieIcon,
   ClockIcon,
   InboxIcon,
-  ListChecksIcon,
   PlusIcon,
   QuoteIcon,
   TargetIcon,
-  TriangleAlertIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { buttonVariants } from '@/components/ui/button';
@@ -19,7 +17,6 @@ import { SegmentDot } from '@/components/shared/segment-badge';
 import { Inbox } from '@/features/capture/components/inbox';
 import { QuickCapture } from '@/features/capture/components/quick-capture';
 import { JobScheduleCard } from '@/features/work/components/job-schedule-card';
-import { TaskRow } from '@/features/tasks/components/task-row';
 import { ACCENT_BG } from '@/lib/accents';
 import { GoalProgress } from '@/features/goals/components/goal-progress';
 import { cn } from '@/lib/utils';
@@ -33,6 +30,7 @@ import { MoodDashboardCard } from '@/features/wellness/components/mood-dashboard
 import { RoutinesDashboardCard } from '@/features/routines/components/routines-dashboard-card';
 import { TimeDashboardCard } from '@/features/time/components/time-dashboard-card';
 import { DashboardCard, EmptyNote } from './dashboard-card';
+import { TodayBlock } from './today-block';
 
 const HORIZON_LABEL = {
   lifelong: 'Lifelong',
@@ -150,35 +148,6 @@ export function Dashboard({
         </DashboardCard>
       ),
     },
-    priorities: {
-      span: 'lg:col-span-6',
-      node: (
-        <DashboardCard title="Today's priorities" icon={ListChecksIcon} href="/tasks" release={1}>
-          {data.priorities.length === 0 && (
-            <EmptyNote>Nothing due today. Pick something from this week.</EmptyNote>
-          )}
-          <ul className="flex flex-col">
-            {data.priorities.map((t) => (
-              <li key={t.id}>
-                <TaskRow task={t} status={t.due} editHref={editHref(t.id)} />
-              </li>
-            ))}
-          </ul>
-          {data.undatedCount > 0 && (
-            <p className="text-muted-foreground mt-2 text-xs">
-              <Link
-                href="/tasks?due=none"
-                className="hover:text-foreground underline-offset-4 hover:underline"
-              >
-                {data.undatedCount} open {data.undatedCount === 1 ? 'task has' : 'tasks have'} no
-                date
-              </Link>
-              . They never show up here until they get one.
-            </p>
-          )}
-        </DashboardCard>
-      ),
-    },
     due: {
       span: 'lg:col-span-3',
       node: (
@@ -194,21 +163,6 @@ export function Dashboard({
                     {t.dueDate && format(parseISO(t.dueDate), 'EEEE')}
                   </span>
                 </Link>
-              </li>
-            ))}
-          </ul>
-        </DashboardCard>
-      ),
-    },
-    overdue: {
-      span: 'lg:col-span-3',
-      node: (
-        <DashboardCard title="Overdue" icon={TriangleAlertIcon} href="/tasks" release={1}>
-          {data.overdue.length === 0 && <EmptyNote>All caught up.</EmptyNote>}
-          <ul className="flex flex-col">
-            {data.overdue.slice(0, 8).map((t) => (
-              <li key={t.id}>
-                <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
               </li>
             ))}
           </ul>
@@ -357,6 +311,18 @@ export function Dashboard({
             </p>
           </CardContent>
         </Card>
+        <TodayBlock
+          userId={userId}
+          todayKey={data.todayKey}
+          timeZone={timeZone}
+          weekStartsOn={data.weekStartsOn}
+          habitsEnabled={enabledModules.habits !== false}
+          events={data.week.find((d) => d.isToday)?.events ?? []}
+          dueToday={data.dueToday}
+          overdue={data.overdue}
+          undated={data.undated}
+          undatedCount={data.undatedCount}
+        />
         {order.map((card) => {
           const entry = cards[card.key];
           return entry ? (

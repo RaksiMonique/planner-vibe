@@ -317,6 +317,7 @@ export function Dashboard({
           timeZone={timeZone}
           weekStartsOn={data.weekStartsOn}
           habitsEnabled={enabledModules.habits !== false}
+          wellnessEnabled={enabledModules.wellness !== false}
           events={data.week.find((d) => d.isToday)?.events ?? []}
           dueToday={data.dueToday}
           overdue={data.overdue}

@@ -2,7 +2,10 @@ import { expect, test } from './test';
 
 test('the dashboard follows the card order and hidden cards chosen in Settings', async ({
   page,
+  isMobile,
 }) => {
+  // The layout is one preference per user, and both devices share the user.
+  test.skip(isMobile, 'Desktop covers it; a parallel mobile run would undo its steps.');
   const main = page.getByRole('main');
   const layoutRows = page
     .getByRole('list')
@@ -40,4 +43,18 @@ test('the dashboard follows the card order and hidden cards chosen in Settings',
   await expect(page.getByRole('button', { name: 'Hide Life Segments' })).toBeVisible();
   await page.goto('/dashboard');
   await expect(main.getByRole('heading', { name: 'Life Segments' })).toBeVisible();
+});
+
+test('the day opens with the mood check-in, which saves in place', async ({ page }) => {
+  await page.goto('/dashboard');
+  const checkIn = page.locator('[data-slot="mood-check-in"]');
+  await expect(checkIn).toBeVisible();
+  // Another run (or the wellness page) may already have saved today; both end in the summary.
+  const moodFour = checkIn.getByRole('radio', { name: /^Mood 4/ });
+  if (await moodFour.isVisible()) {
+    await moodFour.click();
+    await checkIn.getByRole('radio', { name: /^Energy 3/ }).click();
+  }
+  await expect(checkIn).toContainText(/Mood \d · .*, energy \d/);
+  await expect(checkIn.getByRole('link', { name: 'Change' })).toBeVisible();
 });

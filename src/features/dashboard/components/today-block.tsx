@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { CalendarClockIcon, ListChecksIcon, TriangleAlertIcon } from 'lucide-react';
+import { CalendarClockIcon, ListChecksIcon, SmileIcon, TriangleAlertIcon } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SegmentDot } from '@/components/shared/segment-badge';
@@ -12,6 +12,9 @@ import { getHabitOverview } from '@/features/habits/queries';
 import { habitsDueToday } from '../habits-due';
 import { TaskRow } from '@/features/tasks/components/task-row';
 import type { TaskRow as TaskRowData } from '@/features/tasks/queries';
+import { MoodQuickPick } from '@/features/wellness/components/mood-quick-pick';
+import { getMoodForDate } from '@/features/wellness/queries';
+import { ENERGY_WORDS, MOOD_WORDS } from '@/features/wellness/schema';
 import type { DueStatus, WeekStartsOn } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 
@@ -49,8 +52,9 @@ const Quiet = ({ children }: { children: React.ReactNode }) => (
 );
 
 /**
- * The day in one place, in the order it is tackled: what is due today
- * (events, tasks, habits), what is overdue, and what still needs a date.
+ * The day in one place, in the order it is tackled: the mood check-in, what
+ * is due today (events, tasks, habits), what is overdue, and what still
+ * needs a date.
  */
 export async function TodayBlock({
   userId,
@@ -58,6 +62,7 @@ export async function TodayBlock({
   timeZone,
   weekStartsOn,
   habitsEnabled,
+  wellnessEnabled,
   events,
   dueToday,
   overdue,
@@ -69,19 +74,24 @@ export async function TodayBlock({
   timeZone: string;
   weekStartsOn: WeekStartsOn;
   habitsEnabled: boolean;
+  wellnessEnabled: boolean;
   events: EventRow[];
   dueToday: Task[];
   overdue: Task[];
   undated: Task[];
   undatedCount: number;
 }) {
-  const habits = habitsEnabled
-    ? habitsDueToday(await getHabitOverview(userId, todayKey, weekStartsOn))
-    : [];
+  const [habits, mood] = await Promise.all([
+    habitsEnabled
+      ? getHabitOverview(userId, todayKey, weekStartsOn).then(habitsDueToday)
+      : Promise.resolve([]),
+    wellnessEnabled ? getMoodForDate(userId, todayKey) : Promise.resolve(null),
+  ]);
+  const moodPending = wellnessEnabled && !mood;
   const editHref = (id: string) => `/tasks?task=${id}`;
   const timeOf = (e: EventRow) =>
     e.isAllDay || !e.startsAt ? 'All day' : format(toZonedTime(e.startsAt, timeZone), 'HH:mm');
-  const todayCount = events.length + dueToday.length + habits.length;
+  const todayCount = events.length + dueToday.length + habits.length + (moodPending ? 1 : 0);
 
   return (
     <Card className="lg:col-span-12" data-slot="today-block">
@@ -99,7 +109,38 @@ export async function TodayBlock({
             </Link>
           }
         >
-          {todayCount === 0 ? (
+          {wellnessEnabled && (
+            <div
+              data-slot="mood-check-in"
+              className="bg-muted/50 mb-1 flex flex-col gap-2 rounded-lg px-3 py-2.5"
+            >
+              {mood ? (
+                <p className="flex flex-wrap items-center gap-x-3 text-sm">
+                  <SmileIcon className="text-primary size-4" aria-hidden />
+                  <span>
+                    Mood <span className="font-medium">{mood.mood}</span> · {MOOD_WORDS[mood.mood]},
+                    energy <span className="font-medium">{mood.energy}</span> ·{' '}
+                    {ENERGY_WORDS[mood.energy]}
+                  </span>
+                  <Link
+                    href="/wellness/mood"
+                    className="text-muted-foreground text-xs hover:underline"
+                  >
+                    Change
+                  </Link>
+                </p>
+              ) : (
+                <>
+                  <p className="flex items-center gap-2 text-sm font-medium">
+                    <SmileIcon className="text-primary size-4" aria-hidden />
+                    How are you today?
+                  </p>
+                  <MoodQuickPick dateKey={todayKey} inline />
+                </>
+              )}
+            </div>
+          )}
+          {todayCount - (moodPending ? 1 : 0) === 0 ? (
             <Quiet>Nothing due today. Pick something from this week or from To schedule.</Quiet>
           ) : (
             <ul className="flex flex-col">

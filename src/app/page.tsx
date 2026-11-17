@@ -10,13 +10,16 @@ import { cn } from '@/lib/utils';
 export const dynamic = 'force-dynamic';
 
 const SWATCHES = [
-  ['Deep Burgundy', 'bg-burgundy'],
-  ['Terracotta', 'bg-terracotta'],
-  ['Muted Coral', 'bg-coral'],
-  ['Soft Peach', 'bg-peach'],
-  ['Warm Blush', 'bg-blush'],
-  ['Warm Beige', 'bg-beige'],
-  ['Muted Sage', 'bg-sage'],
+  ['Plum', 'bg-plum'],
+  ['Rose', 'bg-rose'],
+  ['Crimson', 'bg-crimson'],
+  ['Raspberry', 'bg-raspberry'],
+  ['Flame', 'bg-flame'],
+  ['Coral', 'bg-coral'],
+  ['Apricot', 'bg-apricot'],
+  ['Gold', 'bg-gold'],
+  ['Ochre', 'bg-ochre'],
+  ['Blush', 'bg-blush'],
 ] as const;
 
 const PILLARS = [

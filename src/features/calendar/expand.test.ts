@@ -14,7 +14,7 @@ const base: ExpandableEvent = {
   exdates: [],
   lifeSegmentId: 'seg',
   calendarId: 'cal',
-  calendar: { accent: 'terracotta' },
+  calendar: { accent: 'crimson' },
 };
 const from = new Date('2026-03-02T00:00:00Z');
 const to = new Date('2026-03-07T00:00:00Z'); // Mon 2 to Fri 6 inclusive

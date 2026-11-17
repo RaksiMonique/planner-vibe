@@ -65,7 +65,7 @@ function Bars({
                   </div>
                   <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
                     <div
-                      className="bg-charcoal/60 h-full rounded-full"
+                      className="bg-plum/60 h-full rounded-full"
                       style={{ width: `${((actual[key] ?? 0) / max) * 100}%` }}
                       aria-hidden
                     />
@@ -111,7 +111,7 @@ export function AnalysisPanel({ analysis, labels }: { analysis: WeekAnalysis; la
                   aria-hidden
                 />
                 <div
-                  className="bg-charcoal/60 w-2 rounded-t"
+                  className="bg-plum/60 w-2 rounded-t"
                   style={{ height: `${(d.actual / maxDay) * 100}%` }}
                   aria-hidden
                 />

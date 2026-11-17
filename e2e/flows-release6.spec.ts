@@ -15,7 +15,7 @@ test('a planner export from another project imports once, and a second run adds 
     exportedAt: new Date().toISOString(),
     profile: { id: randomUUID() },
     lifeSegments: [
-      { id: seg, name: `Imported segment ${stamp}`, slug: `imported-${stamp}`, accent: 'sage' },
+      { id: seg, name: `Imported segment ${stamp}`, slug: `imported-${stamp}`, accent: 'rose' },
     ],
     goals: [{ id: goal, lifeSegmentId: seg, horizon: 'annual', title: `Imported goal ${stamp}` }],
     tasks: [

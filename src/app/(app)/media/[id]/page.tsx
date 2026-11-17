@@ -82,7 +82,7 @@ export default async function MediaItemPage({ params }: { params: Promise<{ id: 
               <Button type="submit" variant="outline" size="sm" aria-pressed={item.isFavourite}>
                 <HeartIcon
                   data-icon="inline-start"
-                  className={cn(item.isFavourite && 'fill-terracotta text-terracotta')}
+                  className={cn(item.isFavourite && 'fill-crimson text-crimson')}
                 />
                 {item.isFavourite ? 'Favourite' : 'Add to favourites'}
               </Button>

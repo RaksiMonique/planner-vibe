@@ -114,7 +114,7 @@ export function PomodoroTimer({
     const total = msOf(state, settings);
     const pct = Math.round(((total - remaining) / total) * 100);
     return (
-      <Card className={cn(state.phase === 'work' ? 'ring-primary/40' : 'ring-sage/60')}>
+      <Card className={cn(state.phase === 'work' ? 'ring-primary/40' : 'ring-rose/60')}>
         <CardContent className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <TimerIcon className="text-primary size-5" aria-hidden />
@@ -139,7 +139,7 @@ export function PomodoroTimer({
             <div
               className={cn(
                 'h-full transition-all',
-                state.phase === 'work' ? 'bg-primary' : 'bg-sage'
+                state.phase === 'work' ? 'bg-primary' : 'bg-rose'
               )}
               style={{ width: `${pct}%` }}
             />

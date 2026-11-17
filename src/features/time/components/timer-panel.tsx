@@ -65,7 +65,7 @@ export function TimerPanel({
     return (
       <div className="bg-secondary flex flex-wrap items-center gap-3 rounded-xl px-4 py-3">
         <span
-          className="bg-terracotta inline-block size-2.5 animate-pulse rounded-full"
+          className="bg-crimson inline-block size-2.5 animate-pulse rounded-full"
           aria-hidden
         />
         <div className="min-w-0 flex-1">

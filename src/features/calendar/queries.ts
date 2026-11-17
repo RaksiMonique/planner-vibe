@@ -23,8 +23,8 @@ export async function listCalendars(userId: string): Promise<Calendar[]> {
   await db
     .insert(calendars)
     .values([
-      { userId, name: 'Personal', kind: 'personal', accent: 'burgundy' },
-      { userId, name: 'Work', kind: 'work', accent: 'terracotta' },
+      { userId, name: 'Personal', kind: 'personal', accent: 'plum' },
+      { userId, name: 'Work', kind: 'work', accent: 'crimson' },
     ])
     .onConflictDoNothing();
   return db

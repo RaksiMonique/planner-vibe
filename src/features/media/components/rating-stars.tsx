@@ -11,7 +11,7 @@ export function RatingStars({ rating, className }: { rating: number | null; clas
       {[1, 2, 3, 4, 5].map((n) => (
         <StarIcon
           key={n}
-          className={cn('size-3.5', n <= rating ? 'fill-terracotta text-terracotta' : 'text-beige')}
+          className={cn('size-3.5', n <= rating ? 'fill-crimson text-crimson' : 'text-blush')}
           aria-hidden
         />
       ))}

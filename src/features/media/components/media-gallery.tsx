@@ -29,7 +29,7 @@ export function MediaGallery({
             )}
             {item.isFavourite && (
               <HeartIcon
-                className="fill-terracotta text-terracotta absolute top-2 right-2 size-4"
+                className="fill-crimson text-crimson absolute top-2 right-2 size-4"
                 aria-label="Favourite"
               />
             )}

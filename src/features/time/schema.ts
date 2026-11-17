@@ -13,10 +13,10 @@ export const ACTIVITY_LABELS: Record<ActivityType, string> = {
 
 /** Palette accent per activity type (instructions.md 8.21). */
 export const ACTIVITY_ACCENT: Record<ActivityType, Accent> = {
-  deep_work: 'burgundy',
-  light_work: 'sage',
-  break: 'beige',
-  custom: 'terracotta',
+  deep_work: 'plum',
+  light_work: 'rose',
+  break: 'blush',
+  custom: 'crimson',
 };
 
 /** Preset block lengths in minutes; anything else is a custom end time. */

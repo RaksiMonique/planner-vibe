@@ -258,7 +258,7 @@ export function timeAllocation(
       return {
         segmentId: r.key,
         name: s?.name ?? 'Unknown segment',
-        accent: s?.accent ?? ('beige' as Accent),
+        accent: s?.accent ?? ('blush' as Accent),
         planned: r.planned,
         actual: r.actual,
         delta: r.actual - r.planned,

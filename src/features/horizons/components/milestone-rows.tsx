@@ -30,7 +30,7 @@ export function MilestoneRows({
           <li key={m.id} className="flex items-start gap-2 py-2 text-sm">
             <span
               aria-hidden
-              className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border ${done ? 'bg-sage border-sage text-white' : 'border-border'}`}
+              className={`mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-full border ${done ? 'bg-rose border-rose text-white' : 'border-border'}`}
             >
               {done && <CheckIcon className="size-3" />}
             </span>

@@ -87,7 +87,7 @@ function ShiftKindForm({ kind, close }: { kind?: ShiftKindRow; close: () => void
             <ChoiceSelect
               id="kind-accent"
               name="accent"
-              defaultValue={kind?.accent ?? 'burgundy'}
+              defaultValue={kind?.accent ?? 'plum'}
               options={ACCENTS.map((a) => ({
                 value: a,
                 label: (

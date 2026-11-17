@@ -107,7 +107,7 @@ export function MonthView({ data }: { data: MonthData }) {
                         {cell.events > 0 && (
                           <span
                             title={`${cell.events} events`}
-                            className="bg-burgundy text-ivory inline-flex min-w-3.5 items-center justify-center rounded-full px-1 text-[9px] leading-3.5"
+                            className="bg-plum text-white inline-flex min-w-3.5 items-center justify-center rounded-full px-1 text-[9px] leading-3.5"
                           >
                             {cell.events}
                           </span>
@@ -115,7 +115,7 @@ export function MonthView({ data }: { data: MonthData }) {
                         {cell.tasks > 0 && (
                           <span
                             title={`${cell.tasks} tasks due`}
-                            className="bg-terracotta inline-flex min-w-3.5 items-center justify-center rounded-full px-1 text-[9px] leading-3.5 text-white"
+                            className="bg-crimson inline-flex min-w-3.5 items-center justify-center rounded-full px-1 text-[9px] leading-3.5 text-white"
                           >
                             {cell.tasks}
                           </span>
@@ -133,7 +133,7 @@ export function MonthView({ data }: { data: MonthData }) {
                             title={`${cell.habitsDone} of ${data.habitCount} habits`}
                             className={cn(
                               'ml-auto size-2 rounded-full',
-                              cell.habitsDone >= data.habitCount ? 'bg-sage' : 'bg-peach'
+                              cell.habitsDone >= data.habitCount ? 'bg-rose' : 'bg-gold'
                             )}
                           />
                         )}
@@ -144,8 +144,8 @@ export function MonthView({ data }: { data: MonthData }) {
               )}
             </div>
             <p className="text-muted-foreground mt-3 text-[11px]">
-              Burgundy counts events, terracotta counts tasks due, ◆ marks milestones, the dot shows
-              habits (sage when every habit was checked). Click a day for its week.
+              Burgundy counts events, crimson counts tasks due, ◆ marks milestones, the dot shows
+              habits (rose when every habit was checked). Click a day for its week.
             </p>
           </CardContent>
         </Card>

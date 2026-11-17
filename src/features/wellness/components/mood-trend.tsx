@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 
 export type TrendDay = { date: string; mood: number | null; energy: number | null };
 
-/** Two bars per day, mood in burgundy and energy in sage, as plain CSS. */
+/** Two bars per day, mood in plum and energy in rose, as plain CSS. */
 export function MoodTrend({
   days,
   compact = false,
@@ -29,7 +29,7 @@ export function MoodTrend({
               title={`${format(parseISO(d.date), 'EEE d MMM')}: mood ${d.mood ?? 'not set'}`}
             />
             <span
-              className="bg-sage w-1.5 rounded-t-sm sm:w-2"
+              className="bg-rose w-1.5 rounded-t-sm sm:w-2"
               style={{ height: d.energy ? `${(d.energy / 5) * 100}%` : '2px' }}
               title={`${format(parseISO(d.date), 'EEE d MMM')}: energy ${d.energy ?? 'not set'}`}
             />
@@ -50,7 +50,7 @@ export function MoodTrend({
           <span className="bg-primary inline-block size-2 rounded-sm" /> Mood
         </span>
         <span className="flex items-center gap-1">
-          <span className="bg-sage inline-block size-2 rounded-sm" /> Energy
+          <span className="bg-rose inline-block size-2 rounded-sm" /> Energy
         </span>
         {!hasAny && <span>No check-ins in this range yet.</span>}
       </p>

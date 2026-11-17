@@ -51,7 +51,7 @@ export function expandTimeBlocks(rows: ExpandableBlock[], from: Date, to: Date):
       sourceId: row.id,
       title: row.title,
       activityType: row.activityType,
-      accent: ACTIVITY_ACCENT[row.activityType] ?? 'terracotta',
+      accent: ACTIVITY_ACCENT[row.activityType] ?? 'crimson',
       segmentId: row.lifeSegmentId,
       projectId: row.projectId,
       taskId: row.taskId,

@@ -53,21 +53,21 @@ const DEFAULT_SEGMENTS: Array<{
   accent: schema.Accent;
   icon: string;
 }> = [
-  { name: 'Faith', slug: 'faith', accent: 'burgundy', icon: 'church' },
-  { name: 'Finance', slug: 'finance', accent: 'terracotta', icon: 'wallet' },
-  { name: 'Family', slug: 'family', accent: 'coral', icon: 'users' },
-  { name: 'Health & Wellness', slug: 'health-wellness', accent: 'sage', icon: 'heart-pulse' },
-  { name: 'Career & Work', slug: 'career-work', accent: 'burgundy', icon: 'briefcase' },
+  { name: 'Faith', slug: 'faith', accent: 'plum', icon: 'church' },
+  { name: 'Finance', slug: 'finance', accent: 'crimson', icon: 'wallet' },
+  { name: 'Family', slug: 'family', accent: 'raspberry', icon: 'users' },
+  { name: 'Health & Wellness', slug: 'health-wellness', accent: 'rose', icon: 'heart-pulse' },
+  { name: 'Career & Work', slug: 'career-work', accent: 'plum', icon: 'briefcase' },
   {
     name: 'Education & Learning',
     slug: 'education-learning',
-    accent: 'terracotta',
+    accent: 'crimson',
     icon: 'graduation-cap',
   },
-  { name: 'Personal Development', slug: 'personal-development', accent: 'sage', icon: 'sprout' },
-  { name: 'Lifestyle & Home', slug: 'lifestyle-home', accent: 'peach', icon: 'house' },
-  { name: 'Relationships', slug: 'relationships', accent: 'coral', icon: 'heart' },
-  { name: 'Recreation', slug: 'recreation', accent: 'beige', icon: 'palmtree' },
+  { name: 'Personal Development', slug: 'personal-development', accent: 'rose', icon: 'sprout' },
+  { name: 'Lifestyle & Home', slug: 'lifestyle-home', accent: 'gold', icon: 'house' },
+  { name: 'Relationships', slug: 'relationships', accent: 'raspberry', icon: 'heart' },
+  { name: 'Recreation', slug: 'recreation', accent: 'blush', icon: 'palmtree' },
 ];
 
 async function main(uid: string) {
@@ -95,8 +95,8 @@ async function main(uid: string) {
   await db
     .insert(calendars)
     .values([
-      { userId: uid, name: 'Personal', kind: 'personal', accent: 'burgundy' },
-      { userId: uid, name: 'Work', kind: 'work', accent: 'terracotta' },
+      { userId: uid, name: 'Personal', kind: 'personal', accent: 'plum' },
+      { userId: uid, name: 'Work', kind: 'work', accent: 'crimson' },
     ])
     .onConflictDoNothing({ target: [calendars.userId, calendars.name] });
   console.log('  2 calendars');
@@ -229,18 +229,18 @@ async function main(uid: string) {
 
   // Habits with two weeks of check-ins.
   const habitSeeds: Array<Omit<schema.NewHabit, 'userId'>> = [
-    { lifeSegmentId: seg.faith, name: 'Morning prayer', frequency: 'daily', accent: 'burgundy' },
+    { lifeSegmentId: seg.faith, name: 'Morning prayer', frequency: 'daily', accent: 'plum' },
     {
       lifeSegmentId: seg['health-wellness'],
       name: 'Drink 2L of water',
       frequency: 'daily',
-      accent: 'sage',
+      accent: 'rose',
     },
     {
       lifeSegmentId: seg['education-learning'],
       name: 'Read for 20 minutes',
       frequency: 'daily',
-      accent: 'terracotta',
+      accent: 'crimson',
     },
   ];
   for (const [i, h] of habitSeeds.entries()) {

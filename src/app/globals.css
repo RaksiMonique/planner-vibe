@@ -5,59 +5,60 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
-  Approved palette (instructions.md 2.1). These are the only colours in
-  the app. Components use the semantic tokens below or the named palette
-  utilities (bg-sage, text-burgundy, ...), never raw hex values.
+  Approved palette (instructions.md 2.1, approved 2026-11-17). These are the
+  only colours in the app. Components use the semantic tokens below or the
+  named palette utilities (bg-rose, text-plum, ...), never raw hex values.
 */
 :root {
-  --burgundy: #722f37;
-  --terracotta: #b65c45;
-  --coral: #d98576;
-  --peach: #e8b4a2;
-  --blush: #f5e6dc;
-  --ivory: #faf7f2;
-  --beige: #d8c8b8;
-  --sage: #8b9278;
-  --charcoal: #35312f;
-  --warm-grey: #80766f;
+  --plum: #73404e;
+  --rose: #a6585e;
+  --crimson: #ae1c42;
+  --raspberry: #bd4877;
+  --flame: #d6481f;
+  --coral: #d96055;
+  --apricot: #f29863;
+  --gold: #e1c16b;
+  --ochre: #bd8940;
+  --blush: #f2d8ce;
   --white: #ffffff;
 
   /* Semantic tokens consumed by shadcn/ui */
-  --background: var(--ivory);
-  --foreground: var(--charcoal);
+  --background: var(--blush);
+  --foreground: var(--plum);
   --card: var(--white);
-  --card-foreground: var(--charcoal);
+  --card-foreground: var(--plum);
   --popover: var(--white);
-  --popover-foreground: var(--charcoal);
-  --primary: var(--burgundy);
-  --primary-foreground: var(--ivory);
+  --popover-foreground: var(--plum);
+  /* Plum is the text colour and the primary fill: white on it is 8.16, it is 6.02 on Blush. */
+  --primary: var(--plum);
+  --primary-foreground: var(--white);
   --secondary: var(--blush);
-  --secondary-foreground: var(--burgundy);
+  --secondary-foreground: var(--plum);
   --muted: var(--blush);
-  /* Warm Grey passes AA only at 18px and up. Use text-muted-foreground
-     for captions, labels and placeholders, not for body copy. */
-  --muted-foreground: var(--warm-grey);
-  --accent: var(--peach);
-  --accent-foreground: var(--charcoal);
-  /* Terracotta with white text passes AA (4.56). */
-  --destructive: var(--terracotta);
+  /* Rose passes AA on White (5.03) but not on Blush (3.71). Use
+     text-muted-foreground for captions, labels and placeholders, not body copy. */
+  --muted-foreground: var(--rose);
+  --accent: var(--blush);
+  --accent-foreground: var(--plum);
+  /* Crimson with white text passes AA (6.90). */
+  --destructive: var(--crimson);
   --destructive-foreground: var(--white);
-  --border: var(--beige);
-  --input: var(--beige);
-  --ring: var(--burgundy);
-  --chart-1: var(--burgundy);
-  --chart-2: var(--terracotta);
-  --chart-3: var(--sage);
-  --chart-4: var(--coral);
-  --chart-5: var(--peach);
+  --border: var(--blush);
+  --input: var(--blush);
+  --ring: var(--plum);
+  --chart-1: var(--plum);
+  --chart-2: var(--flame);
+  --chart-3: var(--gold);
+  --chart-4: var(--crimson);
+  --chart-5: var(--apricot);
   --sidebar: var(--white);
-  --sidebar-foreground: var(--charcoal);
-  --sidebar-primary: var(--burgundy);
-  --sidebar-primary-foreground: var(--ivory);
+  --sidebar-foreground: var(--plum);
+  --sidebar-primary: var(--plum);
+  --sidebar-primary-foreground: var(--white);
   --sidebar-accent: var(--blush);
-  --sidebar-accent-foreground: var(--burgundy);
-  --sidebar-border: var(--beige);
-  --sidebar-ring: var(--burgundy);
+  --sidebar-accent-foreground: var(--plum);
+  --sidebar-border: var(--blush);
+  --sidebar-ring: var(--plum);
   --radius: 0.875rem;
 }
 
@@ -95,17 +96,17 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  /* Named palette utilities: bg-sage, text-burgundy, border-beige ... */
-  --color-burgundy: var(--burgundy);
-  --color-terracotta: var(--terracotta);
+  /* Named palette utilities: bg-rose, text-plum, border-blush ... */
+  --color-plum: var(--plum);
+  --color-rose: var(--rose);
+  --color-crimson: var(--crimson);
+  --color-raspberry: var(--raspberry);
+  --color-flame: var(--flame);
   --color-coral: var(--coral);
-  --color-peach: var(--peach);
+  --color-apricot: var(--apricot);
+  --color-gold: var(--gold);
+  --color-ochre: var(--ochre);
   --color-blush: var(--blush);
-  --color-ivory: var(--ivory);
-  --color-beige: var(--beige);
-  --color-sage: var(--sage);
-  --color-charcoal: var(--charcoal);
-  --color-warm-grey: var(--warm-grey);
 
   --font-sans: var(--font-dm-sans), ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-playfair), ui-serif, Georgia, serif;

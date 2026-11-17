@@ -78,7 +78,7 @@ export const patternInput = z
     /** On edit: the day the changes take effect; earlier days keep the old pattern. */
     applyFrom: dateKey.optional(),
     cycle: cycleField,
-    accent: z.enum(ACCENTS).default('burgundy'),
+    accent: z.enum(ACCENTS).default('plum'),
     isActive: z.coerce.boolean().default(false),
     note: z.string().trim().max(2000).optional(),
   })
@@ -99,7 +99,7 @@ const kindName = z.string().trim().min(1, 'Name the kind.').max(KIND_NAME_MAX);
 export const shiftKindInput = z.object({
   name: kindName,
   countsAs: z.enum(SHIFT_KINDS).default('work'),
-  accent: z.enum(ACCENTS).default('burgundy'),
+  accent: z.enum(ACCENTS).default('plum'),
 });
 export type ShiftKindInput = z.infer<typeof shiftKindInput>;
 

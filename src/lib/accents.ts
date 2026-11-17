@@ -1,21 +1,21 @@
 // Life Segment accent colours, limited to the approved palette.
-export type Accent = 'burgundy' | 'terracotta' | 'coral' | 'peach' | 'sage' | 'beige';
+export type Accent = 'plum' | 'crimson' | 'raspberry' | 'gold' | 'rose' | 'blush';
 
 export const ACCENT_BG: Record<Accent, string> = {
-  burgundy: 'bg-burgundy',
-  terracotta: 'bg-terracotta',
-  coral: 'bg-coral',
-  peach: 'bg-peach',
-  sage: 'bg-sage',
-  beige: 'bg-beige',
+  plum: 'bg-plum',
+  crimson: 'bg-crimson',
+  raspberry: 'bg-raspberry',
+  gold: 'bg-gold',
+  rose: 'bg-rose',
+  blush: 'bg-blush',
 };
 
 // Text on each accent, following the contrast notes in instructions.md 2.1
 export const ACCENT_FG: Record<Accent, string> = {
-  burgundy: 'text-ivory',
-  terracotta: 'text-white',
-  coral: 'text-charcoal',
-  peach: 'text-charcoal',
-  sage: 'text-charcoal',
-  beige: 'text-charcoal',
+  plum: 'text-white',
+  crimson: 'text-white',
+  raspberry: 'text-white',
+  gold: 'text-plum',
+  rose: 'text-white',
+  blush: 'text-plum',
 };

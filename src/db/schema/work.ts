@@ -51,7 +51,7 @@ export const shiftPatterns = planner.table(
     startDate: date('start_date'),
     endDate: date('end_date'),
     cycle: jsonb('cycle').$type<PatternDay[]>().notNull().default([]),
-    accent: accentEnum('accent').notNull().default('burgundy'),
+    accent: accentEnum('accent').notNull().default('plum'),
     isActive: boolean('is_active').notNull().default(true),
     note: text('note'),
     ...softDelete(),
@@ -71,7 +71,7 @@ export const shiftKinds = planner.table(
     userId: ownerId(),
     name: text('name').notNull(),
     countsAs: shiftKindEnum('counts_as').notNull().default('work'),
-    accent: accentEnum('accent').notNull().default('burgundy'),
+    accent: accentEnum('accent').notNull().default('plum'),
     ...timestamps(),
   },
   (t) => [

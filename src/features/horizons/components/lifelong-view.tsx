@@ -164,7 +164,7 @@ export function LifelongView({
                     aria-hidden
                     className={cn(
                       'absolute top-1.5 -left-[1.3rem] size-2.5 rounded-full border',
-                      m.completedAt ? 'bg-sage border-sage' : 'bg-card border-border'
+                      m.completedAt ? 'bg-rose border-rose' : 'bg-card border-border'
                     )}
                   />
                   <p className={m.completedAt ? 'text-muted-foreground line-through' : ''}>

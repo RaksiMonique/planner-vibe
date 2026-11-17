@@ -318,7 +318,7 @@ export function shiftCalendarItems(
         sourceId: day.date,
         type: 'shift' as const,
         title: shift.kind === 'on_call' ? `${shift.label} (on call)` : shift.label,
-        accent: shift.accent ?? ('burgundy' as Accent),
+        accent: shift.accent ?? ('plum' as Accent),
         calendarId: null,
         segmentId,
         recurring: shift.source === 'pattern' || shift.repeats === true,

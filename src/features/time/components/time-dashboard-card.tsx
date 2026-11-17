@@ -47,7 +47,7 @@ export async function TimeDashboardCard({
           href="/time"
           className="bg-secondary flex items-center gap-2 rounded-lg px-3 py-2 text-sm"
         >
-          <span className="bg-terracotta size-2 animate-pulse rounded-full" aria-hidden />
+          <span className="bg-crimson size-2 animate-pulse rounded-full" aria-hidden />
           <span className="min-w-0 flex-1 truncate">
             Timer running{running.note ? `: ${running.note}` : ''}
           </span>

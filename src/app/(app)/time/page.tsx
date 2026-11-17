@@ -70,7 +70,7 @@ export default async function TimeRoute({ searchParams }: { searchParams: Search
                 id: running.id,
                 startedAt: running.startedAt.toISOString(),
                 segmentName: runningSegment?.name ?? 'Unknown segment',
-                accent: runningSegment?.accent ?? 'beige',
+                accent: runningSegment?.accent ?? 'blush',
                 note: running.note,
               }
             : null

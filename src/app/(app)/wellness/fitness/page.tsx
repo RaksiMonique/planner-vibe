@@ -198,7 +198,7 @@ function Strip({
           <div key={key} className="flex flex-col items-center gap-1">
             <div className="bg-muted flex h-16 w-full items-end overflow-hidden rounded-md">
               <div
-                className="bg-sage w-full rounded-t-md"
+                className="bg-rose w-full rounded-t-md"
                 style={{ height: `${Math.min(100, (v / max) * 100)}%` }}
               />
             </div>

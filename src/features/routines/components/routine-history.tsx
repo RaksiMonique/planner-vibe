@@ -4,9 +4,9 @@ import { historyStatus, isScheduledOn, type HistoryStatus } from '../grouping';
 import type { RoutineCompletion } from '../queries';
 
 const STYLE: Record<HistoryStatus, string> = {
-  done: 'bg-sage border-transparent',
-  partial: 'bg-peach border-transparent',
-  missed: 'bg-card border-beige',
+  done: 'bg-rose border-transparent',
+  partial: 'bg-gold border-transparent',
+  missed: 'bg-card border-blush',
   unscheduled: 'bg-transparent border-transparent',
 };
 const LABEL: Record<HistoryStatus, string> = {

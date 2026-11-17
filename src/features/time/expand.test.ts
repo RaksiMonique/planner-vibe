@@ -24,7 +24,7 @@ describe('expandTimeBlocks', () => {
     expect(items).toHaveLength(1);
     expect(items[0]).toMatchObject({
       id: 'b1',
-      accent: 'burgundy',
+      accent: 'plum',
       recurring: false,
       end: '2026-11-02T15:00:00.000Z',
     });

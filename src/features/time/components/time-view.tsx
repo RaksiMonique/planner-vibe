@@ -34,12 +34,12 @@ const VIEWS: { name: TimeViewName; label: string }[] = [
 
 /** Palette variables per accent; FullCalendar writes these into inline styles. */
 const ACCENT_VARS: Record<Accent, { bg: string; fg: string }> = {
-  burgundy: { bg: 'var(--burgundy)', fg: 'var(--ivory)' },
-  terracotta: { bg: 'var(--terracotta)', fg: 'var(--white)' },
-  coral: { bg: 'var(--coral)', fg: 'var(--charcoal)' },
-  peach: { bg: 'var(--peach)', fg: 'var(--charcoal)' },
-  sage: { bg: 'var(--sage)', fg: 'var(--charcoal)' },
-  beige: { bg: 'var(--beige)', fg: 'var(--charcoal)' },
+  plum: { bg: 'var(--plum)', fg: 'var(--white)' },
+  crimson: { bg: 'var(--crimson)', fg: 'var(--white)' },
+  raspberry: { bg: 'var(--raspberry)', fg: 'var(--white)' },
+  gold: { bg: 'var(--gold)', fg: 'var(--plum)' },
+  rose: { bg: 'var(--rose)', fg: 'var(--white)' },
+  blush: { bg: 'var(--blush)', fg: 'var(--plum)' },
 };
 
 function blockToEvent(item: TimeBlockItem): EventInput {
@@ -64,7 +64,7 @@ function entryToEvent(item: TimeEntryItem): EventInput {
     start: item.start,
     end: item.end,
     color: 'var(--blush)',
-    contrastColor: 'var(--charcoal)',
+    contrastColor: 'var(--plum)',
     editable: false,
     className: 'planner-actual',
     extendedProps: { kind: 'entry', sourceId: item.id, recurring: false },
@@ -74,15 +74,15 @@ function entryToEvent(item: TimeEntryItem): EventInput {
 // The classic theme reads these variables; mapping them to the design tokens
 // keeps the grid inside the approved palette (instructions.md 2.1).
 const THEME_VARS = [
-  '[--fc-classic-background:var(--card)] [--fc-classic-faint:var(--ivory)] [--fc-classic-muted:var(--blush)]',
-  '[--fc-classic-strong:var(--beige)] [--fc-classic-foreground:var(--charcoal)]',
-  '[--fc-classic-faint-foreground:var(--beige)] [--fc-classic-muted-foreground:var(--warm-grey)]',
-  '[--fc-classic-border:var(--border)] [--fc-classic-strong-border:var(--beige)]',
-  '[--fc-classic-primary:var(--burgundy)] [--fc-classic-primary-foreground:var(--ivory)]',
-  '[--fc-classic-event:var(--burgundy)] [--fc-classic-event-contrast:var(--ivory)]',
-  '[--fc-classic-highlight:var(--peach)] [--fc-classic-today:var(--blush)] [--fc-classic-now:var(--terracotta)]',
-  '[--fc-classic-button:var(--card)] [--fc-classic-button-border:var(--border)] [--fc-classic-button-foreground:var(--charcoal)]',
-  '[--fc-classic-button-strong:var(--burgundy)] [--fc-classic-button-strong-border:var(--burgundy)] [--fc-classic-button-outline:var(--burgundy)]',
+  '[--fc-classic-background:var(--card)] [--fc-classic-faint:var(--white)] [--fc-classic-muted:var(--blush)]',
+  '[--fc-classic-strong:var(--blush)] [--fc-classic-foreground:var(--plum)]',
+  '[--fc-classic-faint-foreground:var(--blush)] [--fc-classic-muted-foreground:var(--rose)]',
+  '[--fc-classic-border:var(--border)] [--fc-classic-strong-border:var(--blush)]',
+  '[--fc-classic-primary:var(--plum)] [--fc-classic-primary-foreground:var(--white)]',
+  '[--fc-classic-event:var(--plum)] [--fc-classic-event-contrast:var(--white)]',
+  '[--fc-classic-highlight:var(--gold)] [--fc-classic-today:var(--blush)] [--fc-classic-now:var(--crimson)]',
+  '[--fc-classic-button:var(--card)] [--fc-classic-button-border:var(--border)] [--fc-classic-button-foreground:var(--plum)]',
+  '[--fc-classic-button-strong:var(--plum)] [--fc-classic-button-strong-border:var(--plum)] [--fc-classic-button-outline:var(--plum)]',
 ].join(' ');
 
 export function TimeView({

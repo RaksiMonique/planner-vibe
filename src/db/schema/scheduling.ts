@@ -33,7 +33,7 @@ export const calendars = planner.table(
     userId: ownerId(),
     name: text('name').notNull(),
     kind: calendarKindEnum('kind').notNull().default('personal'),
-    accent: accentEnum('accent').notNull().default('burgundy'),
+    accent: accentEnum('accent').notNull().default('plum'),
     isEnabled: boolean('is_enabled').notNull().default(true),
     ...timestamps(),
   },

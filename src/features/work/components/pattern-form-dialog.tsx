@@ -270,7 +270,7 @@ function PatternForm({
             <ChoiceSelect
               id="pattern-accent"
               name="accent"
-              defaultValue={pattern?.accent ?? 'burgundy'}
+              defaultValue={pattern?.accent ?? 'plum'}
               options={ACCENTS.map((a) => ({
                 value: a,
                 label: (

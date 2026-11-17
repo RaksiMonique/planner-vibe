@@ -22,7 +22,7 @@ describe('renderDigest', () => {
     expect(mail.text).toContain('- Submit report (high): https://planner.test/tasks');
     expect(mail.text).not.toContain('OVERDUE');
     expect(mail.html).toContain(
-      '<a href="https://planner.test/calendar" style="color:#722F37">Dentist</a>'
+      '<a href="https://planner.test/calendar" style="color:#73404E">Dentist</a>'
     );
     expect(mail.html).toContain('/settings/integrations');
   });

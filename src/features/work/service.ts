@@ -227,7 +227,7 @@ async function resolveKind(
       (await createShiftKind(userId, {
         name,
         countsAs: input.newKindCountsAs,
-        accent: 'burgundy',
+        accent: 'plum',
       }));
     return { kind: own.countsAs, kindId: own.id };
   }

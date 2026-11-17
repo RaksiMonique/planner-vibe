@@ -71,7 +71,7 @@ export function MediaCard({
                 aria-label={item.isFavourite ? 'Remove from favourites' : 'Add to favourites'}
                 aria-pressed={item.isFavourite}
               >
-                <HeartIcon className={cn(item.isFavourite && 'fill-terracotta text-terracotta')} />
+                <HeartIcon className={cn(item.isFavourite && 'fill-crimson text-crimson')} />
               </Button>
             </form>
           </div>

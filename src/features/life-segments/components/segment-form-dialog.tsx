@@ -93,7 +93,7 @@ export function SegmentForm({
           <ChoiceSelect
             id="segment-accent"
             name="accent"
-            defaultValue={segment?.accent ?? 'burgundy'}
+            defaultValue={segment?.accent ?? 'plum'}
             options={ACCENTS.map((a) => ({
               value: a,
               label: (

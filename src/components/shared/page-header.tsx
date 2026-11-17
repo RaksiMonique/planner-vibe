@@ -69,7 +69,7 @@ export function PageHeader({
           {(trail.length > 0 || eyebrow) && (
             <nav
               aria-label="Breadcrumb"
-              className="tracking-eyebrow text-muted-foreground flex flex-wrap items-center gap-1.5 text-xs uppercase"
+              className="tracking-eyebrow text-foreground flex flex-wrap items-center gap-1.5 text-xs uppercase"
             >
               {trail.map((crumb, i) => (
                 <Fragment key={crumb.href}>
@@ -86,7 +86,7 @@ export function PageHeader({
             </nav>
           )}
           <h2 className="font-heading text-3xl">{title}</h2>
-          {description && <p className="text-muted-foreground max-w-2xl text-sm">{description}</p>}
+          {description && <p className="text-foreground max-w-2xl text-sm">{description}</p>}
         </div>
         {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
       </div>

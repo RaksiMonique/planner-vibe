@@ -10,7 +10,7 @@ const item = (over: Partial<CalendarItem>): CalendarItem => ({
   allDay: false,
   start: '2026-11-12T14:30:00.000Z',
   end: '2026-11-12T15:00:00.000Z',
-  accent: 'burgundy',
+  accent: 'plum',
   calendarId: null,
   segmentId: null,
   recurring: false,

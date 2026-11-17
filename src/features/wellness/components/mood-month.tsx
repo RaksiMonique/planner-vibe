@@ -64,7 +64,7 @@ export function MoodMonth({
                     className={cn('bg-primary size-3 rounded-full', MOOD_OPACITY[entry.mood])}
                   />
                   <span
-                    className={cn('bg-sage size-1.5 rounded-full', MOOD_OPACITY[entry.energy])}
+                    className={cn('bg-rose size-1.5 rounded-full', MOOD_OPACITY[entry.energy])}
                   />
                 </span>
               ) : (

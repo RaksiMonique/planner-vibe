@@ -23,7 +23,7 @@ const twoOnTwoOff: PatternSource = {
     { kind: 'off' },
     { kind: 'off' },
   ],
-  accent: 'sage',
+  accent: 'rose',
   isActive: true,
 };
 
@@ -208,12 +208,12 @@ describe('deriveWorkDays', () => {
 
   it('names and colours a day after the kind of its own', () => {
     const days = deriveWorkDays(
-      { ...empty, shifts: [manual({ kind: 'on_call', kindName: 'Watch', kindAccent: 'coral' })] },
+      { ...empty, shifts: [manual({ kind: 'on_call', kindName: 'Watch', kindAccent: 'raspberry' })] },
       '2026-03-02',
       '2026-03-02'
     );
     expect(days[0]).toMatchObject({ status: 'on_call' });
-    expect(days[0].shifts[0]).toMatchObject({ label: 'Watch', accent: 'coral', kind: 'on_call' });
+    expect(days[0].shifts[0]).toMatchObject({ label: 'Watch', accent: 'raspberry', kind: 'on_call' });
     // A label of the shift's own still wins.
     const labelled = deriveWorkDays(
       { ...empty, shifts: [manual({ kindName: 'Watch', label: 'Cover for Ana' })] },
@@ -258,7 +258,7 @@ describe('deriveWorkDays', () => {
         end: '19:00',
         source: 'pattern',
         patternId: 'p1',
-        accent: 'sage',
+        accent: 'rose',
       },
     ]);
     expect(days[2].shifts).toEqual([]);
@@ -294,7 +294,7 @@ describe('deriveWorkDays', () => {
         { kind: 'off' },
         { kind: 'off' },
       ],
-      accent: 'coral',
+      accent: 'raspberry',
       isActive: true,
     };
     const days = deriveWorkDays(
@@ -304,7 +304,7 @@ describe('deriveWorkDays', () => {
     );
     expect(days[0].shifts).toHaveLength(1);
     expect(days[2]).toMatchObject({ status: 'on_call' });
-    expect(days[2].shifts[0]).toMatchObject({ kind: 'on_call', patternId: 'p2', accent: 'coral' });
+    expect(days[2].shifts[0]).toMatchObject({ kind: 'on_call', patternId: 'p2', accent: 'raspberry' });
   });
 
   it('is on call only when no work shift is present', () => {
@@ -445,7 +445,7 @@ describe('shiftCalendarItems', () => {
       allDay: false,
       start: '2026-03-02T12:00:00.000Z',
       end: '2026-03-03T00:00:00.000Z',
-      accent: 'sage',
+      accent: 'rose',
       segmentId: 'seg',
       recurring: true,
       sourceId: '2026-03-02',

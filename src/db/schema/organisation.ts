@@ -6,12 +6,12 @@ import { ownerId } from './profiles';
 
 /** Palette accents a segment, calendar or habit may use (instructions.md 2.1). */
 export const accentEnum = planner.enum('accent', [
-  'burgundy',
-  'terracotta',
-  'coral',
-  'peach',
-  'sage',
-  'beige',
+  'plum',
+  'crimson',
+  'raspberry',
+  'gold',
+  'rose',
+  'blush',
 ]);
 export type Accent = (typeof accentEnum.enumValues)[number];
 
@@ -33,7 +33,7 @@ export const lifeSegments = planner.table(
     userId: ownerId(),
     name: text('name').notNull(),
     slug: text('slug').notNull(),
-    accent: accentEnum('accent').notNull().default('burgundy'),
+    accent: accentEnum('accent').notNull().default('plum'),
     // lucide icon name
     icon: text('icon'),
     sortOrder: integer('sort_order').notNull().default(0),

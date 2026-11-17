@@ -127,7 +127,7 @@ describe('habitConsistency', () => {
     name: 'Habit',
     frequency: 'daily',
     target: 1,
-    accent: 'sage',
+    accent: 'rose',
     segmentName: 'Health',
     currentStreak: 0,
     ...over,
@@ -205,8 +205,8 @@ describe('habitConsistency', () => {
 
 describe('timeAllocation', () => {
   const segments = [
-    { id: 's1', name: 'Faith', accent: 'burgundy' as const },
-    { id: 's2', name: 'Health', accent: 'sage' as const },
+    { id: 's1', name: 'Faith', accent: 'plum' as const },
+    { id: 's2', name: 'Health', accent: 'rose' as const },
   ];
 
   it('names segments, computes the delta and sorts by logged time', () => {
@@ -220,7 +220,7 @@ describe('timeAllocation', () => {
       segments
     );
     expect(r.rows.map((x) => x.name)).toEqual(['Health', 'Faith', 'Unknown segment']);
-    expect(r.rows[1]).toMatchObject({ accent: 'burgundy', planned: 120, actual: 60, delta: -60 });
+    expect(r.rows[1]).toMatchObject({ accent: 'plum', planned: 120, actual: 60, delta: -60 });
     expect(r).toMatchObject({ plannedTotal: 150, actualTotal: 165, delta: 15, isEmpty: false });
   });
 
@@ -238,7 +238,7 @@ describe('projectsAndMilestones', () => {
     title: 'Project',
     status: 'active',
     progress: 0,
-    accent: 'sage',
+    accent: 'rose',
     segmentName: 'Health',
     dueDate: null,
     ...over,
@@ -366,9 +366,9 @@ describe('summarise', () => {
 });
 
 describe('lifeBalance', () => {
-  const faith = { id: 'a', name: 'Faith', accent: 'burgundy' as const, weight: 3 };
-  const health = { id: 'b', name: 'Health', accent: 'sage' as const, weight: 1 };
-  const home = { id: 'c', name: 'Home', accent: 'beige' as const, weight: 1 };
+  const faith = { id: 'a', name: 'Faith', accent: 'plum' as const, weight: 3 };
+  const health = { id: 'b', name: 'Health', accent: 'rose' as const, weight: 1 };
+  const home = { id: 'c', name: 'Home', accent: 'blush' as const, weight: 1 };
 
   it('normalises weights, shares each measure and names the widest gap', () => {
     const r = lifeBalance(

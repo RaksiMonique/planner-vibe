@@ -144,36 +144,37 @@ Studying a subject is not automatically a project. A defined learning initiative
 
 ### 2.1 Colour palette
 
-These are the approved theme values. Do not substitute different colours without permission. Centralise them as CSS variables consumed by Tailwind theme tokens. Components never use raw hex values.
+These are the approved theme values (approved 2026-11-17, replacing the earlier burgundy and ivory set). Do not substitute different colours without permission. Centralise them as CSS variables consumed by Tailwind theme tokens. Components never use raw hex values.
 
-| Name          | Hex       | Purpose                                     |
-| ------------- | --------- | ------------------------------------------- |
-| Deep Burgundy | `#722F37` | Primary accent, headings, active navigation |
-| Terracotta    | `#B65C45` | Buttons, highlights, progress indicators    |
-| Muted Coral   | `#D98576` | Secondary accents, tags                     |
-| Soft Peach    | `#E8B4A2` | Decorative elements, cards                  |
-| Warm Blush    | `#F5E6DC` | Highlighted sections                        |
-| Warm Ivory    | `#FAF7F2` | Main application background                 |
-| Warm Beige    | `#D8C8B8` | Borders, secondary backgrounds              |
-| Muted Sage    | `#8B9278` | Wellness, habits, natural accents           |
-| Dark Charcoal | `#35312F` | Primary text                                |
-| Warm Grey     | `#80766F` | Secondary text                              |
-| Pure White    | `#FFFFFF` | Cards and content surfaces                  |
+| Name      | Hex       | Purpose                                                        |
+| --------- | --------- | -------------------------------------------------------------- |
+| Plum      | `#73404E` | Primary text, primary accent, headings, active navigation      |
+| Rose      | `#A6585E` | Secondary text, calm fills (energy, done markers)              |
+| Crimson   | `#AE1C42` | Destructive actions, the "now" line, urgency                   |
+| Raspberry | `#BD4877` | Segment accent, tags                                           |
+| Flame     | `#D6481F` | Charts and progress indicators (decoration only)               |
+| Coral     | `#D96055` | Decorative fills (decoration only)                             |
+| Apricot   | `#F29863` | Charts and decorative fills (decoration only)                  |
+| Gold      | `#E1C16B` | Segment accent, highlights, partial states                     |
+| Ochre     | `#BD8940` | Decorative fills (decoration only)                             |
+| Blush     | `#F2D8CE` | Main application background, borders, muted and hover surfaces |
+| White     | `#FFFFFF` | Cards, popovers and the sidebar                                |
 
 Usage rules:
 
-- Warm Ivory is the main background, Pure White is the surface for primary content cards, and Deep Burgundy is the dominant accent.
-- Use Terracotta, Coral, Peach, Beige and Sage selectively. Avoid heavy saturation, gradients and large coloured backgrounds.
-- Each Life Segment is assigned one accent (Burgundy, Terracotta, Coral, Peach, Sage or Beige) and uses it everywhere it appears. With ten default segments some share a colour and are told apart by icon. Users can change the assignment.
+- Blush is the main background, White is the surface for cards and content, and Plum is both the text colour and the dominant accent.
+- Use the warmer colours selectively. Avoid heavy saturation, gradients and large coloured backgrounds.
+- Each Life Segment is assigned one accent from the six that can carry text (Plum, Rose, Crimson, Raspberry, Gold or Blush) and uses it everywhere it appears. With ten default segments some share a colour and are told apart by icon. Users can change the assignment. Shift kinds and patterns use the same six.
+- Flame, Coral, Apricot and Ochre never carry text: they are for charts, bars and decoration.
 - Dark mode is out of scope until dark variants of this palette are approved.
 
 Contrast, measured as WCAG 2 ratios, so text stays readable without leaving the palette:
 
-- Charcoal on Ivory, White, Blush, Peach or Beige passes AA for all text sizes.
-- Burgundy on Ivory, White, Blush or Peach passes AA, and White on Burgundy passes AA. Burgundy is safe for text, links and filled buttons.
-- White on Terracotta passes AA (4.56), so filled Terracotta buttons use white text. Terracotta as text passes AA on White only; on Ivory it is for large text (18 px and up) only.
-- Warm Grey on Ivory (4.15) and on White (4.43) is below AA for body-size text. Use it only for text 18 px and larger, captions and placeholders, or ask for an approved darker variant for small secondary text.
-- Coral and Sage fail as text on light backgrounds, and white text fails on both. Use them as fills, tags, chips and indicators with Charcoal text (Coral passes AA; Sage is large text only), or as decoration.
+- Plum on White (8.16) and on Blush (6.02) passes AA for all text sizes. White on Plum passes AA. Plum is safe for text, links and filled buttons.
+- White text passes AA on Crimson (6.90), Rose (5.03) and Raspberry (4.82). Plum text passes AA on Gold (4.68) and Blush (6.02). These six are therefore the text-bearing accents, each with its fixed text colour in `src/lib/accents.ts`.
+- Rose as text passes AA on White (5.03) but not on Blush (3.71). Use it for captions, labels and placeholders inside white cards, or at 18 px and up on the page background.
+- No text colour in the palette reaches AA on Flame (white 4.37), Coral (white 3.65), Apricot (Plum 3.67) or Ochre (white 3.08), which is why they stay decorative.
+- Blush on White is 1.36, so borders in Blush are soft; focus relies on the Plum ring, never on the border alone.
 
 ### 2.2 Typography and visual design
 

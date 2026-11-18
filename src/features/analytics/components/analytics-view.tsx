@@ -260,10 +260,7 @@ function GoalSection({ goals, period }: { goals: GoalCompletion; period: Resolve
           <ul className="flex flex-col gap-1 text-sm">
             {goals.achievedInPeriod.map((g) => (
               <li key={g.id} className="flex items-center justify-between gap-2">
-                <Link
-                  href={`/goals/${g.id}`}
-                  className="truncate underline-offset-4 hover:underline"
-                >
+                <Link href={`/goals/${g.id}`} className="link truncate underline-offset-4">
                   {g.title}
                 </Link>
                 <span className="text-muted-foreground shrink-0 text-xs">
@@ -464,7 +461,7 @@ function TimeSection({ time, period }: { time: TimeAllocation; period: ResolvedP
             ? `/time/analytics?range=month&start=${period.start}`
             : '/time/analytics'
         }
-        className="text-primary self-start text-sm underline-offset-4 hover:underline"
+        className="text-primary link self-start text-sm underline-offset-4"
       >
         Time analytics by day, project and task
       </Link>
@@ -528,7 +525,7 @@ function ProjectSection({
               <li key={m.id} className="flex items-center justify-between gap-2">
                 <span className="min-w-0 truncate">
                   {m.href ? (
-                    <Link href={m.href} className="underline-offset-4 hover:underline">
+                    <Link href={m.href} className="link underline-offset-4">
                       {m.title}
                     </Link>
                   ) : (
@@ -551,7 +548,7 @@ function ProjectSection({
         {shown.length === 0 ? (
           <p className="text-muted-foreground text-sm">
             No project is in progress.{' '}
-            <Link href="/projects" className="text-primary underline-offset-4 hover:underline">
+            <Link href="/projects" className="text-primary link underline-offset-4">
               Go to projects
             </Link>
           </p>
@@ -563,7 +560,7 @@ function ProjectSection({
                   <SegmentDot accent={p.accent} />
                   <Link
                     href={`/projects/${p.id}`}
-                    className="min-w-0 flex-1 truncate underline-offset-4 hover:underline"
+                    className="link min-w-0 flex-1 truncate underline-offset-4"
                   >
                     {p.title}
                   </Link>
@@ -579,7 +576,7 @@ function ProjectSection({
         {projects.projects.length > PROJECT_LIMIT && (
           <Link
             href="/projects"
-            className="text-primary self-start text-sm underline-offset-4 hover:underline"
+            className="text-primary link self-start text-sm underline-offset-4"
           >
             All {projects.projects.length} active projects
           </Link>

@@ -476,7 +476,7 @@ export function TaskSheet(props: TaskSheetProps) {
               Subtasks
               <Link
                 href={`${pathname}?${subtaskParams.toString()}`}
-                className="text-primary tracking-normal normal-case hover:underline"
+                className="text-primary link tracking-normal normal-case"
               >
                 Add subtask
               </Link>
@@ -498,7 +498,7 @@ export function TaskSheet(props: TaskSheetProps) {
                       </span>
                       <Link
                         href={`${pathname}?${p.toString()}`}
-                        className="text-primary ml-auto text-xs hover:underline"
+                        className="text-primary link ml-auto text-xs"
                       >
                         Open
                       </Link>

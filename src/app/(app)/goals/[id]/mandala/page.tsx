@@ -44,13 +44,13 @@ export default async function MandalaPage({ params }: PageProps<'/goals/[id]/man
         aria-label="Breadcrumb"
         className="text-muted-foreground mb-2 flex flex-wrap items-center gap-1 text-xs"
       >
-        <Link href="/goals" className="hover:underline">
+        <Link href="/goals" className="link">
           Goals
         </Link>
         {ancestors.map((a) => (
           <span key={a.id} className="flex items-center gap-1">
             <ChevronRightIcon className="size-3" aria-hidden />
-            <Link href={`/goals/${a.id}/mandala`} className="hover:underline">
+            <Link href={`/goals/${a.id}/mandala`} className="link">
               {a.title}
             </Link>
           </span>

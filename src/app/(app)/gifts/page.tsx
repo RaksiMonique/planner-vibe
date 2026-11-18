@@ -134,7 +134,7 @@ export default async function GiftsPage({ searchParams }: { searchParams: Promis
             <h2 className="font-heading text-xl">
               People{' '}
               {activeRecipient && (
-                <Link href="/gifts" className="text-primary text-sm hover:underline">
+                <Link href="/gifts" className="text-primary link text-sm">
                   show everyone
                 </Link>
               )}

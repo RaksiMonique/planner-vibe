@@ -77,7 +77,7 @@ export default async function SelfCarePage() {
             </CardTitle>
             <Link
               href="/routines"
-              className="text-primary col-start-2 row-start-1 justify-self-end text-xs hover:underline"
+              className="text-primary link col-start-2 row-start-1 justify-self-end text-xs"
             >
               Routines
             </Link>
@@ -86,7 +86,7 @@ export default async function SelfCarePage() {
             {careRoutines.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 No skincare or haircare routine is scheduled today.{' '}
-                <Link href="/routines" className="text-primary hover:underline">
+                <Link href="/routines" className="text-primary link">
                   Create one as a routine
                 </Link>{' '}
                 with kind skincare or haircare.

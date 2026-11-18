@@ -48,7 +48,7 @@ export function UpcomingEventsList({
             >
               <Link
                 href={`/calendar?date=${dayKey}`}
-                className="min-w-0 flex-1 truncate text-sm hover:underline"
+                className="link min-w-0 flex-1 truncate text-sm"
               >
                 {item.title}
               </Link>

@@ -54,7 +54,7 @@ export default async function LoginPage({ searchParams }: PageProps<'/auth/login
           </>
         )}
         <details className="text-sm">
-          <summary className="text-muted-foreground cursor-pointer underline-offset-4 hover:underline">
+          <summary className="text-muted-foreground link cursor-pointer underline-offset-4">
             No password yet, or forgotten it? Email me a sign-in link
           </summary>
           <div className="flex flex-col gap-3 pt-3">

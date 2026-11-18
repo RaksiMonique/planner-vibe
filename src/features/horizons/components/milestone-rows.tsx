@@ -37,7 +37,7 @@ export function MilestoneRows({
             <div className="min-w-0 flex-1">
               <p className={done ? 'text-muted-foreground line-through' : ''}>{m.title}</p>
               <p className="text-muted-foreground text-xs">
-                <Link href={href} className="underline-offset-4 hover:underline">
+                <Link href={href} className="link underline-offset-4">
                   {m.goalTitle ?? m.projectTitle ?? 'Milestone'}
                 </Link>
               </p>

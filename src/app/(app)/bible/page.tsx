@@ -240,10 +240,7 @@ export default async function BiblePage() {
               <p className="tracking-eyebrow text-muted-foreground text-xs uppercase">
                 {next?.mode === 'continue' ? 'Continue' : 'Next up'}
               </p>
-              <Link
-                href={`/bible/${nextUp.id}`}
-                className="font-heading text-xl leading-snug hover:underline"
-              >
+              <Link href={`/bible/${nextUp.id}`} className="font-heading link text-xl leading-snug">
                 {nextUp.title}
               </Link>
               <p className="text-muted-foreground mt-1 text-sm">
@@ -406,18 +403,15 @@ export default async function BiblePage() {
           </Card>
           <Card size="sm">
             <CardContent className="flex flex-col gap-2 text-sm">
-              <Link
-                href="/media/reading?segment=faith"
-                className="flex items-center gap-2 hover:underline"
-              >
+              <Link href="/media/reading?segment=faith" className="link flex items-center gap-2">
                 <BookMarkedIcon className="text-primary size-4" aria-hidden />
                 Spiritual reading list
               </Link>
-              <Link href="/goals?segment=faith" className="flex items-center gap-2 hover:underline">
+              <Link href="/goals?segment=faith" className="link flex items-center gap-2">
                 <TargetIcon className="text-primary size-4" aria-hidden />
                 Spiritual goals
               </Link>
-              <Link href="/prayer" className="flex items-center gap-2 hover:underline">
+              <Link href="/prayer" className="link flex items-center gap-2">
                 <HeartIcon className="text-primary size-4" aria-hidden />
                 Prayer intentions and journal
               </Link>

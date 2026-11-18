@@ -55,7 +55,7 @@ export function LifelongView({
                 <CardHeader>
                   <h3>
                     <CardTitle className="font-heading text-lg">
-                      <Link href={`/goals/${g.id}`} className="hover:underline">
+                      <Link href={`/goals/${g.id}`} className="link">
                         {g.title}
                       </Link>
                     </CardTitle>
@@ -85,7 +85,7 @@ export function LifelongView({
                           <li key={c.id} className="flex items-center justify-between gap-2">
                             <Link
                               href={`/goals/${c.id}`}
-                              className="truncate underline-offset-4 hover:underline"
+                              className="link truncate underline-offset-4"
                             >
                               {c.title}
                             </Link>
@@ -172,10 +172,7 @@ export function LifelongView({
                   </p>
                   <p className="text-muted-foreground text-xs">
                     {m.dueDate ? format(parseISO(m.dueDate), 'MMM yyyy') : 'No date'} ·{' '}
-                    <Link
-                      href={`/goals/${m.goalId}`}
-                      className="underline-offset-4 hover:underline"
-                    >
+                    <Link href={`/goals/${m.goalId}`} className="link underline-offset-4">
                       {m.goalTitle}
                     </Link>
                   </p>
@@ -197,10 +194,7 @@ export function LifelongView({
             <ul className="flex flex-col gap-1 text-sm">
               {data.closed.map((g) => (
                 <li key={g.id} className="flex items-center justify-between gap-2">
-                  <Link
-                    href={`/goals/${g.id}`}
-                    className="truncate underline-offset-4 hover:underline"
-                  >
+                  <Link href={`/goals/${g.id}`} className="link truncate underline-offset-4">
                     {g.title}
                   </Link>
                   <Badge variant="secondary">

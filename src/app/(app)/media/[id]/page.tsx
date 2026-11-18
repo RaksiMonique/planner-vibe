@@ -66,7 +66,7 @@ export default async function MediaItemPage({ params }: { params: Promise<{ id: 
     <>
       <Link
         href={item.kind === 'book' ? '/media/reading' : '/media'}
-        className="text-muted-foreground mb-3 inline-flex items-center gap-1 text-sm hover:underline"
+        className="text-muted-foreground link mb-3 inline-flex items-center gap-1 text-sm"
       >
         <ArrowLeftIcon className="size-4" aria-hidden />{' '}
         {item.kind === 'book' ? 'Reading list' : 'Media'}
@@ -244,7 +244,7 @@ export default async function MediaItemPage({ params }: { params: Promise<{ id: 
             {memberOf.length === 0 && candidates.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 No lists yet. Create one on the{' '}
-                <Link href="/media/reading" className="text-primary hover:underline">
+                <Link href="/media/reading" className="text-primary link">
                   reading list
                 </Link>{' '}
                 page.

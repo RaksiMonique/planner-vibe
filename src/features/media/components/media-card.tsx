@@ -54,7 +54,7 @@ export function MediaCard({
             <div className="min-w-0 flex-1">
               <Link
                 href={`/media/${item.id}`}
-                className="font-heading block truncate text-base leading-snug hover:underline"
+                className="font-heading link block truncate text-base leading-snug"
               >
                 {item.title}
               </Link>

@@ -75,7 +75,7 @@ export function ProductCard({
               href={product.url}
               target="_blank"
               rel="noreferrer"
-              className="text-primary text-xs hover:underline"
+              className="text-primary link text-xs"
             >
               Link
             </a>

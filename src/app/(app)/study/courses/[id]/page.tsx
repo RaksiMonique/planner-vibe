@@ -97,7 +97,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
   return (
     <>
       <div className="mb-3 text-sm">
-        <Link href="/study" className="text-primary hover:underline">
+        <Link href="/study" className="text-primary link">
           Study planner
         </Link>
         <span className="text-muted-foreground"> / {course.subjectName ?? 'Courses'}</span>
@@ -181,7 +181,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
                   href={course.url}
                   target="_blank"
                   rel="noreferrer"
-                  className="text-primary inline-flex items-center gap-1 hover:underline"
+                  className="text-primary link inline-flex items-center gap-1"
                 >
                   Open course <ExternalLinkIcon className="size-3" aria-hidden />
                 </a>

@@ -72,7 +72,7 @@ export function TaskRow({
       <Link
         href={editHref}
         className={cn(
-          'min-w-0 flex-1 truncate text-sm hover:underline',
+          'link min-w-0 flex-1 truncate text-sm',
           done && 'text-muted-foreground line-through'
         )}
         title={task.title}

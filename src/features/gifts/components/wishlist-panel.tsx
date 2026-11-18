@@ -97,7 +97,7 @@ export function WishlistPanel({ items, currency }: { items: WishlistItem[]; curr
                       href={item.url}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-primary inline-flex items-center gap-1 hover:underline"
+                      className="text-primary link inline-flex items-center gap-1"
                     >
                       Link <ExternalLinkIcon className="size-3" aria-hidden />
                     </a>

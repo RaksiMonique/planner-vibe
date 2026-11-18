@@ -47,7 +47,7 @@ function DayCard({ day }: { day: WeekDay }) {
     >
       <CardHeader className="items-center">
         <CardTitle className={cn('font-heading text-base', day.isToday && 'text-primary')}>
-          <Link href={`/calendar?date=${day.key}`} className="hover:underline">
+          <Link href={`/calendar?date=${day.key}`} className="link">
             {format(date, 'EEE d')}
           </Link>
         </CardTitle>
@@ -76,7 +76,7 @@ function DayCard({ day }: { day: WeekDay }) {
                   <span className="tabular-nums">
                     {b.start}–{b.end}
                   </span>
-                  <Link href="/time" className="truncate hover:underline">
+                  <Link href="/time" className="link truncate">
                     {b.title}
                   </Link>
                 </li>
@@ -114,7 +114,7 @@ function DayCard({ day }: { day: WeekDay }) {
               {day.routines.map(({ routine, doneStepIds }) => (
                 <li key={routine.id} className="flex flex-col gap-1">
                   <p className="flex items-center justify-between text-xs font-medium">
-                    <Link href="/routines" className="truncate hover:underline">
+                    <Link href="/routines" className="link truncate">
                       {routine.name}
                     </Link>
                     <span className="text-muted-foreground tabular-nums">
@@ -197,7 +197,7 @@ export function WeekView({ data }: { data: WeekData }) {
             {data.priorities.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 Mark tasks as important and they gather here.{' '}
-                <Link href="/tasks" className="text-primary hover:underline">
+                <Link href="/tasks" className="text-primary link">
                   Open tasks
                 </Link>
               </p>
@@ -228,7 +228,7 @@ export function WeekView({ data }: { data: WeekData }) {
             {data.goals.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 No weekly goals or targets this week.{' '}
-                <Link href="/goals" className="text-primary hover:underline">
+                <Link href="/goals" className="text-primary link">
                   Open goals
                 </Link>
               </p>
@@ -238,7 +238,7 @@ export function WeekView({ data }: { data: WeekData }) {
                   <li key={g.id} className="flex flex-col gap-1">
                     <div className="flex items-center gap-2 text-sm">
                       <SegmentDot accent={g.segment.accent} className="size-2" />
-                      <Link href={`/goals/${g.id}`} className="flex-1 truncate hover:underline">
+                      <Link href={`/goals/${g.id}`} className="link flex-1 truncate">
                         {g.title}
                       </Link>
                       <Badge variant="outline">{HORIZON_LABEL[g.horizon] ?? g.horizon}</Badge>

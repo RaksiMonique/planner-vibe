@@ -36,7 +36,7 @@ export function MediaTable({ items, segments }: { items: MediaItemRow[]; segment
             <TableCell>
               <div className="flex items-center gap-2">
                 {item.segment && <SegmentDot accent={item.segment.accent} />}
-                <Link href={`/media/${item.id}`} className="min-w-0 truncate hover:underline">
+                <Link href={`/media/${item.id}`} className="link min-w-0 truncate">
                   {item.title}
                 </Link>
                 {item.isFavourite && <Badge variant="secondary">Favourite</Badge>}

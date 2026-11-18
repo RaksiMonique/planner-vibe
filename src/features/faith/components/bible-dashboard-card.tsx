@@ -26,7 +26,7 @@ export async function BibleDashboardCard({
       {!overview && !devotional && !next ? (
         <EmptyNote>
           No reading plan or study yet.{' '}
-          <Link href="/bible" className="text-primary hover:underline">
+          <Link href="/bible" className="text-primary link">
             Start one.
           </Link>
         </EmptyNote>
@@ -53,7 +53,7 @@ export async function BibleDashboardCard({
               <span className="text-muted-foreground">
                 {next.mode === 'continue' ? 'Continue: ' : 'Next study: '}
               </span>
-              <Link href={`/bible/${next.study.id}`} className="hover:underline">
+              <Link href={`/bible/${next.study.id}`} className="link">
                 {next.study.title}
               </Link>
             </p>

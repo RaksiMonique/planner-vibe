@@ -29,7 +29,7 @@ export function ReviewStatsBlock({ stats }: { stats: ReviewStats }) {
             {stats.goals.map((g) => (
               <li key={g.id} className="flex flex-col gap-1">
                 <span className="flex items-center gap-2 text-sm">
-                  <Link href={`/goals/${g.id}`} className="hover:underline">
+                  <Link href={`/goals/${g.id}`} className="link">
                     {g.title}
                   </Link>
                   <span className="text-muted-foreground text-xs">

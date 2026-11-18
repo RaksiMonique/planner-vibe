@@ -11,10 +11,7 @@ export function StudyCard({ study, highlight }: { study: StudyRow; highlight?: s
     <Card size="sm" className={highlight ? 'ring-primary/40' : undefined}>
       <CardContent className="flex flex-col gap-2">
         <div className="flex items-start justify-between gap-2">
-          <Link
-            href={`/bible/${study.id}`}
-            className="font-heading min-w-0 flex-1 text-lg hover:underline"
-          >
+          <Link href={`/bible/${study.id}`} className="font-heading link min-w-0 flex-1 text-lg">
             {study.title}
           </Link>
           {highlight && <Badge>{highlight}</Badge>}

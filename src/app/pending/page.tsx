@@ -38,7 +38,7 @@ export default async function PendingPage() {
             </Button>
           </form>
           {!blocked && (
-            <Link href="/pending" className="text-primary text-sm hover:underline">
+            <Link href="/pending" className="text-primary link text-sm">
               Check again
             </Link>
           )}

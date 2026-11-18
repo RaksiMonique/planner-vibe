@@ -40,7 +40,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
     <>
       <Link
         href="/bible"
-        className="text-muted-foreground mb-3 inline-flex items-center gap-1 text-sm hover:underline"
+        className="text-muted-foreground link mb-3 inline-flex items-center gap-1 text-sm"
       >
         <ArrowLeftIcon className="size-3.5" aria-hidden />
         Bible study
@@ -110,7 +110,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
             {study.prerequisite && (
               <div className="flex items-center gap-2">
                 <span className="text-muted-foreground w-24">Comes after</span>
-                <Link href={`/bible/${study.prerequisite.id}`} className="hover:underline">
+                <Link href={`/bible/${study.prerequisite.id}`} className="link">
                   {study.prerequisite.title}
                 </Link>
                 <Badge variant="outline">{STUDY_STATUS_LABELS[study.prerequisite.status]}</Badge>
@@ -122,7 +122,7 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
                 <ul className="flex flex-col gap-1">
                   {study.dependants.map((d) => (
                     <li key={d.id}>
-                      <Link href={`/bible/${d.id}`} className="hover:underline">
+                      <Link href={`/bible/${d.id}`} className="link">
                         {d.title}
                       </Link>
                     </li>

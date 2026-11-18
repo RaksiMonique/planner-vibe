@@ -123,6 +123,14 @@
   --radius-2xl: calc(var(--radius) * 1.8);
 }
 
+@layer components {
+  /* Text links rest on a quiet Rose underline so they read as clickable
+     without shouting, and firm up to Plum on hover and focus. */
+  .link {
+    @apply decoration-rose/50 hover:decoration-plum focus-visible:decoration-plum underline decoration-1 underline-offset-[3px] transition-[text-decoration-color];
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

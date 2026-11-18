@@ -33,10 +33,7 @@ export function SegmentCard({
     <Card size="sm" className={cn('h-full', archived && 'opacity-70')}>
       <CardHeader className="items-center">
         <CardTitle className="font-heading text-lg">
-          <Link
-            href={`/segments/${segment.slug}`}
-            className="flex items-center gap-2 hover:underline"
-          >
+          <Link href={`/segments/${segment.slug}`} className="link flex items-center gap-2">
             <SegmentDot accent={segment.accent} className="size-3" />
             {segment.name}
           </Link>

@@ -42,10 +42,7 @@ export function MandalaGrid({
                 </Badge>
                 <p className="font-heading text-base leading-snug sm:text-lg">{center.title}</p>
                 <GoalProgress progress={center.progress} valueClassName="text-xs" />
-                <Link
-                  href={`/goals/${center.id}`}
-                  className="text-xs underline-offset-4 hover:underline"
-                >
+                <Link href={`/goals/${center.id}`} className="link text-xs underline-offset-4">
                   Open goal
                 </Link>
               </div>
@@ -98,7 +95,7 @@ export function MandalaGrid({
           {overflow.map((g, i) => (
             <span key={g.id}>
               {i > 0 && ', '}
-              <Link href={`/goals/${g.id}/mandala`} className="underline-offset-4 hover:underline">
+              <Link href={`/goals/${g.id}/mandala`} className="link underline-offset-4">
                 {g.title}
               </Link>
             </span>

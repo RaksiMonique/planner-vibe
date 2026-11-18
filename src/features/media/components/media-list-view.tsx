@@ -16,7 +16,7 @@ export function MediaListView({ items }: { items: MediaItemRow[] }) {
             {MEDIA_KIND_LABELS[item.kind]}
           </span>
           <div className="min-w-0 flex-1">
-            <Link href={`/media/${item.id}`} className="block truncate text-sm hover:underline">
+            <Link href={`/media/${item.id}`} className="link block truncate text-sm">
               {item.title}
             </Link>
             <p className="text-muted-foreground flex flex-wrap gap-x-2 text-xs">

@@ -36,7 +36,7 @@ export default async function ReviewPage({ params }: { params: Promise<{ id: str
         actions={
           <>
             <PrintButton />
-            <Link href="/reviews" className="text-primary text-sm hover:underline">
+            <Link href="/reviews" className="text-primary link text-sm">
               All reviews
             </Link>
             {review.completedAt ? (

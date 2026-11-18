@@ -73,10 +73,7 @@ export function PageHeader({
             >
               {trail.map((crumb, i) => (
                 <Fragment key={crumb.href}>
-                  <Link
-                    href={crumb.href}
-                    className="hover:text-primary underline-offset-4 hover:underline"
-                  >
+                  <Link href={crumb.href} className="hover:text-primary link underline-offset-4">
                     {crumb.label}
                   </Link>
                   {(eyebrow || i < trail.length - 1) && <span aria-hidden>›</span>}

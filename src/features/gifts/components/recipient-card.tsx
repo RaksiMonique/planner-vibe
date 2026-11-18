@@ -25,7 +25,7 @@ export function RecipientCard({
         <div className="flex items-start gap-2">
           <Link
             href={active ? '/gifts' : `/gifts?recipient=${recipient.id}`}
-            className="font-heading min-w-0 flex-1 truncate text-base hover:underline"
+            className="font-heading link min-w-0 flex-1 truncate text-base"
           >
             {recipient.name}
           </Link>

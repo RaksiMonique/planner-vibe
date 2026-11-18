@@ -51,7 +51,7 @@ export function PeriodStats({
         detail={
           <Link
             href={review ? `/reviews/${review.id}` : '/reviews'}
-            className="text-primary underline-offset-4 hover:underline"
+            className="text-primary link underline-offset-4"
           >
             {review ? (review.completedAt ? 'Read it' : 'Continue') : 'Start it'}
           </Link>

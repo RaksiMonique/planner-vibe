@@ -138,10 +138,7 @@ export async function TodayBlock({
                     energy <span className="font-medium">{mood.energy}</span> ·{' '}
                     {ENERGY_WORDS[mood.energy]}
                   </span>
-                  <Link
-                    href="/wellness/mood"
-                    className="text-muted-foreground text-xs hover:underline"
-                  >
+                  <Link href="/wellness/mood" className="text-muted-foreground link text-xs">
                     Change
                   </Link>
                 </p>
@@ -168,7 +165,7 @@ export async function TodayBlock({
                   <SegmentDot accent={e.calendar.accent} />
                   <Link
                     href={`/calendar?date=${todayKey}`}
-                    className="min-w-0 flex-1 truncate hover:underline"
+                    className="link min-w-0 flex-1 truncate"
                   >
                     {e.title}
                   </Link>
@@ -189,7 +186,7 @@ export async function TodayBlock({
                     label={`Check in ${h.name}`}
                   />
                   <SegmentDot accent={habitAccent(h)} />
-                  <Link href="/habits" className="min-w-0 flex-1 truncate hover:underline">
+                  <Link href="/habits" className="link min-w-0 flex-1 truncate">
                     {h.name}
                   </Link>
                   <span className="text-muted-foreground text-xs">Habit</span>
@@ -245,7 +242,7 @@ export async function TodayBlock({
                   <SegmentDot accent={e.calendar.accent} />
                   <Link
                     href={`/calendar?date=${dayOf(e)}`}
-                    className="min-w-0 flex-1 truncate hover:underline"
+                    className="link min-w-0 flex-1 truncate"
                   >
                     {e.title}
                   </Link>

@@ -155,10 +155,7 @@ export default async function WellnessJournalPage({
                     ) ?? 'daily';
                   return (
                     <li key={e.id} className="flex flex-col gap-0.5">
-                      <Link
-                        href={href(s, parseISO(e.date))}
-                        className="text-primary text-xs hover:underline"
-                      >
+                      <Link href={href(s, parseISO(e.date))} className="text-primary link text-xs">
                         {format(parseISO(e.date), 'EEE d MMM')} · {s}
                       </Link>
                       <p className="text-sm">{excerpt(e.content, 120)}</p>

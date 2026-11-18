@@ -35,7 +35,7 @@ export function DashboardCard({
           {ready ? (
             <Link
               href={href}
-              className="text-primary inline-flex items-center gap-1 text-xs font-medium hover:underline"
+              className="text-primary link inline-flex items-center gap-1 text-xs font-medium"
             >
               Open <ArrowUpRightIcon className="size-3" aria-hidden />
             </Link>

@@ -49,7 +49,7 @@ export function UpcomingAppointments({
                 </span>
                 <Link
                   href={`/calendar?date=${item.allDay ? item.start : formatInTimeZone(new Date(item.start), timeZone, 'yyyy-MM-dd')}`}
-                  className="min-w-0 flex-1 truncate hover:underline"
+                  className="link min-w-0 flex-1 truncate"
                 >
                   {item.title}
                 </Link>

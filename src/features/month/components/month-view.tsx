@@ -156,7 +156,7 @@ export function MonthView({ data }: { data: MonthData }) {
             {data.goals.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 No monthly goals or targets.{' '}
-                <Link href="/goals" className="text-primary hover:underline">
+                <Link href="/goals" className="text-primary link">
                   Open goals
                 </Link>
               </p>
@@ -166,7 +166,7 @@ export function MonthView({ data }: { data: MonthData }) {
                   <li key={g.id} className="flex flex-col gap-1">
                     <div className="flex items-center gap-2 text-sm">
                       <SegmentDot accent={g.segment.accent} className="size-2" />
-                      <Link href={`/goals/${g.id}`} className="flex-1 truncate hover:underline">
+                      <Link href={`/goals/${g.id}`} className="link flex-1 truncate">
                         {g.title}
                       </Link>
                       <Badge variant="outline">{HORIZON_LABEL[g.horizon] ?? g.horizon}</Badge>
@@ -185,7 +185,7 @@ export function MonthView({ data }: { data: MonthData }) {
                 data.review.id ? (
                   <Link
                     href={`/reviews/${data.review.id}`}
-                    className="text-primary text-sm font-medium hover:underline"
+                    className="text-primary link text-sm font-medium"
                   >
                     {data.review.status === 'complete' ? 'Open' : 'Continue'}
                   </Link>
@@ -246,7 +246,7 @@ export function MonthView({ data }: { data: MonthData }) {
                 <div key={w.start} className="flex flex-col gap-1">
                   <Link
                     href={`/week?date=${w.start}`}
-                    className="tracking-eyebrow text-muted-foreground text-[10px] uppercase hover:underline"
+                    className="tracking-eyebrow text-muted-foreground link text-[10px] uppercase"
                   >
                     {format(parseISO(w.start), 'd MMM')} – {format(parseISO(w.end), 'd MMM')}
                   </Link>
@@ -254,10 +254,7 @@ export function MonthView({ data }: { data: MonthData }) {
                     {w.items.map((t) => (
                       <li key={t.id} className="flex items-center gap-2 text-sm">
                         <SegmentDot accent={t.segment.accent} className="size-2" />
-                        <Link
-                          href={`/tasks?task=${t.id}`}
-                          className="flex-1 truncate hover:underline"
-                        >
+                        <Link href={`/tasks?task=${t.id}`} className="link flex-1 truncate">
                           {t.title}
                         </Link>
                         {t.dueDate && (
@@ -277,7 +274,7 @@ export function MonthView({ data }: { data: MonthData }) {
           {data.habitSummary.length === 0 ? (
             <p className="text-muted-foreground text-sm">
               No habits yet.{' '}
-              <Link href="/habits" className="text-primary hover:underline">
+              <Link href="/habits" className="text-primary link">
                 Add one
               </Link>
             </p>

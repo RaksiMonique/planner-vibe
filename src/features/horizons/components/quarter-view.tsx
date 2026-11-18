@@ -49,7 +49,7 @@ export function QuarterView({ data }: { data: QuarterData }) {
                 {data.undated.map((g, i) => (
                   <span key={g.id}>
                     {i > 0 && ', '}
-                    <Link href={`/goals/${g.id}`} className="underline-offset-4 hover:underline">
+                    <Link href={`/goals/${g.id}`} className="link underline-offset-4">
                       {g.title}
                     </Link>
                   </span>
@@ -93,7 +93,7 @@ export function QuarterView({ data }: { data: QuarterData }) {
               {data.months.map((m) => (
                 <div key={m.key} className="bg-muted/30 flex flex-col gap-2 rounded-lg p-3">
                   <h3 className="font-heading text-base">
-                    <Link href={`/month?month=${m.key}`} className="hover:underline">
+                    <Link href={`/month?month=${m.key}`} className="link">
                       {m.label}
                     </Link>
                   </h3>
@@ -108,7 +108,7 @@ export function QuarterView({ data }: { data: QuarterData }) {
                         <li key={g.id} className="flex items-center justify-between gap-2">
                           <Link
                             href={`/goals/${g.id}`}
-                            className="truncate underline-offset-4 hover:underline"
+                            className="link truncate underline-offset-4"
                           >
                             {g.title}
                           </Link>

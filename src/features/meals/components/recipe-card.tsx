@@ -19,7 +19,7 @@ export function RecipeCard({ recipe, imageUrl }: { recipe: Recipe; imageUrl: str
         <div className="flex items-start gap-2">
           <Link
             href={`/meals/recipes/${recipe.id}`}
-            className="font-heading min-w-0 flex-1 text-lg leading-snug hover:underline"
+            className="font-heading link min-w-0 flex-1 text-lg leading-snug"
           >
             {recipe.title}
           </Link>

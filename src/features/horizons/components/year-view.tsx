@@ -47,7 +47,7 @@ export function YearView({ data }: { data: YearData }) {
                 {data.undated.map((g, i) => (
                   <span key={g.id}>
                     {i > 0 && ', '}
-                    <Link href={`/goals/${g.id}`} className="underline-offset-4 hover:underline">
+                    <Link href={`/goals/${g.id}`} className="link underline-offset-4">
                       {g.title}
                     </Link>
                   </span>
@@ -126,7 +126,7 @@ export function YearView({ data }: { data: YearData }) {
                   )}
                 >
                   <h3 className="font-heading text-base">
-                    <Link href={`/quarter?quarter=${q.range.key}`} className="hover:underline">
+                    <Link href={`/quarter?quarter=${q.range.key}`} className="link">
                       {q.range.label}
                     </Link>
                   </h3>
@@ -140,7 +140,7 @@ export function YearView({ data }: { data: YearData }) {
                         <li key={g.id}>
                           <Link
                             href={`/goals/${g.id}`}
-                            className="block truncate underline-offset-4 hover:underline"
+                            className="link block truncate underline-offset-4"
                           >
                             {g.title}
                           </Link>

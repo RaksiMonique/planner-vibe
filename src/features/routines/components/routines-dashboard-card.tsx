@@ -35,7 +35,7 @@ export async function RoutinesDashboardCard({
       {routines.length === 0 ? (
         <EmptyNote>
           Nothing scheduled today.{' '}
-          <Link href="/routines" className="text-primary hover:underline">
+          <Link href="/routines" className="text-primary link">
             Set up a routine.
           </Link>
         </EmptyNote>
@@ -70,7 +70,7 @@ export async function RoutinesDashboardCard({
             })}
           </div>
           {more > 0 && (
-            <Link href="/routines" className="text-primary text-xs hover:underline">
+            <Link href="/routines" className="text-primary link text-xs">
               {more} more on the Routines page
             </Link>
           )}

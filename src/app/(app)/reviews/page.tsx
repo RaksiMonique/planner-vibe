@@ -95,7 +95,7 @@ export default async function ReviewsPage() {
                       {review ? (
                         <Link
                           href={`/reviews/${review.id}`}
-                          className="text-primary text-sm font-medium hover:underline"
+                          className="text-primary link text-sm font-medium"
                         >
                           {status === 'complete' ? 'Open' : 'Continue'}
                         </Link>
@@ -126,7 +126,7 @@ export default async function ReviewsPage() {
             {goals.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 No active goals yet.{' '}
-                <Link href="/goals" className="text-primary hover:underline">
+                <Link href="/goals" className="text-primary link">
                   Open goals
                 </Link>
               </p>
@@ -167,7 +167,7 @@ export default async function ReviewsPage() {
                   const status = reviewStatus(r, t.prompts);
                   return (
                     <li key={r.id} className="flex flex-wrap items-center gap-2 py-2">
-                      <Link href={`/reviews/${r.id}`} className="min-w-0 flex-1 hover:underline">
+                      <Link href={`/reviews/${r.id}`} className="link min-w-0 flex-1">
                         <span className="text-sm font-medium">
                           {t.title}
                           {r.goalTitle ? `: ${r.goalTitle}` : ''}

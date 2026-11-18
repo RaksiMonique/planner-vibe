@@ -112,7 +112,7 @@ function RenameableName({ id, name }: { id: string; name: string }) {
     return (
       <button
         type="button"
-        className="font-heading flex-1 text-left text-base hover:underline"
+        className="font-heading link flex-1 text-left text-base"
         onClick={() => setEditing(true)}
         title="Rename"
       >

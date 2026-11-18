@@ -79,7 +79,7 @@ export function GoalTimeline({
                   {lane.undated.map((g, i) => (
                     <span key={g.id}>
                       {i > 0 && ', '}
-                      <Link href={`/goals/${g.id}`} className="underline-offset-4 hover:underline">
+                      <Link href={`/goals/${g.id}`} className="link underline-offset-4">
                         {g.title}
                       </Link>
                     </span>

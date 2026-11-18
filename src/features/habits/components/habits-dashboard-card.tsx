@@ -33,7 +33,7 @@ export async function HabitsDashboardCard({
       {habits.length === 0 ? (
         <EmptyNote>
           No habits yet.{' '}
-          <Link href="/habits" className="text-primary hover:underline">
+          <Link href="/habits" className="text-primary link">
             Add the first one.
           </Link>
         </EmptyNote>
@@ -72,7 +72,7 @@ export async function HabitsDashboardCard({
             ))}
           </ul>
           {more > 0 && (
-            <Link href="/habits" className="text-primary text-xs hover:underline">
+            <Link href="/habits" className="text-primary link text-xs">
               {more} more on the Habits page
             </Link>
           )}

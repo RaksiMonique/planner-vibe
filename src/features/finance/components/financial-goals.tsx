@@ -22,7 +22,7 @@ export function FinancialGoals({ goals, todayKey }: { goals: GoalRow[]; todayKey
           >
             <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
               <h3 className="min-w-0 flex-1 font-sans text-sm font-medium tracking-normal">
-                <Link href={`/goals/${g.id}`} className="hover:underline">
+                <Link href={`/goals/${g.id}`} className="link">
                   {g.title}
                 </Link>
               </h3>
@@ -58,7 +58,7 @@ export function FinancialGoals({ goals, todayKey }: { goals: GoalRow[]; todayKey
                   keepValue
                 />
               ) : (
-                <Link href={`/goals/${g.id}`} className="text-primary text-xs hover:underline">
+                <Link href={`/goals/${g.id}`} className="text-primary link text-xs">
                   Open goal
                 </Link>
               )}

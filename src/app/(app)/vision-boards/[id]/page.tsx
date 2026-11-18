@@ -50,7 +50,7 @@ export default async function VisionBoardPage({ params }: { params: Promise<{ id
     <>
       <Link
         href="/vision-boards"
-        className="text-muted-foreground mb-3 inline-flex items-center gap-1 text-sm hover:underline"
+        className="text-muted-foreground link mb-3 inline-flex items-center gap-1 text-sm"
       >
         <ArrowLeftIcon className="size-4" aria-hidden /> All boards
       </Link>

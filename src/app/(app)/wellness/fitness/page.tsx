@@ -164,7 +164,7 @@ export default async function FitnessPage({ searchParams }: { searchParams: Prom
             ) : (
               <p className="text-muted-foreground text-sm">
                 Cycle tracking is off. Turn it on under{' '}
-                <Link href="/settings" className="text-primary hover:underline">
+                <Link href="/settings" className="text-primary link">
                   Settings, Modules
                 </Link>{' '}
                 if you want it; it stays private either way.

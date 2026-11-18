@@ -158,7 +158,7 @@ export function Dashboard({
               <li key={g.id} className="flex flex-col gap-1">
                 <div className="flex items-center gap-2">
                   <SegmentDot accent={g.segment.accent} />
-                  <Link href={`/goals/${g.id}`} className="flex-1 truncate text-sm hover:underline">
+                  <Link href={`/goals/${g.id}`} className="link flex-1 truncate text-sm">
                     {g.title}
                   </Link>
                   <Badge variant="outline">{HORIZON_LABEL[g.horizon]}</Badge>
@@ -176,7 +176,7 @@ export function Dashboard({
         <DashboardCard title="Inbox" icon={InboxIcon} href="/tasks" release={1}>
           <Inbox captures={data.captures.slice(0, 6)} segments={data.segments} />
           {data.captures.length > 6 && (
-            <Link href="/tasks" className="text-primary text-xs hover:underline">
+            <Link href="/tasks" className="text-primary link text-xs">
               {data.captures.length - 6} more in the inbox
             </Link>
           )}
@@ -220,7 +220,7 @@ export function Dashboard({
             ))}
           </div>
           {data.segments.length > 10 && (
-            <Link href="/segments" className="text-primary text-xs hover:underline">
+            <Link href="/segments" className="text-primary link text-xs">
               All {data.segments.length} segments
             </Link>
           )}

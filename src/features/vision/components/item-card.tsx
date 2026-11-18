@@ -58,7 +58,7 @@ export function ItemCard({
           href={item.url}
           target="_blank"
           rel="noreferrer"
-          className="text-primary flex items-center gap-2 p-4 text-sm hover:underline"
+          className="text-primary link flex items-center gap-2 p-4 text-sm"
         >
           <ExternalLinkIcon className="size-4 shrink-0" aria-hidden />
           <span className="truncate">{item.caption || item.url}</span>

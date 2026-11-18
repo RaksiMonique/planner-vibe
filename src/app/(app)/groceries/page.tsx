@@ -26,7 +26,7 @@ export default async function GroceriesPage() {
         <div className="flex items-center gap-2">
           <Link
             href={`/groceries/${list.id}`}
-            className="font-heading min-w-0 flex-1 truncate text-lg hover:underline"
+            className="font-heading link min-w-0 flex-1 truncate text-lg"
           >
             {list.name}
           </Link>

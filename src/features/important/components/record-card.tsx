@@ -45,15 +45,12 @@ export function RecordCard({ record }: { record: ImportantRecord }) {
                       href={record.fields[d.key]}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-primary hover:underline"
+                      className="text-primary link"
                     >
                       {record.fields[d.key]}
                     </a>
                   ) : d.type === 'tel' ? (
-                    <a
-                      href={`tel:${record.fields[d.key]}`}
-                      className="text-primary hover:underline"
-                    >
+                    <a href={`tel:${record.fields[d.key]}`} className="text-primary link">
                       {record.fields[d.key]}
                     </a>
                   ) : (

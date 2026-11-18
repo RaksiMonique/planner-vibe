@@ -38,10 +38,7 @@ export function CourseCard({
         <div className="flex items-start gap-2">
           <SegmentDot accent={course.segment.accent} className="mt-1.5" />
           <div className="min-w-0 flex-1">
-            <Link
-              href={`/study/courses/${course.id}`}
-              className="font-heading text-lg hover:underline"
-            >
+            <Link href={`/study/courses/${course.id}`} className="font-heading link text-lg">
               {course.title}
             </Link>
             <p className="text-muted-foreground text-xs">
@@ -66,7 +63,7 @@ export function CourseCard({
             <span>Due {format(new Date(`${course.dueDate}T00:00:00`), 'd MMM yyyy')}</span>
           )}
           {course.projectId && (
-            <Link href={`/projects/${course.projectId}`} className="text-primary hover:underline">
+            <Link href={`/projects/${course.projectId}`} className="text-primary link">
               Project
             </Link>
           )}
@@ -159,7 +156,7 @@ export function ResourceList({ resources }: { resources: LearningResource[] }) {
               href={r.url}
               target="_blank"
               rel="noreferrer"
-              className="text-primary inline-flex min-w-0 flex-1 items-center gap-1 truncate hover:underline"
+              className="text-primary link inline-flex min-w-0 flex-1 items-center gap-1 truncate"
             >
               {r.title}
               <ExternalLinkIcon className="size-3 shrink-0" aria-hidden />

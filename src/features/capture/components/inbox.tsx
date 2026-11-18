@@ -85,7 +85,7 @@ function InboxItem({ capture, segments }: { capture: Capture; segments: LifeSegm
           </Button>
           <Link
             href={`/calendar?capture=${capture.id}`}
-            className="text-primary inline-flex h-6 items-center gap-1 rounded-md px-2 text-xs hover:underline"
+            className="text-primary link inline-flex h-6 items-center gap-1 rounded-md px-2 text-xs"
           >
             <CalendarPlusIcon className="size-3" aria-hidden /> Make event
           </Link>

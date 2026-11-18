@@ -56,7 +56,7 @@ export function HabitToggle({
         disabled={disabled || pending}
         onClick={() => toggle(!value)}
         className={cn(
-          'flex size-7 items-center justify-center rounded-md border transition-colors',
+          'border-input flex size-7 items-center justify-center rounded-md border transition-colors',
           value
             ? 'bg-primary text-primary-foreground border-transparent'
             : 'bg-card hover:bg-muted',

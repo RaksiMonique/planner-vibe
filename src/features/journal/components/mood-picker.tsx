@@ -26,7 +26,7 @@ export function MoodPicker({
             aria-label={`${n}, ${MOOD_LABELS[n]}`}
             onClick={() => setValue(value === n ? null : n)}
             className={cn(
-              'size-8 rounded-full border text-sm transition-colors',
+              'border-input size-8 rounded-full border text-sm transition-colors',
               value === n
                 ? 'bg-primary text-primary-foreground border-transparent'
                 : 'bg-card hover:bg-muted'

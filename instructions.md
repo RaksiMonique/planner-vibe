@@ -174,7 +174,7 @@ Contrast, measured as WCAG 2 ratios, so text stays readable without leaving the 
 - White text passes AA on Crimson (6.90), Rose (5.03) and Raspberry (4.82). Plum text passes AA on Gold (4.68) and Blush (6.02). These six are therefore the text-bearing accents, each with its fixed text colour in `src/lib/accents.ts`.
 - Rose as text passes AA on White (5.03) but not on Blush (3.71). Use it for captions, labels and placeholders inside white cards, or at 18 px and up on the page background.
 - No text colour in the palette reaches AA on Flame (white 4.37), Coral (white 3.65), Apricot (Plum 3.67) or Ochre (white 3.08), which is why they stay decorative.
-- Blush on White is 1.36, so borders in Blush are soft; focus relies on the Plum ring, never on the border alone.
+- Blush on White is 1.36, so card and divider borders in Blush are soft, and focus relies on the Plum ring. Form controls (inputs, selects, checkboxes, radio-style pickers) take a Rose edge instead, which clears the 3:1 that component boundaries need on both White and Blush.
 
 ### 2.2 Typography and visual design
 

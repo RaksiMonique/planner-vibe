@@ -44,7 +44,9 @@
   --destructive: var(--crimson);
   --destructive-foreground: var(--white);
   --border: var(--blush);
-  --input: var(--blush);
+  /* Form controls need a visible edge: Rose is 5.03 on White and 3.71 on
+     Blush, above the 3:1 that component boundaries need. Blush is 1.36. */
+  --input: var(--rose);
   --ring: var(--plum);
   --chart-1: var(--plum);
   --chart-2: var(--flame);

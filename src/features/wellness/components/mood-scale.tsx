@@ -35,7 +35,7 @@ export function MoodScale({
             aria-label={`${label} ${n}, ${words[n]}`}
             onClick={() => onChange(n)}
             className={cn(
-              'rounded-full border text-sm transition-colors',
+              'border-input rounded-full border text-sm transition-colors',
               size === 'sm' ? 'size-7 text-xs' : 'size-9',
               value === n
                 ? 'bg-primary text-primary-foreground border-transparent'

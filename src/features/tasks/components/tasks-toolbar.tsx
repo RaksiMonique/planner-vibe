@@ -22,11 +22,14 @@ export function TasksToolbar({
   segments,
   projects,
   goals,
+  lockSegment = false,
 }: {
   view: string;
   segments: LifeSegment[];
   projects: ProjectOption[];
   goals: GoalOption[];
+  /** The page already fixes the segment, so the segment filter is not shown. */
+  lockSegment?: boolean;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -79,19 +82,21 @@ export function TasksToolbar({
         </Link>
       </div>
       <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center">
-        <NativeSelect
-          aria-label="Life Segment"
-          value={params.get('segment') ?? ''}
-          onChange={(e) => setParam('segment', e.target.value || null)}
-          className="sm:w-48"
-        >
-          <option value="">All segments</option>
-          {segments.map((s) => (
-            <option key={s.id} value={s.slug}>
-              {s.name}
-            </option>
-          ))}
-        </NativeSelect>
+        {!lockSegment && (
+          <NativeSelect
+            aria-label="Life Segment"
+            value={params.get('segment') ?? ''}
+            onChange={(e) => setParam('segment', e.target.value || null)}
+            className="sm:w-48"
+          >
+            <option value="">All segments</option>
+            {segments.map((s) => (
+              <option key={s.id} value={s.slug}>
+                {s.name}
+              </option>
+            ))}
+          </NativeSelect>
+        )}
         <NativeSelect
           aria-label="Project"
           value={params.get('project') ?? ''}

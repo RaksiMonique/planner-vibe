@@ -174,3 +174,21 @@ test('work projects lists the projects in the work segment', async ({ page }) =>
       .first()
   ).toBeVisible();
 });
+
+test('work tasks live on their own page, locked to the work segment', async ({
+  page,
+  isMobile,
+}) => {
+  const title = `Prepare quarterly report ${stamp}${isMobile ? ' (phone)' : ''}`;
+  await page.goto('/work/tasks?new=1');
+  const sheet = page.getByRole('dialog', { name: 'New task' });
+  await sheet.getByLabel('Title').fill(title);
+  await page.getByRole('button', { name: 'Add task' }).click();
+  // Stays on the work page, with no segment filter to change.
+  await expect(page).toHaveURL(/\/work\/tasks/);
+  await expect(page.getByText(title).first()).toBeVisible();
+  await expect(page.getByLabel('Life Segment')).toHaveCount(0);
+  // The same task is in the Career & Work segment on the main Tasks page.
+  await page.goto('/tasks?segment=career-work');
+  await expect(page.getByText(title).first()).toBeVisible();
+});

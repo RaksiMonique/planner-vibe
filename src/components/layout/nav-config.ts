@@ -175,6 +175,13 @@ export const navGroups: NavGroup[] = [
         release: 5,
         module: 'work',
       },
+      {
+        label: 'Work tasks',
+        href: '/work/tasks',
+        icon: ListChecks,
+        release: 5,
+        module: 'work',
+      },
     ],
   },
   {

@@ -70,13 +70,25 @@ export function visibleCards(
     .filter((c) => !c.module || enabledModules[c.module] !== false);
 }
 
-export function moveCard(layout: DashboardLayout, key: string, direction: -1 | 1): DashboardLayout {
+/**
+ * Moves a card one step. With `among` (the keys currently shown), the step is
+ * taken past the next shown card, so hidden cards in between are skipped and
+ * the result on the page is always visible.
+ */
+export function moveCard(
+  layout: DashboardLayout,
+  key: string,
+  direction: -1 | 1,
+  among?: string[]
+): DashboardLayout {
   const { order, hidden } = normaliseLayout(layout);
-  const i = order.indexOf(key);
-  const j = i + direction;
-  if (i === -1 || j < 0 || j >= order.length) return { order, hidden };
-  const next = [...order];
-  [next[i], next[j]] = [next[j], next[i]];
+  const lane = among ? order.filter((k) => among.includes(k)) : order;
+  const i = lane.indexOf(key);
+  const target = lane[i + direction];
+  if (i === -1 || !target) return { order, hidden };
+  const next = order.filter((k) => k !== key);
+  const j = next.indexOf(target);
+  next.splice(direction === -1 ? j : j + 1, 0, key);
   return { order: next, hidden };
 }
 

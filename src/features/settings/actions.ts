@@ -1,7 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { moveCard, normaliseLayout, toggleCard } from '@/features/dashboard/layout';
+import { moveCard, normaliseLayout, toggleCard, visibleCards } from '@/features/dashboard/layout';
 import { redirect } from 'next/navigation';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
@@ -95,10 +95,13 @@ export async function moveDashboardCardAction(formData: FormData): Promise<void>
   const key = String(formData.get('key') ?? '');
   const direction = formData.get('direction') === '-1' ? -1 : 1;
   const prefs = await getPreferences(user.id);
-  await updateDashboardLayout(
-    user.id,
-    moveCard(normaliseLayout(prefs.dashboardLayout), key, direction)
-  );
+  const layout = normaliseLayout(prefs.dashboardLayout);
+  // From the dashboard itself the move steps past the cards actually shown.
+  const among =
+    formData.get('among') === 'visible'
+      ? visibleCards(layout, prefs.enabledModules).map((c) => c.key)
+      : undefined;
+  await updateDashboardLayout(user.id, moveCard(layout, key, direction, among));
   revalidatePath('/dashboard');
   revalidatePath('/settings');
 }

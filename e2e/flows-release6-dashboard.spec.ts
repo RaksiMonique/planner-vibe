@@ -1,5 +1,8 @@
 import { expect, test } from './test';
 
+// Two tests edit the one dashboard layout the test user has, so this file runs in order.
+test.describe.configure({ mode: 'default' });
+
 test('the dashboard follows the card order and hidden cards chosen in Settings', async ({
   page,
   isMobile,
@@ -25,7 +28,7 @@ test('the dashboard follows the card order and hidden cards chosen in Settings',
   await expect(main.getByRole('heading', { name: 'Life Segments' })).toHaveCount(0);
 
   await page.goto('/settings');
-  expect(await indexOf('Inbox')).toBeGreaterThan(0);
+  await expect.poll(() => indexOf('Inbox')).toBeGreaterThan(0);
   for (let guard = 0; guard < 20; guard++) {
     const before = await indexOf('Inbox');
     if (before <= 0) break;
@@ -57,4 +60,43 @@ test('the day opens with the mood check-in, which saves in place', async ({ page
   }
   await expect(checkIn).toContainText(/Mood \d · .*, energy \d/);
   await expect(checkIn.getByRole('link', { name: 'Change' })).toBeVisible();
+});
+
+test('Customise on the dashboard moves, hides and re-adds cards in place', async ({
+  page,
+  isMobile,
+}) => {
+  test.skip(isMobile, 'Desktop covers it; a parallel mobile run would undo its steps.');
+  const main = page.getByRole('main');
+
+  await page.goto('/dashboard');
+  await page.getByRole('link', { name: 'Customise' }).click();
+  await expect(page).toHaveURL(/customise=1/);
+  await expect(main.getByText('Add a card')).toBeVisible();
+  // Start from the default layout whatever an earlier run left behind.
+  await main.getByRole('button', { name: 'Reset to default' }).click();
+  await page.waitForLoadState('networkidle');
+  await expect(main.getByText('Every card is on the page.')).toBeVisible();
+  await expect(main.getByRole('button', { name: 'Move Weekly schedule up' })).toBeDisabled();
+
+  await main.getByRole('button', { name: 'Hide Quote of the day' }).click();
+  await expect(main.getByRole('button', { name: 'Quote of the day', exact: true })).toBeVisible();
+  await expect(main.getByRole('button', { name: 'Hide Quote of the day' })).toHaveCount(0);
+  await expect(page).toHaveURL(/customise=1/);
+
+  // Weekly schedule is first; moving it down swaps it with the next shown card.
+  await expect(main.getByRole('button', { name: 'Move Weekly schedule up' })).toBeDisabled();
+  await main.getByRole('button', { name: 'Move Weekly schedule down' }).click();
+  await expect(main.getByRole('button', { name: 'Move Weekly schedule up' })).toBeEnabled();
+
+  await main.getByRole('button', { name: 'Quote of the day', exact: true }).click();
+  await expect(main.getByRole('button', { name: 'Hide Quote of the day' })).toBeVisible();
+
+  await main.getByRole('button', { name: 'Reset to default' }).click();
+  await expect(main.getByRole('button', { name: 'Move Weekly schedule up' })).toBeDisabled();
+  await expect(main.getByText('Every card is on the page.')).toBeVisible();
+
+  await page.getByRole('link', { name: 'Done' }).click();
+  await expect(page).toHaveURL(/\/dashboard$/);
+  await expect(main.getByRole('button', { name: /^Hide / })).toHaveCount(0);
 });

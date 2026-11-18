@@ -7,9 +7,13 @@ import { requireUser } from '@/lib/auth';
 export const metadata: Metadata = { title: 'Dashboard' };
 export const dynamic = 'force-dynamic';
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: PageProps<'/dashboard'>) {
   const user = await requireUser();
-  const [data, prefs] = await Promise.all([getDashboardData(user.id), getPreferences(user.id)]);
+  const [data, prefs, params] = await Promise.all([
+    getDashboardData(user.id),
+    getPreferences(user.id),
+    searchParams,
+  ]);
   return (
     <Dashboard
       userId={user.id}
@@ -17,6 +21,7 @@ export default async function DashboardPage() {
       timeZone={prefs.timeZone}
       layout={prefs.dashboardLayout}
       enabledModules={prefs.enabledModules}
+      customising={params.customise === '1'}
     />
   );
 }

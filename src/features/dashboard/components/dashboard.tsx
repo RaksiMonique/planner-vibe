@@ -5,8 +5,10 @@ import {
   CalendarDaysIcon,
   ChartPieIcon,
   InboxIcon,
+  CheckIcon,
   PlusIcon,
   QuoteIcon,
+  Settings2Icon,
   TargetIcon,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -20,7 +22,8 @@ import { ACCENT_BG } from '@/lib/accents';
 import { GoalProgress } from '@/features/goals/components/goal-progress';
 import { cn } from '@/lib/utils';
 import type { DashboardLayout, EnabledModules } from '@/db/schema';
-import { visibleCards, type DashboardCardKey } from '../layout';
+import { normaliseLayout, visibleCards, type DashboardCardKey } from '../layout';
+import { AddCards, CardControls } from './customise';
 import type { DashboardData } from '../queries';
 import { BibleDashboardCard } from '@/features/faith/components/bible-dashboard-card';
 import { HabitsDashboardCard } from '@/features/habits/components/habits-dashboard-card';
@@ -45,12 +48,15 @@ export function Dashboard({
   userId,
   layout,
   enabledModules,
+  customising = false,
 }: {
   data: DashboardData;
   timeZone: string;
   userId: string;
   layout: DashboardLayout | null;
   enabledModules: EnabledModules;
+  /** Edit mode: move and hide cards in place (instructions.md 7.5). */
+  customising?: boolean;
 }) {
   const timeOf = (startsAt: Date | null) =>
     startsAt ? format(toZonedTime(startsAt, timeZone), 'HH:mm') : '';
@@ -229,6 +235,7 @@ export function Dashboard({
     },
   };
   const order = visibleCards(layout, enabledModules);
+  const shown = order.filter((card) => cards[card.key]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -247,6 +254,20 @@ export function Dashboard({
           <PlusIcon data-icon="inline-start" />
           Event
         </Link>
+        {customising ? (
+          <Link href="/dashboard" className={cn(buttonVariants({ size: 'sm' }))}>
+            <CheckIcon data-icon="inline-start" />
+            Done
+          </Link>
+        ) : (
+          <Link
+            href="/dashboard?customise=1"
+            className={cn(buttonVariants({ variant: 'ghost', size: 'sm' }))}
+          >
+            <Settings2Icon data-icon="inline-start" />
+            Customise
+          </Link>
+        )}
         <div className="ml-auto w-full sm:w-auto">
           <QuickCapture />
         </div>
@@ -283,14 +304,20 @@ export function Dashboard({
           undated={data.undated}
           undatedCount={data.undatedCount}
         />
-        {order.map((card) => {
-          const entry = cards[card.key];
-          return entry ? (
-            <div key={card.key} className={entry.span}>
+        {shown.map((card, i) => {
+          const entry = cards[card.key]!;
+          return (
+            <div key={card.key} className={cn(entry.span, customising && 'flex flex-col gap-1')}>
+              {customising && (
+                <CardControls card={card} first={i === 0} last={i === shown.length - 1} />
+              )}
               {entry.node}
             </div>
-          ) : null;
+          );
         })}
+        {customising && (
+          <AddCards hidden={normaliseLayout(layout).hidden} enabledModules={enabledModules} />
+        )}
       </div>
     </div>
   );

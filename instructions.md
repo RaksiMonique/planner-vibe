@@ -426,7 +426,7 @@ Large cards: personalised greeting with the date; weekly schedule and calendar; 
 
 Small cards: tasks due this week; overdue tasks; morning and evening routines; daily habit checklist; mood and energy check-in; active goals and milestones; upcoming appointments; job schedule preview; Bible study and devotional preview; quick notes and reminders (the Inbox); Life Segment navigation cards; optional vision board or inspirational image.
 
-Quick actions: add task, note, event, habit check-in, time entry, and the quick-capture box. Cards for disabled modules are hidden. Customisable layouts (reorder and hide cards) arrive in Release 6.
+Quick actions: add task, note, event, habit check-in, time entry, and the quick-capture box. Cards for disabled modules are hidden. The layout is the user's own: Customise on the dashboard opens an edit mode where each card can be moved up or down or hidden in place, and hidden cards are added back from a row at the bottom; the same controls live in Settings. The greeting and the Today block stay at the top.
 
 ### 7.6 Quick capture, the Inbox and sticky notes
 

@@ -43,6 +43,16 @@ describe('moveCard and toggleCard', () => {
     expect(up.order.slice(0, 2)).toEqual(['job', 'week']);
     expect(moveCard(DEFAULT_LAYOUT, 'week', -1).order).toEqual(DEFAULT_LAYOUT.order);
   });
+  it('steps past hidden cards when moving among the visible ones', () => {
+    // week, job, routines, habits… with job hidden: moving routines up lands it above week.
+    const layout = { ...DEFAULT_LAYOUT, hidden: ['job'] };
+    const shown = DEFAULT_LAYOUT.order.filter((k) => k !== 'job');
+    const up = moveCard(layout, 'routines', -1, shown);
+    expect(up.order.slice(0, 3)).toEqual(['routines', 'week', 'job']);
+    const down = moveCard(up, 'routines', 1, shown);
+    expect(down.order.slice(0, 3)).toEqual(['week', 'routines', 'job']);
+    expect(moveCard(layout, 'week', -1, shown).order).toEqual(layout.order);
+  });
   it('hides and shows without duplicates', () => {
     const hidden = toggleCard(DEFAULT_LAYOUT, 'quote', false);
     expect(hidden.hidden).toEqual(['quote']);

@@ -148,3 +148,23 @@ test('import the deferred legacy sections', async ({ page }) => {
   await expect(page.getByRole('table').last()).toBeVisible({ timeout: 30_000 });
   await expect(page.getByRole('table').last()).toContainText(/bible/i);
 });
+
+test('the monthly overview starts and then continues the month review', async ({ page }) => {
+  await page.goto('/month');
+  const card = page
+    .getByRole('main')
+    .locator('section, div')
+    .filter({
+      has: page.getByText('End-of-month review', { exact: true }),
+    });
+  const start = page.getByRole('button', { name: 'Start' });
+  const open = page.getByRole('link', { name: /^(Continue|Open)$/ });
+  // Both devices share the month; whichever arrives second finds the review already started.
+  await expect(start.or(open.first())).toBeVisible();
+  if (await start.isVisible()) await start.click();
+  else await open.first().click();
+  await expect(page).toHaveURL(/\/reviews\/[0-9a-f-]{36}$/);
+  await page.goto('/month');
+  await expect(card.getByRole('link', { name: /^(Continue|Open)$/ }).first()).toBeVisible();
+  await expect(page.getByText(/In progress|Not started|Complete\./).first()).toBeVisible();
+});

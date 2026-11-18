@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ProgressBar } from '@/components/shared/progress-bar';
 import { GoalProgress } from '@/features/goals/components/goal-progress';
 import { SegmentDot } from '@/components/shared/segment-badge';
+import { OpenReviewButton } from '@/features/reviews/components/open-review-button';
 import { cn } from '@/lib/utils';
 import type { MonthData } from '../queries';
 
@@ -107,7 +108,7 @@ export function MonthView({ data }: { data: MonthData }) {
                         {cell.events > 0 && (
                           <span
                             title={`${cell.events} events`}
-                            className="bg-plum text-white inline-flex min-w-3.5 items-center justify-center rounded-full px-1 text-[9px] leading-3.5"
+                            className="bg-plum inline-flex min-w-3.5 items-center justify-center rounded-full px-1 text-[9px] leading-3.5 text-white"
                           >
                             {cell.events}
                           </span>
@@ -176,15 +177,37 @@ export function MonthView({ data }: { data: MonthData }) {
               </ul>
             )}
           </SectionCard>
-          <SectionCard
-            title="End-of-month review"
-            icon={RotateCcwIcon}
-            action={<Badge variant="outline">Release 3</Badge>}
-          >
-            <p className="text-muted-foreground text-sm">
-              Structured monthly reviews arrive with journals and reflections.
-            </p>
-          </SectionCard>
+          {data.review && (
+            <SectionCard
+              title="End-of-month review"
+              icon={RotateCcwIcon}
+              action={
+                data.review.id ? (
+                  <Link
+                    href={`/reviews/${data.review.id}`}
+                    className="text-primary text-sm font-medium hover:underline"
+                  >
+                    {data.review.status === 'complete' ? 'Open' : 'Continue'}
+                  </Link>
+                ) : (
+                  <OpenReviewButton
+                    kind="monthly"
+                    date={`${data.monthKey}-01`}
+                    label="Start"
+                    variant="outline"
+                  />
+                )
+              }
+            >
+              <p className="text-muted-foreground text-sm">
+                {data.review.status === 'complete'
+                  ? 'Complete. Open it to read your answers.'
+                  : data.review.status === 'in_progress'
+                    ? `In progress: ${data.review.answered} of ${data.review.prompts} answered.`
+                    : 'Not started. A few prompts to look back on the month.'}
+              </p>
+            </SectionCard>
+          )}
         </div>
       </div>
 

@@ -6,6 +6,13 @@ import { listEventsBetween } from '@/features/calendar/queries';
 import { listGoals, listMilestones, type GoalRow, type Milestone } from '@/features/goals/queries';
 import { listCheckInsBetween, listHabits, type HabitRow } from '@/features/habits/queries';
 import { getPreferences } from '@/features/settings/service';
+import { findReview } from '@/features/reviews/queries';
+import {
+  answeredCount,
+  REVIEW_TEMPLATES,
+  reviewStatus,
+  type ReviewStatus,
+} from '@/features/reviews/templates';
 import { listTasks, type TaskRow } from '@/features/tasks/queries';
 import { toDateKey, todayInZone, type WeekStartsOn } from '@/lib/dates';
 import {
@@ -42,6 +49,8 @@ export type MonthData = {
   habitCount: number;
   openTasks: number;
   doneTasks: number;
+  /** This month's review: its id once started, how far along it is, or null when Reviews is off. */
+  review: { id: string | null; status: ReviewStatus; answered: number; prompts: number } | null;
 };
 
 export async function getMonthData(userId: string, monthParam?: string): Promise<MonthData> {
@@ -118,6 +127,19 @@ export async function getMonthData(userId: string, monthParam?: string): Promise
     daysSoFar: soFar,
   }));
 
+  const monthly = REVIEW_TEMPLATES.monthly;
+  const existing = prefs.enabledModules.reviews
+    ? await findReview(userId, 'monthly', `${monthKey}-01`)
+    : null;
+  const review = prefs.enabledModules.reviews
+    ? {
+        id: existing?.id ?? null,
+        status: reviewStatus(existing, monthly.prompts),
+        answered: existing ? answeredCount(existing.answers, monthly.prompts) : 0,
+        prompts: monthly.prompts.length,
+      }
+    : null;
+
   return {
     monthKey,
     title: format(first, 'MMMM yyyy'),
@@ -133,5 +155,6 @@ export async function getMonthData(userId: string, monthParam?: string): Promise
     habitCount: habits.length,
     openTasks: openTasks.filter((t) => inMonth(t.dueDate)).length,
     doneTasks: doneTasks.filter((t) => inMonth(t.dueDate)).length,
+    review,
   };
 }

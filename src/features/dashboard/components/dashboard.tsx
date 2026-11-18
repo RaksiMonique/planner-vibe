@@ -53,7 +53,6 @@ export function Dashboard({
   layout: DashboardLayout | null;
   enabledModules: EnabledModules;
 }) {
-  const editHref = (id: string) => `/tasks?task=${id}`;
   const timeOf = (startsAt: Date | null) =>
     startsAt ? format(toZonedTime(startsAt, timeZone), 'HH:mm') : '';
 
@@ -145,27 +144,6 @@ export function Dashboard({
               </Link>
             ))}
           </div>
-        </DashboardCard>
-      ),
-    },
-    due: {
-      span: 'lg:col-span-1',
-      node: (
-        <DashboardCard title="Due this week" icon={CalendarDaysIcon} href="/tasks" release={1}>
-          {data.dueThisWeek.length === 0 && <EmptyNote>Nothing else due this week.</EmptyNote>}
-          <ul className="flex flex-col gap-2">
-            {data.dueThisWeek.slice(0, 8).map((t) => (
-              <li key={t.id} className="flex items-start gap-2 text-sm">
-                <SegmentDot accent={t.segment.accent} className="mt-1.5" />
-                <Link href={editHref(t.id)} className="min-w-0 flex-1 hover:underline">
-                  <span className="block truncate">{t.title}</span>
-                  <span className="text-muted-foreground text-xs">
-                    {t.dueDate && format(parseISO(t.dueDate), 'EEEE')}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
         </DashboardCard>
       ),
     },
@@ -331,6 +309,7 @@ export function Dashboard({
           events={data.week.find((d) => d.isToday)?.events ?? []}
           dueToday={data.dueToday}
           overdue={data.overdue}
+          dueThisWeek={data.dueThisWeek}
           undated={data.undated}
           undatedCount={data.undatedCount}
         />

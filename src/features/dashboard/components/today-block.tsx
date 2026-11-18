@@ -1,7 +1,13 @@
 import Link from 'next/link';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
-import { CalendarClockIcon, ListChecksIcon, SmileIcon, TriangleAlertIcon } from 'lucide-react';
+import {
+  CalendarClockIcon,
+  CalendarDaysIcon,
+  ListChecksIcon,
+  SmileIcon,
+  TriangleAlertIcon,
+} from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SegmentDot } from '@/components/shared/segment-badge';
@@ -53,8 +59,8 @@ const Quiet = ({ children }: { children: React.ReactNode }) => (
 
 /**
  * The day in one place, in the order it is tackled: the mood check-in, what
- * is due today (events, tasks, habits), what is overdue, and what still
- * needs a date.
+ * is due today (events, tasks, habits), what is overdue, what the rest of
+ * the week holds, and what still needs a date.
  */
 export async function TodayBlock({
   userId,
@@ -66,6 +72,7 @@ export async function TodayBlock({
   events,
   dueToday,
   overdue,
+  dueThisWeek,
   undated,
   undatedCount,
 }: {
@@ -78,6 +85,7 @@ export async function TodayBlock({
   events: EventRow[];
   dueToday: Task[];
   overdue: Task[];
+  dueThisWeek: Task[];
   undated: Task[];
   undatedCount: number;
 }) {
@@ -191,6 +199,25 @@ export async function TodayBlock({
               {overdue.map((t) => (
                 <li key={t.id}>
                   <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+
+        <Section title="This week" icon={CalendarDaysIcon} count={dueThisWeek.length}>
+          {dueThisWeek.length === 0 ? (
+            <Quiet>Nothing else due this week.</Quiet>
+          ) : (
+            <ul className="flex flex-col">
+              {dueThisWeek.map((t) => (
+                <li key={t.id} className="flex items-center gap-2.5">
+                  <span className="text-muted-foreground w-12 shrink-0 pl-1.5 text-xs">
+                    {t.dueDate && format(parseISO(t.dueDate), 'EEE')}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
+                  </div>
                 </li>
               ))}
             </ul>

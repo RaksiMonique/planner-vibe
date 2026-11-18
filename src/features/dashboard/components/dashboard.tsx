@@ -4,7 +4,6 @@ import { toZonedTime } from 'date-fns-tz';
 import {
   CalendarDaysIcon,
   ChartPieIcon,
-  ClockIcon,
   InboxIcon,
   PlusIcon,
   QuoteIcon,
@@ -171,36 +170,6 @@ export function Dashboard({
         </DashboardCard>
       ),
     },
-    appointments: {
-      span: 'lg:col-span-1',
-      node: (
-        <DashboardCard title="Appointments" icon={ClockIcon} href="/calendar" release={1}>
-          {data.appointments.length === 0 && (
-            <EmptyNote>No appointments in the next seven days.</EmptyNote>
-          )}
-          <ul className="flex flex-col gap-2">
-            {data.appointments.map((e) => (
-              <li key={e.id} className="flex items-center gap-3 text-sm">
-                <span className="text-muted-foreground w-14 shrink-0 text-xs">
-                  {format(
-                    parseISO(
-                      e.isAllDay
-                        ? (e.allDayDate ?? data.todayKey)
-                        : format(toZonedTime(e.startsAt ?? new Date(), timeZone), 'yyyy-MM-dd')
-                    ),
-                    'EEE d'
-                  )}
-                </span>
-                <span className="flex-1 truncate">{e.title}</span>
-                <span className="text-muted-foreground text-xs">
-                  {e.isAllDay ? 'All day' : timeOf(e.startsAt)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </DashboardCard>
-      ),
-    },
     inbox: {
       span: 'lg:col-span-1',
       node: (
@@ -310,6 +279,7 @@ export function Dashboard({
           dueToday={data.dueToday}
           overdue={data.overdue}
           dueThisWeek={data.dueThisWeek}
+          appointments={data.appointments}
           undated={data.undated}
           undatedCount={data.undatedCount}
         />

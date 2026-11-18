@@ -4,6 +4,7 @@ import { toZonedTime } from 'date-fns-tz';
 import {
   CalendarClockIcon,
   CalendarDaysIcon,
+  ClockIcon,
   ListChecksIcon,
   SmileIcon,
   TriangleAlertIcon,
@@ -60,7 +61,7 @@ const Quiet = ({ children }: { children: React.ReactNode }) => (
 /**
  * The day in one place, in the order it is tackled: the mood check-in, what
  * is due today (events, tasks, habits), what is overdue, what the rest of
- * the week holds, and what still needs a date.
+ * the week holds, the appointments coming up, and what still needs a date.
  */
 export async function TodayBlock({
   userId,
@@ -73,6 +74,7 @@ export async function TodayBlock({
   dueToday,
   overdue,
   dueThisWeek,
+  appointments,
   undated,
   undatedCount,
 }: {
@@ -86,6 +88,8 @@ export async function TodayBlock({
   dueToday: Task[];
   overdue: Task[];
   dueThisWeek: Task[];
+  /** Appointments and self-care in the next seven days, soonest first. */
+  appointments: EventRow[];
   undated: Task[];
   undatedCount: number;
 }) {
@@ -99,6 +103,10 @@ export async function TodayBlock({
   const editHref = (id: string) => `/tasks?task=${id}`;
   const timeOf = (e: EventRow) =>
     e.isAllDay || !e.startsAt ? 'All day' : format(toZonedTime(e.startsAt, timeZone), 'HH:mm');
+  const dayOf = (e: EventRow) =>
+    e.isAllDay
+      ? (e.allDayDate ?? todayKey)
+      : format(toZonedTime(e.startsAt ?? new Date(), timeZone), 'yyyy-MM-dd');
   const todayCount = events.length + dueToday.length + habits.length + (moodPending ? 1 : 0);
 
   return (
@@ -218,6 +226,30 @@ export async function TodayBlock({
                   <div className="min-w-0 flex-1">
                     <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
                   </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+
+        <Section title="Appointments" icon={ClockIcon} count={appointments.length}>
+          {appointments.length === 0 ? (
+            <Quiet>No appointments in the next seven days.</Quiet>
+          ) : (
+            <ul className="flex flex-col">
+              {appointments.map((e) => (
+                <li key={e.id} className="flex items-center gap-2.5 px-1.5 py-1 text-sm">
+                  <span className="text-muted-foreground w-12 shrink-0 text-xs">
+                    {dayOf(e) === todayKey ? 'Today' : format(parseISO(dayOf(e)), 'EEE d')}
+                  </span>
+                  <SegmentDot accent={e.calendar.accent} />
+                  <Link
+                    href={`/calendar?date=${dayOf(e)}`}
+                    className="min-w-0 flex-1 truncate hover:underline"
+                  >
+                    {e.title}
+                  </Link>
+                  <span className="text-muted-foreground text-xs tabular-nums">{timeOf(e)}</span>
                 </li>
               ))}
             </ul>

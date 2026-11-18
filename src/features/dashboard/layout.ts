@@ -15,7 +15,6 @@ export type DashboardCardKey =
   | 'mood'
   | 'week'
   | 'goals'
-  | 'appointments'
   | 'inbox'
   | 'quote'
   | 'segments'
@@ -36,12 +35,11 @@ export const DASHBOARD_CARDS: CardDefinition[] = [
   { key: 'habits', label: 'Habits today', module: 'habits' },
   { key: 'time', label: 'Time this week', module: 'time' },
   { key: 'faith', label: 'Bible study', module: 'faith' },
-  { key: 'journal', label: 'Journal', module: 'journal' },
   { key: 'mood', label: 'Mood and energy', module: 'wellness' },
   { key: 'goals', label: 'Active goals', module: 'life-segments' },
-  { key: 'appointments', label: 'Appointments', module: 'planning' },
   { key: 'inbox', label: 'Inbox', module: 'planning' },
   { key: 'quote', label: 'Quote of the day', module: 'notes' },
+  { key: 'journal', label: 'Journal', module: 'journal' },
   { key: 'segments', label: 'Life Segments', module: 'life-segments' },
 ];
 

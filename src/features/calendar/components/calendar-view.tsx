@@ -38,10 +38,14 @@ const VIEWS: { name: CalendarViewName; label: string }[] = [
 /** Palette variables per accent; FullCalendar writes these into inline styles. */
 const ACCENT_VARS: Record<Accent, { bg: string; fg: string }> = {
   plum: { bg: 'var(--plum)', fg: 'var(--white)' },
+  rose: { bg: 'var(--rose)', fg: 'var(--white)' },
   crimson: { bg: 'var(--crimson)', fg: 'var(--white)' },
   raspberry: { bg: 'var(--raspberry)', fg: 'var(--white)' },
+  flame: { bg: 'var(--flame)', fg: 'var(--white)' },
+  coral: { bg: 'var(--coral)', fg: 'var(--white)' },
+  apricot: { bg: 'var(--apricot)', fg: 'var(--plum)' },
   gold: { bg: 'var(--gold)', fg: 'var(--plum)' },
-  rose: { bg: 'var(--rose)', fg: 'var(--white)' },
+  ochre: { bg: 'var(--ochre)', fg: 'var(--white)' },
   blush: { bg: 'var(--blush)', fg: 'var(--plum)' },
 };
 

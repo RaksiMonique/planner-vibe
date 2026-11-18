@@ -12,6 +12,10 @@ export const accentEnum = planner.enum('accent', [
   'gold',
   'rose',
   'blush',
+  'flame',
+  'coral',
+  'apricot',
+  'ochre',
 ]);
 export type Accent = (typeof accentEnum.enumValues)[number];
 

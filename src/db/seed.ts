@@ -54,20 +54,20 @@ const DEFAULT_SEGMENTS: Array<{
   icon: string;
 }> = [
   { name: 'Faith', slug: 'faith', accent: 'plum', icon: 'church' },
-  { name: 'Finance', slug: 'finance', accent: 'crimson', icon: 'wallet' },
+  { name: 'Finance', slug: 'finance', accent: 'ochre', icon: 'wallet' },
   { name: 'Family', slug: 'family', accent: 'raspberry', icon: 'users' },
   { name: 'Health & Wellness', slug: 'health-wellness', accent: 'rose', icon: 'heart-pulse' },
-  { name: 'Career & Work', slug: 'career-work', accent: 'plum', icon: 'briefcase' },
+  { name: 'Career & Work', slug: 'career-work', accent: 'crimson', icon: 'briefcase' },
   {
     name: 'Education & Learning',
     slug: 'education-learning',
-    accent: 'crimson',
+    accent: 'apricot',
     icon: 'graduation-cap',
   },
-  { name: 'Personal Development', slug: 'personal-development', accent: 'rose', icon: 'sprout' },
-  { name: 'Lifestyle & Home', slug: 'lifestyle-home', accent: 'gold', icon: 'house' },
-  { name: 'Relationships', slug: 'relationships', accent: 'raspberry', icon: 'heart' },
-  { name: 'Recreation', slug: 'recreation', accent: 'blush', icon: 'palmtree' },
+  { name: 'Personal Development', slug: 'personal-development', accent: 'gold', icon: 'sprout' },
+  { name: 'Lifestyle & Home', slug: 'lifestyle-home', accent: 'blush', icon: 'house' },
+  { name: 'Relationships', slug: 'relationships', accent: 'coral', icon: 'heart' },
+  { name: 'Recreation', slug: 'recreation', accent: 'flame', icon: 'palmtree' },
 ];
 
 async function main(uid: string) {

@@ -1,6 +1,18 @@
 import { z } from 'zod';
 
-export const ACCENTS = ['plum', 'crimson', 'raspberry', 'gold', 'rose', 'blush'] as const;
+// All ten approved colours (instructions.md 2.1), in palette order.
+export const ACCENTS = [
+  'plum',
+  'rose',
+  'crimson',
+  'raspberry',
+  'flame',
+  'coral',
+  'apricot',
+  'gold',
+  'ochre',
+  'blush',
+] as const;
 
 export const segmentInput = z.object({
   name: z.string().trim().min(1, 'Give the segment a name.').max(60),
@@ -23,9 +35,13 @@ export function slugify(name: string): string {
 
 export const ACCENT_LABELS: Record<(typeof ACCENTS)[number], string> = {
   plum: 'Plum',
+  rose: 'Rose',
   crimson: 'Crimson',
   raspberry: 'Raspberry',
+  flame: 'Flame',
+  coral: 'Coral',
+  apricot: 'Apricot',
   gold: 'Gold',
-  rose: 'Rose',
+  ochre: 'Ochre',
   blush: 'Blush',
 };

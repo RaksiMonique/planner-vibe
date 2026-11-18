@@ -152,11 +152,11 @@ These are the approved theme values (approved 2026-11-17, replacing the earlier 
 | Rose      | `#A6585E` | Secondary text, calm fills (energy, done markers)              |
 | Crimson   | `#AE1C42` | Destructive actions, the "now" line, urgency                   |
 | Raspberry | `#BD4877` | Segment accent, tags                                           |
-| Flame     | `#D6481F` | Charts and progress indicators (decoration only)               |
-| Coral     | `#D96055` | Decorative fills (decoration only)                             |
-| Apricot   | `#F29863` | Charts and decorative fills (decoration only)                  |
+| Flame     | `#D6481F` | Segment accent, charts and progress indicators                 |
+| Coral     | `#D96055` | Segment accent, decorative fills                               |
+| Apricot   | `#F29863` | Segment accent, charts and decorative fills                    |
 | Gold      | `#E1C16B` | Segment accent, highlights, partial states                     |
-| Ochre     | `#BD8940` | Decorative fills (decoration only)                             |
+| Ochre     | `#BD8940` | Segment accent, decorative fills                               |
 | Blush     | `#F2D8CE` | Main application background, borders, muted and hover surfaces |
 | White     | `#FFFFFF` | Cards, popovers and the sidebar                                |
 
@@ -164,16 +164,16 @@ Usage rules:
 
 - Blush is the main background, White is the surface for cards and content, and Plum is both the text colour and the dominant accent.
 - Use the warmer colours selectively. Avoid heavy saturation, gradients and large coloured backgrounds.
-- Each Life Segment is assigned one accent from the six that can carry text (Plum, Rose, Crimson, Raspberry, Gold or Blush) and uses it everywhere it appears. With ten default segments some share a colour and are told apart by icon. Users can change the assignment. Shift kinds and patterns use the same six.
-- Flame, Coral, Apricot and Ochre never carry text: they are for charts, bars and decoration.
+- Each Life Segment is assigned one of the ten accents and uses it everywhere it appears: as a dot beside its name, and as the fill of its calendar events, time blocks and shift chips. The ten default segments each take a different colour. Users can change the assignment. Habits, subjects, shift kinds and patterns choose from the same ten.
+- Plum, Rose, Crimson, Raspberry, Gold and Blush are the preferred fills under small text. Flame, Coral, Apricot and Ochre are offered as well, with the text colour that reads best on each, and otherwise serve charts, bars and decoration.
 - Dark mode is out of scope until dark variants of this palette are approved.
 
 Contrast, measured as WCAG 2 ratios, so text stays readable without leaving the palette:
 
 - Plum on White (8.16) and on Blush (6.02) passes AA for all text sizes. White on Plum passes AA. Plum is safe for text, links and filled buttons.
-- White text passes AA on Crimson (6.90), Rose (5.03) and Raspberry (4.82). Plum text passes AA on Gold (4.68) and Blush (6.02). These six are therefore the text-bearing accents, each with its fixed text colour in `src/lib/accents.ts`.
+- White text passes AA on Crimson (6.90), Rose (5.03) and Raspberry (4.82). Plum text passes AA on Gold (4.68) and Blush (6.02). Each accent's text colour is fixed in `src/lib/accents.ts`.
 - Rose as text passes AA on White (5.03) but not on Blush (3.71). Use it for captions, labels and placeholders inside white cards, or at 18 px and up on the page background.
-- No text colour in the palette reaches AA on Flame (white 4.37), Coral (white 3.65), Apricot (Plum 3.67) or Ochre (white 3.08), which is why they stay decorative.
+- Flame (white 4.37), Coral (white 3.65), Apricot (Plum 3.67) and Ochre (white 3.08) pass AA only for large text (3:1). On calendar events and shift chips their labels fall short of AA, which the user accepted on 2026-11-18 so that every approved colour is available as a segment accent.
 - Blush on White is 1.36, so card and divider borders in Blush are soft, and focus relies on the Plum ring. Form controls (inputs, selects, checkboxes, radio-style pickers) take a Rose edge instead, which clears the 3:1 that component boundaries need on both White and Blush.
 
 ### 2.2 Typography and visual design

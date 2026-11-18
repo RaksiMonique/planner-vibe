@@ -12,15 +12,15 @@ export type LifeSegment = typeof lifeSegments.$inferSelect;
 /** Seeded for every new user (instructions.md 1.3). */
 export const DEFAULT_SEGMENTS: Array<Pick<LifeSegment, 'name' | 'slug' | 'accent' | 'icon'>> = [
   { name: 'Faith', slug: 'faith', accent: 'plum', icon: 'church' },
-  { name: 'Finance', slug: 'finance', accent: 'crimson', icon: 'wallet' },
+  { name: 'Finance', slug: 'finance', accent: 'ochre', icon: 'wallet' },
   { name: 'Family', slug: 'family', accent: 'raspberry', icon: 'users' },
   { name: 'Health & Wellness', slug: 'health', accent: 'rose', icon: 'heart-pulse' },
-  { name: 'Career & Work', slug: 'career', accent: 'plum', icon: 'briefcase' },
-  { name: 'Education & Learning', slug: 'learning', accent: 'crimson', icon: 'graduation-cap' },
+  { name: 'Career & Work', slug: 'career', accent: 'crimson', icon: 'briefcase' },
+  { name: 'Education & Learning', slug: 'learning', accent: 'apricot', icon: 'graduation-cap' },
   { name: 'Personal Development', slug: 'growth', accent: 'gold', icon: 'sprout' },
   { name: 'Lifestyle & Home', slug: 'home', accent: 'blush', icon: 'house' },
-  { name: 'Relationships', slug: 'relationships', accent: 'raspberry', icon: 'hand-heart' },
-  { name: 'Recreation', slug: 'recreation', accent: 'rose', icon: 'tent-tree' },
+  { name: 'Relationships', slug: 'relationships', accent: 'coral', icon: 'hand-heart' },
+  { name: 'Recreation', slug: 'recreation', accent: 'flame', icon: 'tent-tree' },
 ];
 
 /** Creates the ten defaults the first time a user has no segments at all. */

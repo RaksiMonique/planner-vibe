@@ -1,7 +1,13 @@
 import 'server-only';
 import { and, asc, desc, eq, gte, inArray, isNull, lte } from 'drizzle-orm';
 import { db } from '@/db';
-import { moodEntries, products, userPreferences, wellnessEntries } from '@/db/schema';
+import {
+  journalEntries,
+  moodEntries,
+  products,
+  userPreferences,
+  wellnessEntries,
+} from '@/db/schema';
 import { listSegments } from '@/features/life-segments/service';
 import { getPreferences, type Preferences } from '@/features/settings/service';
 import { ValidationError } from '@/lib/errors';
@@ -10,6 +16,7 @@ import type { WellnessKind } from './schema';
 export type MoodEntry = typeof moodEntries.$inferSelect;
 export type WellnessEntry = typeof wellnessEntries.$inferSelect;
 export type Product = typeof products.$inferSelect;
+export type WellnessJournalEntry = typeof journalEntries.$inferSelect;
 
 export type WellnessPrefs = Preferences & { currency: string; cycleEnabled: boolean };
 
@@ -116,4 +123,23 @@ export async function getProduct(userId: string, id: string): Promise<Product | 
     .where(and(eq(products.userId, userId), eq(products.id, id), isNull(products.deletedAt)))
     .limit(1);
   return row ?? null;
+}
+
+/** The newest wellness journal entries (any scope), newest first. */
+export async function listRecentWellnessJournal(
+  userId: string,
+  limit = 5
+): Promise<WellnessJournalEntry[]> {
+  return db
+    .select()
+    .from(journalEntries)
+    .where(
+      and(
+        eq(journalEntries.userId, userId),
+        eq(journalEntries.kind, 'wellness'),
+        isNull(journalEntries.deletedAt)
+      )
+    )
+    .orderBy(desc(journalEntries.date), desc(journalEntries.updatedAt))
+    .limit(limit);
 }

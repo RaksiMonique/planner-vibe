@@ -8,7 +8,7 @@ import {
   visibleCards,
 } from './layout';
 
-const all = { planning: true, work: true } as Record<string, boolean>;
+const all = new Proxy({} as Record<string, boolean>, { get: () => true });
 
 describe('normaliseLayout', () => {
   it('fills a missing layout with the defaults', () => {
@@ -21,7 +21,17 @@ describe('normaliseLayout', () => {
     });
     expect(out.order.slice(0, 2)).toEqual(['inbox', 'week']);
     expect(out.order).toHaveLength(DASHBOARD_CARDS.length);
-    expect(out.hidden).toEqual(['quote']);
+    expect(out.hidden[0]).toBe('quote');
+  });
+  it('hides optional cards the layout has never seen, and keeps ones it has', () => {
+    const optional = DASHBOARD_CARDS.filter((c) => c.optional).map((c) => c.key);
+    expect(optional.length).toBeGreaterThan(0);
+    expect(DEFAULT_LAYOUT.hidden).toEqual(optional);
+    const seen = optional[0];
+    const out = normaliseLayout({ order: ['week', seen], hidden: [] });
+    expect(out.hidden).not.toContain(seen);
+    expect(out.hidden).toEqual(optional.filter((k) => k !== seen));
+    expect(visibleCards(out, all).map((c) => c.key)).toContain(seen);
   });
 });
 
@@ -54,7 +64,8 @@ describe('moveCard and toggleCard', () => {
     expect(moveCard(layout, 'week', -1, shown).order).toEqual(layout.order);
   });
   it('hides and shows without duplicates', () => {
-    const hidden = toggleCard(DEFAULT_LAYOUT, 'quote', false);
+    const everything = { order: DEFAULT_LAYOUT.order, hidden: [] };
+    const hidden = toggleCard(everything, 'quote', false);
     expect(hidden.hidden).toEqual(['quote']);
     expect(toggleCard(hidden, 'quote', false).hidden).toEqual(['quote']);
     expect(toggleCard(hidden, 'quote', true).hidden).toEqual([]);

@@ -30,14 +30,14 @@ export function DashboardLayoutForm({
             : false;
           return (
             <li key={key} className="flex items-center gap-1.5 py-1.5 text-sm">
-              <span
-                className={cn(
-                  'min-w-0 flex-1 truncate',
-                  isHidden && 'text-muted-foreground line-through'
-                )}
-              >
-                {card.label}
-                {moduleOff && <span className="text-muted-foreground text-xs"> (module off)</span>}
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className={cn('truncate', isHidden && 'text-muted-foreground line-through')}>
+                  {card.label}
+                  {moduleOff && (
+                    <span className="text-muted-foreground text-xs"> (module off)</span>
+                  )}
+                </span>
+                <span className="text-muted-foreground truncate text-xs">{card.description}</span>
               </span>
               <form action={moveDashboardCardAction}>
                 <input type="hidden" name="key" value={key} />

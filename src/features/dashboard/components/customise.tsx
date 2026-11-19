@@ -7,7 +7,7 @@ import {
   resetDashboardLayoutAction,
   toggleDashboardCardAction,
 } from '@/features/settings/actions';
-import { DASHBOARD_CARDS, type CardDefinition } from '../layout';
+import { CARD_GROUPS, DASHBOARD_CARDS, type CardDefinition } from '../layout';
 
 /**
  * Edit mode for the dashboard (instructions.md 7.5). Each shown card gets a
@@ -90,20 +90,29 @@ export function AddCards({
       {addable.length === 0 ? (
         <p className="text-muted-foreground text-sm">Every card is on the page.</p>
       ) : (
-        <ul className="flex flex-wrap gap-2">
-          {addable.map((card) => (
-            <li key={card.key}>
-              <form action={toggleDashboardCardAction}>
-                <input type="hidden" name="key" value={card.key} />
-                <input type="hidden" name="visible" value="1" />
-                <Button type="submit" size="sm" variant="outline">
-                  <PlusIcon data-icon="inline-start" />
-                  {card.label}
-                </Button>
-              </form>
-            </li>
+        <div className="flex flex-col gap-3">
+          {CARD_GROUPS.filter((g) => addable.some((c) => c.group === g)).map((group) => (
+            <div key={group} className="flex flex-col gap-1.5">
+              <p className="tracking-eyebrow text-muted-foreground text-xs uppercase">{group}</p>
+              <ul className="flex flex-wrap gap-2">
+                {addable
+                  .filter((c) => c.group === group)
+                  .map((card) => (
+                    <li key={card.key}>
+                      <form action={toggleDashboardCardAction}>
+                        <input type="hidden" name="key" value={card.key} />
+                        <input type="hidden" name="visible" value="1" />
+                        <Button type="submit" size="sm" variant="outline" title={card.description}>
+                          <PlusIcon data-icon="inline-start" />
+                          {card.label}
+                        </Button>
+                      </form>
+                    </li>
+                  ))}
+              </ul>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
       {off.length > 0 && (
         <p className="text-muted-foreground text-sm">

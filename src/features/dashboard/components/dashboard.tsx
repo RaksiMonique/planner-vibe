@@ -61,7 +61,7 @@ export function Dashboard({
   const timeOf = (startsAt: Date | null) =>
     startsAt ? format(toZonedTime(startsAt, timeZone), 'HH:mm') : '';
 
-  const cards: Record<DashboardCardKey, { span: string; node: React.ReactNode } | null> = {
+  const cards: Partial<Record<DashboardCardKey, { span: string; node: React.ReactNode } | null>> = {
     job: data.workDays
       ? {
           span: 'lg:col-span-1',

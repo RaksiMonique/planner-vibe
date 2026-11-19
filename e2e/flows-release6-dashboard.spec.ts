@@ -76,7 +76,7 @@ test('Customise on the dashboard moves, hides and re-adds cards in place', async
   // Start from the default layout whatever an earlier run left behind.
   await main.getByRole('button', { name: 'Reset to default' }).click();
   await page.waitForLoadState('networkidle');
-  await expect(main.getByText('Every card is on the page.')).toBeVisible();
+  await expect(main.getByRole('button', { name: 'Projects', exact: true })).toBeVisible();
   await expect(main.getByRole('button', { name: 'Move Weekly schedule up' })).toBeDisabled();
 
   await main.getByRole('button', { name: 'Hide Quote of the day' }).click();
@@ -94,7 +94,7 @@ test('Customise on the dashboard moves, hides and re-adds cards in place', async
 
   await main.getByRole('button', { name: 'Reset to default' }).click();
   await expect(main.getByRole('button', { name: 'Move Weekly schedule up' })).toBeDisabled();
-  await expect(main.getByText('Every card is on the page.')).toBeVisible();
+  await expect(main.getByRole('button', { name: 'Projects', exact: true })).toBeVisible();
 
   await page.getByRole('link', { name: 'Done' }).click();
   await expect(page).toHaveURL(/\/dashboard$/);

@@ -142,6 +142,39 @@ export async function listDependencyIds(userId: string, taskId: string): Promise
   return rows.map((r) => r.id);
 }
 
+export type CompletedTask = Task & { segment: SegmentRef };
+
+/** The most recently finished tasks, newest first; a done task without a finish time falls back to its last change. */
+export async function listRecentlyCompleted(
+  userId: string,
+  limit: number
+): Promise<CompletedTask[]> {
+  const rows = await db
+    .select({ task: tasks, segment: segmentRefColumns })
+    .from(tasks)
+    .innerJoin(lifeSegments, eq(tasks.lifeSegmentId, lifeSegments.id))
+    .where(and(eq(tasks.userId, userId), isNull(tasks.deletedAt), eq(tasks.status, 'done')))
+    .orderBy(desc(sql`coalesce(${tasks.completedAt}, ${tasks.updatedAt})`))
+    .limit(limit);
+  return rows.map((r) => ({ ...r.task, segment: r.segment }));
+}
+
+/** How many tasks were finished at or after `since`. */
+export async function countCompletedSince(userId: string, since: Date): Promise<number> {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        isNull(tasks.deletedAt),
+        eq(tasks.status, 'done'),
+        gte(sql`coalesce(${tasks.completedAt}, ${tasks.updatedAt})`, since)
+      )
+    );
+  return row?.count ?? 0;
+}
+
 /** Open task counts keyed by Life Segment id. */
 export async function countOpenTasksBySegment(userId: string): Promise<Record<string, number>> {
   const rows = await db

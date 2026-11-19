@@ -2,6 +2,7 @@ import {
   addMonths,
   addQuarters,
   addYears,
+  differenceInCalendarDays,
   endOfQuarter,
   endOfYear,
   format,
@@ -96,4 +97,13 @@ export function inRange(dateKey: string | null | undefined, start: string, end: 
 
 export function monthOf(dateKey: string): string {
   return dateKey.slice(0, 7);
+}
+
+/** Whole percent of the days from `start` to `end` (inclusive keys) that have passed by `todayKey`. */
+export function elapsedPercent(start: string, end: string, todayKey: string): number {
+  if (todayKey < start) return 0;
+  if (todayKey > end) return 100;
+  const total = differenceInCalendarDays(parseISO(end), parseISO(start)) + 1;
+  const gone = differenceInCalendarDays(parseISO(todayKey), parseISO(start)) + 1;
+  return total <= 0 ? 100 : Math.round((gone / total) * 100);
 }

@@ -9,6 +9,7 @@ import { getPreferences } from '@/features/settings/service';
 import { todayInZone } from '@/lib/dates';
 import {
   countOpenSubtasks,
+  type TaskRow as TaskRowData,
   getTask,
   listBlockerOptions,
   listDependencyIds,
@@ -65,22 +66,32 @@ export async function TasksWorkspace({
     : allProjects;
   const today = todayInZone(prefs.timeZone);
 
-  const [allTasks, subtaskCounts, editing, parentTask, milestones, blockerOptions, blockedByIds] =
-    await Promise.all([
-      listTasks(userId, {
-        lifeSegmentId: segment?.id,
-        projectId: one(sp.project),
-        goalId: one(sp.goal),
-        status: includeDone ? 'all' : 'open',
-        parentTaskId: null,
-      }),
-      countOpenSubtasks(userId),
-      taskId ? getTask(userId, taskId) : Promise.resolve(null),
-      parentId ? getTask(userId, parentId) : Promise.resolve(null),
-      taskId || isNew ? listMilestones(userId, { open: true }) : Promise.resolve([]),
-      taskId || isNew ? listBlockerOptions(userId, taskId) : Promise.resolve([]),
-      taskId ? listDependencyIds(userId, taskId) : Promise.resolve([]),
-    ]);
+  const [
+    allTasks,
+    allSubtasks,
+    subtaskCounts,
+    editing,
+    parentTask,
+    milestones,
+    blockerOptions,
+    blockedByIds,
+  ] = await Promise.all([
+    listTasks(userId, {
+      lifeSegmentId: segment?.id,
+      projectId: one(sp.project),
+      goalId: one(sp.goal),
+      status: includeDone ? 'all' : 'open',
+      parentTaskId: null,
+    }),
+    // Shown indented under their parents, following the same done filter.
+    listTasks(userId, { status: includeDone ? 'all' : 'open', parentTaskId: 'any' }),
+    countOpenSubtasks(userId),
+    taskId ? getTask(userId, taskId) : Promise.resolve(null),
+    parentId ? getTask(userId, parentId) : Promise.resolve(null),
+    taskId || isNew ? listMilestones(userId, { open: true }) : Promise.resolve([]),
+    taskId || isNew ? listBlockerOptions(userId, taskId) : Promise.resolve([]),
+    taskId ? listDependencyIds(userId, taskId) : Promise.resolve([]),
+  ]);
   const byBlocking =
     blocked === 'hide'
       ? allTasks.filter((t) => t.blockedBy.length === 0)
@@ -93,6 +104,11 @@ export async function TasksWorkspace({
       : due === 'dated'
         ? byBlocking.filter((t) => Boolean(t.dueDate))
         : byBlocking;
+  const subtasksOf: Record<string, TaskRowData[]> = {};
+  for (const s of allSubtasks) {
+    if (!s.parentTaskId) continue;
+    (subtasksOf[s.parentTaskId] ??= []).push(s);
+  }
   const subtasks = editing
     ? await listTasks(userId, { parentTaskId: editing.id, status: 'all' })
     : [];
@@ -108,7 +124,14 @@ export async function TasksWorkspace({
     return `${basePath}?${p.toString()}`;
   };
 
-  const viewProps = { tasks, today, weekStartsOn: prefs.weekStartsOn, subtaskCounts, editHref };
+  const viewProps = {
+    tasks,
+    today,
+    weekStartsOn: prefs.weekStartsOn,
+    subtaskCounts,
+    subtasksOf,
+    editHref,
+  };
   const dueTime = editing?.dueAt ? format(toZonedTime(editing.dueAt, prefs.timeZone), 'HH:mm') : '';
 
   return (

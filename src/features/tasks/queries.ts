@@ -41,8 +41,8 @@ export type TaskFilters = {
   projectId?: string;
   goalId?: string;
   milestoneId?: string;
-  /** `null` returns top-level tasks only. */
-  parentTaskId?: string | null;
+  /** `null` returns top-level tasks only; `'any'` returns every subtask. */
+  parentTaskId?: string | null | 'any';
   /** Defaults to 'open'. */
   status?: 'open' | 'done' | 'all';
   /** yyyy-MM-dd, inclusive. */
@@ -58,6 +58,7 @@ export async function listTasks(userId: string, filters: TaskFilters = {}): Prom
   if (filters.goalId) conds.push(eq(tasks.goalId, filters.goalId));
   if (filters.milestoneId) conds.push(eq(tasks.milestoneId, filters.milestoneId));
   if (filters.parentTaskId === null) conds.push(isNull(tasks.parentTaskId));
+  else if (filters.parentTaskId === 'any') conds.push(sql`${tasks.parentTaskId} is not null`);
   else if (filters.parentTaskId) conds.push(eq(tasks.parentTaskId, filters.parentTaskId));
   const status = filters.status ?? 'open';
   if (status === 'open') conds.push(ne(tasks.status, 'done'));

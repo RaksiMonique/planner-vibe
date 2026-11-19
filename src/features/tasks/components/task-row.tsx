@@ -82,7 +82,10 @@ export function TaskRow({
       {error && <span className="text-destructive text-xs">{error}</span>}
       {task.rrule && <RepeatIcon className="text-muted-foreground size-3.5" aria-label="Repeats" />}
       {subtaskCount > 0 && (
-        <span className="text-muted-foreground hidden items-center gap-0.5 text-xs sm:inline-flex">
+        <span
+          className="text-muted-foreground inline-flex items-center gap-0.5 text-xs"
+          title={`${subtaskCount} open subtask${subtaskCount === 1 ? '' : 's'}`}
+        >
           <ListTreeIcon className="size-3.5" aria-hidden /> {subtaskCount}
         </span>
       )}

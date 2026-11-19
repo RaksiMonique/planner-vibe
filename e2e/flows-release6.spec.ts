@@ -44,6 +44,11 @@ test('a planner export from another project imports once, and a second run adds 
 
   await page.goto('/tasks');
   await expect(page.getByText(`Imported task ${stamp}`).first()).toBeVisible();
+  // The subtask sits indented under its parent in the list, not only in the task sheet.
+  const parentRow = page.locator('li', { hasText: `Imported task ${stamp}` }).first();
+  await expect(
+    parentRow.locator('[data-slot="subtasks"]').getByText(`Imported subtask ${stamp}`)
+  ).toBeVisible();
 
   const second = await runImport();
   await expect(second.nth(1)).toHaveText('0');

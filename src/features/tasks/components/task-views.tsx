@@ -19,9 +19,40 @@ export type ViewProps = {
   today: Date;
   weekStartsOn: WeekStartsOn;
   subtaskCounts: Record<string, number>;
+  /** Subtasks keyed by parent id, shown indented under the parent. */
+  subtasksOf: Record<string, TaskRowData[]>;
   /** Builds the edit link for a task, keeping the page's current params. */
   editHref: (id: string) => string;
 };
+
+/** The subtasks of one parent, indented beneath it so they read as part of it. */
+function Subtasks({
+  items,
+  today,
+  weekStartsOn,
+  editHref,
+}: {
+  items: TaskRowData[] | undefined;
+  today: Date;
+  weekStartsOn: WeekStartsOn;
+  editHref: (id: string) => string;
+}) {
+  if (!items?.length) return null;
+  return (
+    <ul data-slot="subtasks" className="border-input ml-5 flex flex-col border-l pl-1.5">
+      {items.map((s) => (
+        <li key={s.id}>
+          <TaskRow
+            task={s}
+            status={dueStatus(s.dueDate, today, weekStartsOn)}
+            editHref={editHref(s.id)}
+            compact
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
 
 function Empty() {
   return (
@@ -33,7 +64,14 @@ function Empty() {
   );
 }
 
-export function TaskListView({ tasks, today, weekStartsOn, subtaskCounts, editHref }: ViewProps) {
+export function TaskListView({
+  tasks,
+  today,
+  weekStartsOn,
+  subtaskCounts,
+  subtasksOf,
+  editHref,
+}: ViewProps) {
   if (tasks.length === 0) return <Empty />;
   const groups = groupForList(tasks, today, weekStartsOn);
   return (
@@ -53,6 +91,12 @@ export function TaskListView({ tasks, today, weekStartsOn, subtaskCounts, editHr
                   editHref={editHref(t.id)}
                   subtaskCount={subtaskCounts[t.id]}
                 />
+                <Subtasks
+                  items={subtasksOf[t.id]}
+                  today={today}
+                  weekStartsOn={weekStartsOn}
+                  editHref={editHref}
+                />
               </li>
             ))}
           </ul>
@@ -62,7 +106,14 @@ export function TaskListView({ tasks, today, weekStartsOn, subtaskCounts, editHr
   );
 }
 
-export function TaskBoardView({ tasks, today, weekStartsOn, subtaskCounts, editHref }: ViewProps) {
+export function TaskBoardView({
+  tasks,
+  today,
+  weekStartsOn,
+  subtaskCounts,
+  subtasksOf,
+  editHref,
+}: ViewProps) {
   if (tasks.length === 0) return <Empty />;
   const groups = groupForBoard(tasks);
   return (
@@ -83,6 +134,12 @@ export function TaskBoardView({ tasks, today, weekStartsOn, subtaskCounts, editH
                   subtaskCount={subtaskCounts[t.id]}
                   compact
                 />
+                <Subtasks
+                  items={subtasksOf[t.id]}
+                  today={today}
+                  weekStartsOn={weekStartsOn}
+                  editHref={editHref}
+                />
                 <div className="px-2 pb-1.5">
                   <BoardMove id={t.id} status={col.key} blockedBy={t.blockedBy} />
                 </div>
@@ -95,7 +152,14 @@ export function TaskBoardView({ tasks, today, weekStartsOn, subtaskCounts, editH
   );
 }
 
-export function TaskMatrixView({ tasks, today, weekStartsOn, subtaskCounts, editHref }: ViewProps) {
+export function TaskMatrixView({
+  tasks,
+  today,
+  weekStartsOn,
+  subtaskCounts,
+  subtasksOf,
+  editHref,
+}: ViewProps) {
   if (tasks.length === 0) return <Empty />;
   const groups = groupForMatrix(tasks, today, weekStartsOn);
   return (
@@ -120,6 +184,12 @@ export function TaskMatrixView({ tasks, today, weekStartsOn, subtaskCounts, edit
                   editHref={editHref(t.id)}
                   subtaskCount={subtaskCounts[t.id]}
                   compact
+                />
+                <Subtasks
+                  items={subtasksOf[t.id]}
+                  today={today}
+                  weekStartsOn={weekStartsOn}
+                  editHref={editHref}
                 />
               </li>
             ))}

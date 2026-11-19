@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  elapsedPercent,
   inRange,
   parseQuarterKey,
   parseYearKey,
@@ -48,5 +49,18 @@ describe('inRange', () => {
     expect(inRange('2026-03-31', '2026-01-01', '2026-03-31')).toBe(true);
     expect(inRange('2026-04-01', '2026-01-01', '2026-03-31')).toBe(false);
     expect(inRange(null, '2026-01-01', '2026-03-31')).toBe(false);
+  });
+});
+
+describe('elapsedPercent', () => {
+  it('counts the days gone in a quarter, inclusive of today', () => {
+    expect(elapsedPercent('2026-10-01', '2026-12-31', '2026-10-01')).toBe(1);
+    expect(elapsedPercent('2026-10-01', '2026-12-31', '2026-11-19')).toBe(54);
+    expect(elapsedPercent('2026-10-01', '2026-12-31', '2026-12-31')).toBe(100);
+  });
+
+  it('clamps outside the range', () => {
+    expect(elapsedPercent('2026-10-01', '2026-12-31', '2026-09-30')).toBe(0);
+    expect(elapsedPercent('2026-10-01', '2026-12-31', '2027-01-01')).toBe(100);
   });
 });

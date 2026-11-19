@@ -158,3 +158,45 @@ export async function getMonthData(userId: string, monthParam?: string): Promise
     review,
   };
 }
+
+export type MonthMark = { key: string; inMonth: boolean; isToday: boolean; marked: boolean };
+
+/**
+ * The current month's grid with a flag on each day that has an event, a
+ * task due or a milestone, for the dashboard's small calendar. The caller
+ * passes today and the preferences it already holds.
+ */
+export async function getMonthMarks(
+  userId: string,
+  todayKey: string,
+  timeZone: string,
+  weekStartsOn: WeekStartsOn
+): Promise<Array<Omit<MonthRow, 'cells'> & { cells: MonthMark[] }>> {
+  const rows = buildMonthGrid(todayKey.slice(0, 7), weekStartsOn);
+  const firstKey = rows[0].start;
+  const lastKey = rows[rows.length - 1].end;
+  const from = fromZonedTime(`${firstKey}T00:00:00`, timeZone);
+  const to = fromZonedTime(`${toDateKey(addDays(parseISO(lastKey), 1))}T00:00:00`, timeZone);
+  const [eventRows, openTasks, milestones] = await Promise.all([
+    listEventsBetween(userId, from, to),
+    listTasks(userId, { status: 'open', dueFrom: firstKey, dueTo: lastKey }),
+    listMilestones(userId, { dueFrom: firstKey, dueTo: lastKey }),
+  ]);
+  const marked = new Set<string>([
+    ...expandEvents(eventRows, from, to).map((item) =>
+      item.allDay ? item.start : formatInTimeZone(new Date(item.start), timeZone, 'yyyy-MM-dd')
+    ),
+    ...openTasks.map((t) => t.dueDate ?? ''),
+    ...milestones.map((m) => m.dueDate ?? ''),
+  ]);
+  return rows.map((row) => ({
+    start: row.start,
+    end: row.end,
+    cells: row.cells.map((c) => ({
+      key: c.key,
+      inMonth: c.inMonth,
+      isToday: c.key === todayKey,
+      marked: marked.has(c.key),
+    })),
+  }));
+}

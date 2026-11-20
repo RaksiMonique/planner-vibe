@@ -119,14 +119,17 @@ export function TaskBoardView({
   return (
     <div className="grid gap-3 md:grid-cols-3">
       {BOARD_COLUMNS.map((col) => (
-        <section key={col.key} className="bg-card/60 flex flex-col gap-2 rounded-xl border p-2">
+        <section
+          key={col.key}
+          className="bg-card/60 flex min-w-0 flex-col gap-2 rounded-xl border p-2"
+        >
           <h3 className="tracking-eyebrow text-muted-foreground flex items-center justify-between px-1.5 text-xs uppercase">
             {col.label}
             <span className="tabular-nums">{groups[col.key].length}</span>
           </h3>
           <ul className="flex flex-col gap-1">
             {groups[col.key].map((t) => (
-              <li key={t.id} className="bg-card ring-foreground/10 rounded-lg ring-1">
+              <li key={t.id} className="bg-card ring-foreground/10 min-w-0 rounded-lg ring-1">
                 <TaskRow
                   task={t}
                   status={dueStatus(t.dueDate, today, weekStartsOn)}
@@ -167,7 +170,7 @@ export function TaskMatrixView({
       {QUADRANTS.map((q) => (
         <section
           key={q.key}
-          className="bg-card/60 flex min-h-40 flex-col gap-2 rounded-xl border p-2"
+          className="bg-card/60 flex min-h-40 min-w-0 flex-col gap-2 rounded-xl border p-2"
         >
           <h3 className="px-1.5">
             <span className="tracking-eyebrow text-muted-foreground block text-xs uppercase">

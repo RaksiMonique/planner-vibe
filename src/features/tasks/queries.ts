@@ -169,7 +169,8 @@ export async function countCompletedSince(userId: string, since: Date): Promise<
         eq(tasks.userId, userId),
         isNull(tasks.deletedAt),
         eq(tasks.status, 'done'),
-        gte(sql`coalesce(${tasks.completedAt}, ${tasks.updatedAt})`, since)
+        // A raw expression has no column type, so the bound value is sent as text.
+        sql`coalesce(${tasks.completedAt}, ${tasks.updatedAt}) >= ${since.toISOString()}::timestamptz`
       )
     );
   return row?.count ?? 0;

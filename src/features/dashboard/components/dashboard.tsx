@@ -26,11 +26,31 @@ import { normaliseLayout, visibleCards, type DashboardCardKey } from '../layout'
 import { AddCards, CardControls } from './customise';
 import type { DashboardData } from '../queries';
 import { BibleDashboardCard } from '@/features/faith/components/bible-dashboard-card';
+import { PrayerDashboardCard } from '@/features/faith/components/prayer-dashboard-card';
+import { ScriptureDashboardCard } from '@/features/faith/components/scripture-dashboard-card';
+import { StudyDashboardCard } from '@/features/study/components/study-dashboard-card';
+import { ReadingDashboardCard } from '@/features/media/components/reading-dashboard-card';
 import { HabitsDashboardCard } from '@/features/habits/components/habits-dashboard-card';
 import { JournalDashboardCard } from '@/features/journal/components/journal-dashboard-card';
 import { MoodDashboardCard } from '@/features/wellness/components/mood-dashboard-card';
+import { SelfCareDashboardCard } from '@/features/wellness/components/self-care-dashboard-card';
+import { FitnessDashboardCard } from '@/features/wellness/components/fitness-dashboard-card';
+import { WellnessJournalDashboardCard } from '@/features/wellness/components/wellness-journal-dashboard-card';
+import { MoodTrendDashboardCard } from '@/features/wellness/components/mood-trend-dashboard-card';
 import { RoutinesDashboardCard } from '@/features/routines/components/routines-dashboard-card';
 import { TimeDashboardCard } from '@/features/time/components/time-dashboard-card';
+import { ProjectsDashboardCard } from '@/features/projects/components/projects-dashboard-card';
+import { SegmentSpotlightDashboardCard } from '@/features/life-segments/components/segment-spotlight-card';
+import { MonthGlanceDashboardCard } from '@/features/month/components/month-glance-card';
+import { QuarterFocusDashboardCard } from '@/features/horizons/components/quarter-focus-card';
+import { WaitingDashboardCard } from '@/features/tasks/components/waiting-dashboard-card';
+import { CompletedDashboardCard } from '@/features/tasks/components/completed-dashboard-card';
+import { CountdownsDashboardCard } from '@/features/calendar/components/countdowns-dashboard-card';
+import { MealsDashboardCard } from '@/features/meals/components/meals-dashboard-card';
+import { GroceriesDashboardCard } from '@/features/meals/components/groceries-dashboard-card';
+import { MediaDashboardCard } from '@/features/media/components/media-dashboard-card';
+import { GiftsDashboardCard } from '@/features/gifts/components/gifts-dashboard-card';
+import { VisionDashboardCard } from '@/features/vision/components/vision-dashboard-card';
 import { DashboardCard, EmptyNote } from './dashboard-card';
 import { TodayBlock } from './today-block';
 
@@ -60,6 +80,15 @@ export function Dashboard({
 }) {
   const timeOf = (startsAt: Date | null) =>
     startsAt ? format(toZonedTime(startsAt, timeZone), 'HH:mm') : '';
+
+  // Every optional card takes the same props and fetches its own data.
+  const cardProps = {
+    userId,
+    todayKey: data.todayKey,
+    timeZone,
+    weekStartsOn: data.weekStartsOn,
+  };
+  const one = (node: React.ReactNode) => ({ span: 'lg:col-span-1', node });
 
   const cards: Partial<Record<DashboardCardKey, { span: string; node: React.ReactNode } | null>> = {
     job: data.workDays
@@ -91,6 +120,26 @@ export function Dashboard({
       span: 'lg:col-span-1',
       node: <BibleDashboardCard userId={userId} todayKey={data.todayKey} />,
     },
+    prayer: one(<PrayerDashboardCard {...cardProps} />),
+    scripture: one(<ScriptureDashboardCard {...cardProps} />),
+    study: one(<StudyDashboardCard {...cardProps} />),
+    reading: one(<ReadingDashboardCard {...cardProps} />),
+    'self-care': one(<SelfCareDashboardCard {...cardProps} />),
+    fitness: one(<FitnessDashboardCard {...cardProps} />),
+    'wellness-journal': one(<WellnessJournalDashboardCard {...cardProps} />),
+    'mood-trend': one(<MoodTrendDashboardCard {...cardProps} />),
+    projects: one(<ProjectsDashboardCard {...cardProps} />),
+    spotlight: one(<SegmentSpotlightDashboardCard {...cardProps} />),
+    month: one(<MonthGlanceDashboardCard {...cardProps} />),
+    quarter: one(<QuarterFocusDashboardCard {...cardProps} />),
+    waiting: one(<WaitingDashboardCard {...cardProps} />),
+    completed: one(<CompletedDashboardCard {...cardProps} />),
+    countdowns: one(<CountdownsDashboardCard {...cardProps} />),
+    meals: one(<MealsDashboardCard {...cardProps} />),
+    groceries: one(<GroceriesDashboardCard {...cardProps} />),
+    media: one(<MediaDashboardCard {...cardProps} />),
+    gifts: one(<GiftsDashboardCard {...cardProps} />),
+    vision: one(<VisionDashboardCard {...cardProps} />),
     journal: {
       span: 'lg:col-span-1',
       node: <JournalDashboardCard userId={userId} todayKey={data.todayKey} />,

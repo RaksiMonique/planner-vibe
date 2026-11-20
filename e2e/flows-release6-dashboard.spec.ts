@@ -92,6 +92,12 @@ test('Customise on the dashboard moves, hides and re-adds cards in place', async
   await main.getByRole('button', { name: 'Quote of the day', exact: true }).click();
   await expect(main.getByRole('button', { name: 'Hide Quote of the day' })).toBeVisible();
 
+  // Optional cards start hidden and join the page from the Add a card row.
+  await expect(main.getByRole('heading', { name: 'Projects' })).toHaveCount(0);
+  await main.getByRole('button', { name: 'Projects', exact: true }).click();
+  await expect(main.getByRole('heading', { name: 'Projects' })).toBeVisible();
+  await expect(main.getByRole('button', { name: 'Hide Projects' })).toBeVisible();
+
   await main.getByRole('button', { name: 'Reset to default' }).click();
   await expect(main.getByRole('button', { name: 'Move Weekly schedule up' })).toBeDisabled();
   await expect(main.getByRole('button', { name: 'Projects', exact: true })).toBeVisible();

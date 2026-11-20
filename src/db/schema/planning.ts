@@ -14,6 +14,7 @@ import {
 import { planner } from './_schema';
 import { recurrence, softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
+import { budgets } from './finance';
 import { lifeSegments } from './organisation';
 import { ownerId } from './profiles';
 
@@ -161,6 +162,8 @@ export const tasks = planner.table(
     projectId: uuid('project_id').references(() => projects.id, { onDelete: 'set null' }),
     goalId: uuid('goal_id').references(() => goals.id, { onDelete: 'set null' }),
     milestoneId: uuid('milestone_id').references(() => milestones.id, { onDelete: 'set null' }),
+    /** A budget this task came out of in a monthly money review (8.22). */
+    budgetId: uuid('budget_id').references(() => budgets.id, { onDelete: 'set null' }),
     parentTaskId: uuid('parent_task_id').references((): AnyPgColumn => tasks.id, {
       onDelete: 'cascade',
     }),

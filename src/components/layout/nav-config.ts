@@ -3,6 +3,7 @@ import type { ModuleKey } from '@/db/schema';
 import {
   Activity,
   Calendar,
+  CalendarCheck,
   CalendarFold,
   CalendarRange,
   ChartColumn,
@@ -208,6 +209,13 @@ export const navGroups: NavGroup[] = [
         href: '/finance',
         icon: PiggyBank,
         release: 5,
+        module: 'finance',
+      },
+      {
+        label: 'Monthly money review',
+        href: '/finance/review',
+        icon: CalendarCheck,
+        release: 6,
         module: 'finance',
       },
       {

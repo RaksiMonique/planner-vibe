@@ -28,6 +28,8 @@ export const taskInput = z
     projectId: optionalUuid,
     goalId: optionalUuid,
     milestoneId: optionalUuid,
+    /** Budget the task came out of in a money review. */
+    budgetId: optionalUuid,
     parentTaskId: optionalUuid,
     priority: z.enum(PRIORITIES).default('medium'),
     isImportant: z.coerce.boolean().default(false),

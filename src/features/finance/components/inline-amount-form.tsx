@@ -21,6 +21,7 @@ export function InlineAmountForm({
   placeholder = '0.00',
   min = 0,
   keepValue = false,
+  hidden,
   className,
 }: {
   action: (prev: ActionResult | null, formData: FormData) => Promise<ActionResult>;
@@ -33,6 +34,8 @@ export function InlineAmountForm({
   placeholder?: string;
   min?: number;
   keepValue?: boolean;
+  /** Extra fields posted with the amount, such as the month under review. */
+  hidden?: Record<string, string>;
   className?: string;
 }) {
   const formRef = useRef<HTMLFormElement>(null);
@@ -44,6 +47,8 @@ export function InlineAmountForm({
   return (
     <form ref={formRef} action={formAction} className={cn('flex flex-col gap-1', className)}>
       <input type="hidden" name="id" value={id} />
+      {hidden &&
+        Object.entries(hidden).map(([k, v]) => <input key={k} type="hidden" name={k} value={v} />)}
       <div className="flex items-center gap-1">
         <Input
           name={name}

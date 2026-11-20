@@ -1,4 +1,4 @@
-import { index, integer, numeric, text, uuid } from 'drizzle-orm/pg-core';
+import { date, index, integer, numeric, text, timestamp, uniqueIndex, uuid } from 'drizzle-orm/pg-core';
 import { planner } from './_schema';
 import { softDelete, timestamps } from './_columns';
 import { ownerPolicies } from './_policies';
@@ -35,4 +35,48 @@ export const budgets = planner.table(
     ...timestamps(),
   },
   (t) => [index('budgets_user_idx').on(t.userId), ...ownerPolicies('budgets')]
+);
+
+/**
+ * Monthly money review (instructions.md 8.22): one row per budget per month,
+ * written when the user reviews the month. `month` is the first day of the
+ * month. Figures are typed by hand; the live counter on `budgets` is the month
+ * in progress, and these rows are the record once a month is reviewed.
+ */
+export const budgetMonths = planner.table(
+  'budget_months',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: ownerId(),
+    budgetId: uuid('budget_id')
+      .notNull()
+      .references(() => budgets.id, { onDelete: 'cascade' }),
+    month: date('month').notNull(),
+    limitAmount: numeric('limit_amount', { precision: 14, scale: 2 }).notNull(),
+    spentAmount: numeric('spent_amount', { precision: 14, scale: 2 }).notNull().default('0'),
+    note: text('note'),
+    ...timestamps(),
+  },
+  (t) => [
+    uniqueIndex('budget_months_budget_month_idx').on(t.budgetId, t.month),
+    index('budget_months_user_month_idx').on(t.userId, t.month),
+    ...ownerPolicies('budget_months'),
+  ]
+);
+
+/** The month's review as a whole: an overall note and when it was finished. */
+export const financeReviews = planner.table(
+  'finance_reviews',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: ownerId(),
+    month: date('month').notNull(),
+    note: text('note'),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    ...timestamps(),
+  },
+  (t) => [
+    uniqueIndex('finance_reviews_user_month_idx').on(t.userId, t.month),
+    ...ownerPolicies('finance_reviews'),
+  ]
 );

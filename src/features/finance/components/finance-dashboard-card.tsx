@@ -8,6 +8,8 @@ import { getPreferences } from '@/features/settings/service';
 import type { WeekStartsOn } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import { listBudgets } from '../queries';
+import { monthOf } from '../review';
+import { getFinanceReview } from '../review-queries';
 import {
   findFinanceSegment,
   formatCurrency,
@@ -24,6 +26,7 @@ type Figure = { key: string; label: string; value: string; hint: string; warn?: 
  */
 export async function FinanceDashboardCard({
   userId,
+  todayKey,
   timeZone,
 }: {
   userId: string;
@@ -31,10 +34,11 @@ export async function FinanceDashboardCard({
   timeZone: string;
   weekStartsOn: WeekStartsOn;
 }) {
-  const [segments, prefs, budgets] = await Promise.all([
+  const [segments, prefs, budgets, review] = await Promise.all([
     listSegments(userId),
     getPreferences(userId),
     listBudgets(userId),
+    getFinanceReview(userId, monthOf(todayKey)),
   ]);
   const finance = findFinanceSegment(segments);
   const goals = finance ? await listGoals(userId, { lifeSegmentId: finance.id }) : [];
@@ -108,6 +112,14 @@ export async function FinanceDashboardCard({
               Figures last updated {formatInTimeZone(updatedAt, timeZone, 'd MMM')}.
             </p>
           )}
+          <p className="text-muted-foreground text-xs">
+            {review?.completedAt
+              ? `This month reviewed ${formatInTimeZone(review.completedAt, timeZone, 'd MMM')}. `
+              : "This month's money review is still open. "}
+            <Link href="/finance/review" className="text-primary link">
+              {review?.completedAt ? 'Open it' : 'Review now'}
+            </Link>
+          </p>
         </>
       )}
     </DashboardCard>

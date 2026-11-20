@@ -102,7 +102,17 @@ export default async function FinancePage() {
       <PageHeader
         title="Financial snapshot"
         description="Savings goals, budgets and what is coming up, all entered by hand. Nothing here connects to a bank or any other service."
-        actions={addBudget}
+        actions={
+          <>
+            <Link
+              href="/finance/review"
+              className={buttonVariants({ variant: 'outline', size: 'sm' })}
+            >
+              Monthly review
+            </Link>
+            {addBudget}
+          </>
+        }
       />
       <div className="flex flex-col gap-6">
         <StatTiles

@@ -41,6 +41,8 @@ export type TaskFilters = {
   projectId?: string;
   goalId?: string;
   milestoneId?: string;
+  /** Tasks that came out of these budgets' money reviews. */
+  budgetIds?: string[];
   /** `null` returns top-level tasks only; `'any'` returns every subtask. */
   parentTaskId?: string | null | 'any';
   /** Defaults to 'open'. */
@@ -57,6 +59,10 @@ export async function listTasks(userId: string, filters: TaskFilters = {}): Prom
   if (filters.projectId) conds.push(eq(tasks.projectId, filters.projectId));
   if (filters.goalId) conds.push(eq(tasks.goalId, filters.goalId));
   if (filters.milestoneId) conds.push(eq(tasks.milestoneId, filters.milestoneId));
+  if (filters.budgetIds) {
+    if (filters.budgetIds.length === 0) return [];
+    conds.push(inArray(tasks.budgetId, filters.budgetIds));
+  }
   if (filters.parentTaskId === null) conds.push(isNull(tasks.parentTaskId));
   else if (filters.parentTaskId === 'any') conds.push(sql`${tasks.parentTaskId} is not null`);
   else if (filters.parentTaskId) conds.push(eq(tasks.parentTaskId, filters.parentTaskId));

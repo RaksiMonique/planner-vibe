@@ -2,7 +2,15 @@ import 'server-only';
 import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { db } from '@/db';
-import { goals, lifeSegments, milestones, projects, taskDependencies, tasks } from '@/db/schema';
+import {
+  budgets,
+  goals,
+  lifeSegments,
+  milestones,
+  projects,
+  taskDependencies,
+  tasks,
+} from '@/db/schema';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { findCycles } from './dependencies';
 import type { Task } from './queries';
@@ -48,6 +56,10 @@ async function assertOwned(userId: string, input: TaskInput, selfId?: string) {
       )
     );
     labels.push('milestone');
+  }
+  if (input.budgetId) {
+    checks.push(db.$count(budgets, and(eq(budgets.id, input.budgetId), eq(budgets.userId, userId))));
+    labels.push('budget');
   }
   if (input.parentTaskId) {
     if (input.parentTaskId === selfId)
@@ -128,6 +140,7 @@ function toValues(input: TaskInput, ctx: TaskContext) {
     projectId: input.projectId ?? null,
     goalId: input.goalId ?? null,
     milestoneId: input.milestoneId ?? null,
+    budgetId: input.budgetId ?? null,
     parentTaskId: input.parentTaskId ?? null,
     priority: input.priority,
     isImportant: input.isImportant,
@@ -261,6 +274,7 @@ async function spawnNextOccurrence(userId: string, task: Task, ctx: TaskContext)
     projectId: task.projectId,
     goalId: task.goalId,
     milestoneId: task.milestoneId,
+    budgetId: task.budgetId,
     parentTaskId: task.parentTaskId,
     title: task.title,
     notes: task.notes,

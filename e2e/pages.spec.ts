@@ -46,6 +46,7 @@ const ROUTES: Array<[string, RegExp]> = [
   ['/work/projects', /work projects/i],
   ['/work/tasks', /work tasks/i],
   ['/finance', /financial snapshot/i],
+  ['/finance/review', /monthly money review/i],
   ['/time/analytics', /time analytics/i],
   // Release 6
   ['/settings/integrations', /integrations/i],

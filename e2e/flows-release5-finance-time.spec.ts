@@ -55,3 +55,51 @@ test('time analytics renders the current week and switches to the month', async 
   await expect(page.getByRole('heading', { name: 'Time analytics' }).first()).toBeVisible();
   await expect(totals.or(empty).first()).toBeVisible();
 });
+
+test('the monthly money review sets a figure, adds a repeating task and finishes the month', async ({
+  page,
+}) => {
+  const name = `Going out ${stamp}`;
+  await page.goto('/finance');
+  await page
+    .getByRole('button', { name: /new budget/i })
+    .first()
+    .click();
+  const dialog = page.getByRole('dialog');
+  await dialog.getByLabel('Name').fill(name);
+  await dialog.getByLabel('Limit').fill('150');
+  await dialog.getByRole('button', { name: 'Add budget' }).click();
+  await expect(page.getByTestId('budget-row').filter({ hasText: name })).toBeVisible();
+
+  await page.goto('/finance/review');
+  await expect(page.getByRole('heading', { name: 'Monthly money review' }).first()).toBeVisible();
+  const row = page.getByTestId('review-budget').filter({ hasText: name });
+  await expect(row).toBeVisible();
+
+  await row.getByLabel(new RegExp(`^Spent on ${name}`)).fill('80');
+  await row.getByRole('button', { name: 'Set spent' }).click();
+  await expect(row).toContainText('53% spent');
+
+  const taskTitle = `Fewer nights out ${stamp}`;
+  await row.getByLabel(`New task for ${name}`).fill(taskTitle);
+  await row.getByRole('checkbox', { name: `Repeat the ${name} task every month` }).click();
+  await row.getByRole('button', { name: 'Add task' }).click();
+  await expect(row.getByText(taskTitle)).toBeVisible();
+  await expect(row.getByLabel('Repeats')).toBeVisible();
+
+  // The repeating reminder is created once; a second visit only reports it.
+  const remind = page.getByRole('button', { name: 'Remind me every month' });
+  if (await remind.isVisible()) await remind.click();
+  await expect(page.getByText(/Reminder set: a Monthly money review task repeats/)).toBeVisible();
+
+  await page.getByPlaceholder(/Where the money went/).fill('Fewer nights out next month.');
+  await page.getByRole('button', { name: /Finish review|Update review/ }).click();
+  await expect(page.getByText(/^Reviewed \d+ \w+$/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Update review' })).toBeVisible();
+
+  // Reviewing the month in progress leaves the live counter alone.
+  await page.goto('/finance');
+  await expect(page.getByTestId('budget-row').filter({ hasText: name })).toContainText(
+    /80\.00 of .*150\.00/
+  );
+});

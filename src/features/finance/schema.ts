@@ -55,6 +55,34 @@ export const spendingInput = z.object({
 });
 export type SpendingInput = z.infer<typeof spendingInput>;
 
+const monthKey = z.string().regex(/^\d{4}-\d{2}$/, 'Use a month like 2026-11.');
+const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a full date.');
+
+/** Monthly money review (instructions.md 8.22). */
+export const reviewFigureInput = z.object({
+  id: z.uuid(),
+  month: monthKey,
+  amount: amount('Enter what was spent.'),
+});
+export const reviewNoteInput = z.object({
+  id: z.uuid(),
+  month: monthKey,
+  note: z.string().trim().max(1000).optional(),
+});
+export const finishReviewInput = z.object({
+  month: monthKey,
+  note: z.string().trim().max(5000).optional(),
+  reset: z.coerce.boolean().default(false),
+});
+export const budgetTaskInput = z.object({
+  id: z.uuid(),
+  month: monthKey,
+  title: z.string().trim().min(1, 'Give the task a title.').max(200),
+  dueDate: dateKey.optional(),
+  monthly: z.coerce.boolean().default(false),
+});
+export type BudgetTaskInput = z.infer<typeof budgetTaskInput>;
+
 export const goalProgressInput = z.object({
   id: z.uuid(),
   currentValue: amount('Enter the current value.'),

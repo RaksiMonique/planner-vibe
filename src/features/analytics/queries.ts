@@ -1,6 +1,9 @@
 import 'server-only';
 import { addDays, parseISO, startOfWeek } from 'date-fns';
 import { formatInTimeZone, fromZonedTime } from 'date-fns-tz';
+import { and, eq, gt, gte, isNull, lt, lte } from 'drizzle-orm';
+import { db } from '@/db';
+import { habitCheckIns, journalEntries, tasks } from '@/db/schema';
 import { expandEvents } from '@/features/calendar/expand';
 import { listEventsBetween } from '@/features/calendar/queries';
 import { listGoals, listMilestones } from '@/features/goals/queries';
@@ -204,4 +207,58 @@ export async function getAnalyticsData(
       scheduledMinutesBySegment(expandEvents(eventRows, from, to), from, to)
     ),
   };
+}
+
+// ───────────────── single counts for the "This week in numbers" card ─────────────────
+
+/** Tasks finished between two instants, `from` inclusive and `to` exclusive. */
+export async function countTasksCompletedBetween(
+  userId: string,
+  from: Date,
+  to: Date
+): Promise<number> {
+  return db.$count(
+    tasks,
+    and(
+      eq(tasks.userId, userId),
+      isNull(tasks.deletedAt),
+      eq(tasks.status, 'done'),
+      gte(tasks.completedAt, from),
+      lt(tasks.completedAt, to)
+    )
+  );
+}
+
+/** Habit check-ins made between two yyyy-MM-dd keys, both inclusive. */
+export async function countHabitCheckInsBetween(
+  userId: string,
+  fromKey: string,
+  toKey: string
+): Promise<number> {
+  return db.$count(
+    habitCheckIns,
+    and(
+      eq(habitCheckIns.userId, userId),
+      gt(habitCheckIns.value, 0),
+      gte(habitCheckIns.date, fromKey),
+      lte(habitCheckIns.date, toKey)
+    )
+  );
+}
+
+/** Journal entries dated between two yyyy-MM-dd keys, both inclusive. */
+export async function countJournalEntriesBetween(
+  userId: string,
+  fromKey: string,
+  toKey: string
+): Promise<number> {
+  return db.$count(
+    journalEntries,
+    and(
+      eq(journalEntries.userId, userId),
+      isNull(journalEntries.deletedAt),
+      gte(journalEntries.date, fromKey),
+      lte(journalEntries.date, toKey)
+    )
+  );
 }

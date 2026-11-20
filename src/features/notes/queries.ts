@@ -70,3 +70,26 @@ export async function getNote(userId: string, id: string): Promise<NoteRow | nul
     .limit(1);
   return row ? { ...row.note, segment: row.segment } : null;
 }
+
+/** Pinned notes first, then the most recently edited, capped for the dashboard preview. */
+export async function listRecentNotes(
+  userId: string,
+  kind: Note['kind'],
+  limit: number
+): Promise<NoteRow[]> {
+  const rows = await db
+    .select({ note: notes, segment: segmentRefColumns })
+    .from(notes)
+    .innerJoin(lifeSegments, eq(notes.lifeSegmentId, lifeSegments.id))
+    .where(and(eq(notes.userId, userId), isNull(notes.deletedAt), eq(notes.kind, kind)))
+    .orderBy(desc(notes.isPinned), desc(notes.updatedAt), asc(notes.createdAt))
+    .limit(limit);
+  return rows.map((r) => ({ ...r.note, segment: r.segment }));
+}
+
+export async function countNotes(userId: string, kind: Note['kind']): Promise<number> {
+  return db.$count(
+    notes,
+    and(eq(notes.userId, userId), isNull(notes.deletedAt), eq(notes.kind, kind))
+  );
+}

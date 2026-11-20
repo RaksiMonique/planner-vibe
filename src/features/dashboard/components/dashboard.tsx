@@ -51,6 +51,15 @@ import { GroceriesDashboardCard } from '@/features/meals/components/groceries-da
 import { MediaDashboardCard } from '@/features/media/components/media-dashboard-card';
 import { GiftsDashboardCard } from '@/features/gifts/components/gifts-dashboard-card';
 import { VisionDashboardCard } from '@/features/vision/components/vision-dashboard-card';
+import { WorkProjectsDashboardCard } from '@/features/work/components/work-projects-dashboard-card';
+import { WorkTasksDashboardCard } from '@/features/work/components/work-tasks-dashboard-card';
+import { WorkHoursDashboardCard } from '@/features/work/components/work-hours-dashboard-card';
+import { ReviewDashboardCard } from '@/features/reviews/components/review-dashboard-card';
+import { JournalStreakDashboardCard } from '@/features/journal/components/journal-streak-dashboard-card';
+import { NotesDashboardCard } from '@/features/notes/components/notes-dashboard-card';
+import { FinanceDashboardCard } from '@/features/finance/components/finance-dashboard-card';
+import { ImportantDashboardCard } from '@/features/important/components/important-dashboard-card';
+import { WeekStatsDashboardCard } from '@/features/analytics/components/week-stats-dashboard-card';
 import { DashboardCard, EmptyNote } from './dashboard-card';
 import { TodayBlock } from './today-block';
 
@@ -90,7 +99,7 @@ export function Dashboard({
   };
   const one = (node: React.ReactNode) => ({ span: 'lg:col-span-1', node });
 
-  const cards: Partial<Record<DashboardCardKey, { span: string; node: React.ReactNode } | null>> = {
+  const cards: Record<DashboardCardKey, { span: string; node: React.ReactNode } | null> = {
     job: data.workDays
       ? {
           span: 'lg:col-span-1',
@@ -140,6 +149,15 @@ export function Dashboard({
     media: one(<MediaDashboardCard {...cardProps} />),
     gifts: one(<GiftsDashboardCard {...cardProps} />),
     vision: one(<VisionDashboardCard {...cardProps} />),
+    'work-projects': one(<WorkProjectsDashboardCard {...cardProps} />),
+    'work-tasks': one(<WorkTasksDashboardCard {...cardProps} />),
+    'work-hours': one(<WorkHoursDashboardCard {...cardProps} />),
+    review: one(<ReviewDashboardCard {...cardProps} />),
+    'journal-streak': one(<JournalStreakDashboardCard {...cardProps} />),
+    notes: one(<NotesDashboardCard {...cardProps} />),
+    finance: one(<FinanceDashboardCard {...cardProps} />),
+    important: one(<ImportantDashboardCard {...cardProps} />),
+    stats: one(<WeekStatsDashboardCard {...cardProps} />),
     journal: {
       span: 'lg:col-span-1',
       node: <JournalDashboardCard userId={userId} todayKey={data.todayKey} />,

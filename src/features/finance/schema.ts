@@ -7,6 +7,15 @@ export const BUDGET_PERIOD_LABELS: Record<BudgetPeriod, string> = {
   annual: 'Annual',
 };
 
+/** How a budget is usually paid, so the user can see where cash is needed. */
+export const PAYMENT_METHODS = ['cash', 'credit', 'transfer'] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: 'Cash',
+  credit: 'Credit',
+  transfer: 'Transfer',
+};
+
 const MAX_AMOUNT = 99_999_999;
 const toNumber = (v: unknown) =>
   v === '' || v === undefined || v === null ? undefined : Number(v);
@@ -38,6 +47,10 @@ export const budgetInput = z.object({
   name: z.string().trim().min(1, 'Give the budget a name.').max(120),
   category: z.string().trim().max(80).optional(),
   period: z.enum(BUDGET_PERIODS).default('monthly'),
+  paymentMethod: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.enum(PAYMENT_METHODS).optional()
+  ),
   lifeSegmentId: z.uuid('Choose a Life Segment.'),
   limitAmount: amount('Give the budget a limit.').refine(
     (v) => v > 0,

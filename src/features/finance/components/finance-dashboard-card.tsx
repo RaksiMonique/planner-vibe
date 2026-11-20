@@ -15,6 +15,7 @@ import {
   formatCurrency,
   isMeasurable,
   savingsTotal,
+  totalsByPayment,
   totalsByPeriod,
 } from '../summary';
 
@@ -46,6 +47,7 @@ export async function FinanceDashboardCard({
   const measurable = goals.filter(isMeasurable);
   const totals = totalsByPeriod(budgets);
   const overCount = totals.monthly.overCount + totals.annual.overCount;
+  const cash = totalsByPayment(budgets.filter((b) => b.period === 'monthly')).cash;
 
   const updatedAt = [...budgets, ...measurable]
     .map((row) => row.updatedAt)
@@ -107,6 +109,15 @@ export async function FinanceDashboardCard({
               </div>
             ))}
           </dl>
+          {cash.count > 0 && (
+            <p className="text-muted-foreground text-xs">
+              Cash to have ready this month:{' '}
+              <span className="text-foreground tabular-nums">
+                {formatCurrency(Math.max(0, cash.remaining), currency)}
+              </span>{' '}
+              across {cash.count} cash budget{cash.count === 1 ? '' : 's'}.
+            </p>
+          )}
           {updatedAt && (
             <p className="text-muted-foreground text-xs">
               Figures last updated {formatInTimeZone(updatedAt, timeZone, 'd MMM')}.

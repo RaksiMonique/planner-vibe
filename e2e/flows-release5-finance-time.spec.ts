@@ -14,12 +14,17 @@ test('create a budget, record spending and see the spent figure', async ({ page 
   const dialog = page.getByRole('dialog');
   await dialog.getByLabel('Name').fill(name);
   await dialog.getByLabel('Limit').fill('200');
+  await dialog.getByLabel('Paid by').selectOption('cash');
   await dialog.getByRole('button', { name: 'Add budget' }).click();
 
   const row = page.getByTestId('budget-row').filter({ hasText: name });
   await expect(row).toBeVisible();
   await expect(row).toContainText(/0\.00 of .*200\.00/);
   await expect(row).toContainText('0% spent');
+  await expect(row).toContainText('Cash');
+  // The Paid by strip totals cash budgets so the user knows what to have ready.
+  await expect(page.getByTestId('paid-by')).toContainText(/Cash · \d+ budget/);
+  await expect(page.getByTestId('paid-by')).toContainText('to have ready');
 
   await row.getByLabel(`Record spending for ${name}`).fill('45.5');
   await row.getByRole('button', { name: 'Record' }).click();

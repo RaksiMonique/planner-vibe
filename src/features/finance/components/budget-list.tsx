@@ -7,7 +7,7 @@ import type { SegmentRef } from '@/features/life-segments/types';
 import { cn } from '@/lib/utils';
 import { deleteBudgetAction, recordSpendingAction, resetBudgetAction } from '../actions';
 import type { BudgetRow } from '../queries';
-import { BUDGET_PERIOD_LABELS } from '../schema';
+import { BUDGET_PERIOD_LABELS, PAYMENT_METHOD_LABELS } from '../schema';
 import { formatCurrency, isOverLimit, percentSpent, remaining } from '../summary';
 import { BudgetFormDialog } from './budget-form-dialog';
 import { InlineAmountForm } from './inline-amount-form';
@@ -40,7 +40,12 @@ export function BudgetList({
               <div className="min-w-0 flex-1">
                 <h3 className="truncate font-sans text-sm font-medium tracking-normal">{b.name}</h3>
                 <p className="text-muted-foreground text-xs">
-                  {[b.category, BUDGET_PERIOD_LABELS[b.period], b.segment.name]
+                  {[
+                    b.category,
+                    BUDGET_PERIOD_LABELS[b.period],
+                    b.paymentMethod && PAYMENT_METHOD_LABELS[b.paymentMethod],
+                    b.segment.name,
+                  ]
                     .filter(Boolean)
                     .join(' · ')}
                 </p>

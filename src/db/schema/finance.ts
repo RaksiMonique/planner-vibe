@@ -13,6 +13,8 @@ import { ownerId } from './profiles';
  */
 
 export const budgetPeriodEnum = planner.enum('budget_period', ['monthly', 'annual']);
+/** How the user expects to pay for a budget, so they know where cash is needed. */
+export const budgetPaymentEnum = planner.enum('budget_payment', ['cash', 'credit', 'transfer']);
 
 export const budgets = planner.table(
   'budgets',
@@ -25,6 +27,8 @@ export const budgets = planner.table(
     name: text('name').notNull(),
     category: text('category'),
     period: budgetPeriodEnum('period').notNull().default('monthly'),
+    /** Cash, credit or transfer; unset when the user has not said. */
+    paymentMethod: budgetPaymentEnum('payment_method'),
     limitAmount: numeric('limit_amount', { precision: 14, scale: 2 }).notNull(),
     /** Updated by hand; reset when a new period starts. */
     spentAmount: numeric('spent_amount', { precision: 14, scale: 2 }).notNull().default('0'),

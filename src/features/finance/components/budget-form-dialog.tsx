@@ -13,7 +13,12 @@ import { NativeSelect } from '@/features/tasks/components/native-select';
 import type { ActionResult } from '@/lib/action-result';
 import { createBudgetAction, updateBudgetAction } from '../actions';
 import type { Budget } from '../queries';
-import { BUDGET_PERIOD_LABELS, BUDGET_PERIODS } from '../schema';
+import {
+  BUDGET_PERIOD_LABELS,
+  BUDGET_PERIODS,
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_METHODS,
+} from '../schema';
 import { DialogShell } from './dialog-shell';
 
 type Props = {
@@ -98,17 +103,39 @@ function BudgetForm({
             </NativeSelect>
           </Field>
         </div>
-        <Field data-invalid={hasFieldError(state, 'lifeSegmentId')}>
-          <FieldLabel htmlFor="budget-segment">Life Segment</FieldLabel>
-          <NativeSelect id="budget-segment" name="lifeSegmentId" defaultValue={segmentId} required>
-            {segments.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </NativeSelect>
-          <FieldError errors={fieldErrors(state, 'lifeSegmentId')} />
-        </Field>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field data-invalid={hasFieldError(state, 'lifeSegmentId')}>
+            <FieldLabel htmlFor="budget-segment">Life Segment</FieldLabel>
+            <NativeSelect
+              id="budget-segment"
+              name="lifeSegmentId"
+              defaultValue={segmentId}
+              required
+            >
+              {segments.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+            </NativeSelect>
+            <FieldError errors={fieldErrors(state, 'lifeSegmentId')} />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="budget-payment">Paid by</FieldLabel>
+            <NativeSelect
+              id="budget-payment"
+              name="paymentMethod"
+              defaultValue={budget?.paymentMethod ?? ''}
+            >
+              <option value="">Not set</option>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {PAYMENT_METHOD_LABELS[m]}
+                </option>
+              ))}
+            </NativeSelect>
+          </Field>
+        </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <Field data-invalid={hasFieldError(state, 'limitAmount')}>
             <FieldLabel htmlFor="budget-limit">Limit</FieldLabel>

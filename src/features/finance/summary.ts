@@ -60,10 +60,13 @@ export function formatAmount(value: MoneyLike): string {
   return new Intl.NumberFormat('en-GB', { maximumFractionDigits: 2 }).format(toAmount(value));
 }
 
+export type PaymentMethodLike = 'cash' | 'credit' | 'transfer' | null;
+
 export type BudgetLike = {
   period: 'monthly' | 'annual';
   limitAmount: MoneyLike;
   spentAmount: MoneyLike;
+  paymentMethod?: PaymentMethodLike;
 };
 
 export type BudgetTotals = {
@@ -91,6 +94,18 @@ export function totalsByPeriod(budgets: BudgetLike[]): Record<'monthly' | 'annua
     monthly: budgetTotals(budgets.filter((b) => b.period === 'monthly')),
     annual: budgetTotals(budgets.filter((b) => b.period === 'annual')),
   };
+}
+
+/**
+ * Totals by how the budgets are paid, so the user can see how much cash to
+ * have ready. Budgets with no method are counted under `unset`.
+ */
+export function totalsByPayment(
+  budgets: BudgetLike[]
+): Record<'cash' | 'credit' | 'transfer' | 'unset', BudgetTotals> {
+  const of = (method: PaymentMethodLike) =>
+    budgetTotals(budgets.filter((b) => (b.paymentMethod ?? null) === method));
+  return { cash: of('cash'), credit: of('credit'), transfer: of('transfer'), unset: of(null) };
 }
 
 export type MeasurableGoalLike = {

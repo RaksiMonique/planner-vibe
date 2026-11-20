@@ -13,6 +13,7 @@ import { listEventsBetween } from '@/features/calendar/queries';
 import { BudgetFormDialog } from '@/features/finance/components/budget-form-dialog';
 import { BudgetList } from '@/features/finance/components/budget-list';
 import { FinancialGoals } from '@/features/finance/components/financial-goals';
+import { PaymentBreakdown } from '@/features/finance/components/payment-breakdown';
 import {
   UpcomingActions,
   type UpcomingEvent,
@@ -147,9 +148,14 @@ export default async function FinancePage() {
               <h2 className="font-heading text-lg">Budgets</h2>
               <p className="text-muted-foreground text-sm">
                 Record spending as it happens; reset a budget when its month or year starts again.
+                Mark how each is paid to see how much cash to have ready this month.
               </p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col gap-4">
+              <PaymentBreakdown
+                budgets={budgets.filter((b) => b.period === 'monthly')}
+                currency={currency}
+              />
               {budgets.length === 0 ? (
                 <EmptyState
                   icon={PiggyBankIcon}

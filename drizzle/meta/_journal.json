@@ -155,6 +155,13 @@
       "when": 1795133768993,
       "tag": "0021_money_review",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795143491037,
+      "tag": "0022_payment_method",
+      "breakpoints": true
     }
   ]
 }

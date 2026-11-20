@@ -11,6 +11,7 @@ import {
   savingsTotal,
   sumAmounts,
   toAmount,
+  totalsByPayment,
   totalsByPeriod,
 } from './summary';
 
@@ -84,6 +85,19 @@ describe('totals', () => {
     const by = totalsByPeriod(budgets);
     expect(by.monthly).toMatchObject({ count: 2, limit: 150, spent: 100, overCount: 1 });
     expect(by.annual).toMatchObject({ count: 1, limit: 1200, spent: 0, overCount: 0 });
+  });
+  it('splits totals by how each budget is paid, with unset budgets kept apart', () => {
+    const by = totalsByPayment([
+      { period: 'monthly', limitAmount: '100', spentAmount: '30', paymentMethod: 'cash' },
+      { period: 'monthly', limitAmount: '50', spentAmount: '60', paymentMethod: 'cash' },
+      { period: 'monthly', limitAmount: '200', spentAmount: '0', paymentMethod: 'credit' },
+      { period: 'monthly', limitAmount: '80', spentAmount: '10', paymentMethod: null },
+      { period: 'monthly', limitAmount: '20', spentAmount: '0' },
+    ]);
+    expect(by.cash).toMatchObject({ count: 2, limit: 150, spent: 90, remaining: 60, overCount: 1 });
+    expect(by.credit).toMatchObject({ count: 1, limit: 200, spent: 0, remaining: 200 });
+    expect(by.transfer.count).toBe(0);
+    expect(by.unset).toMatchObject({ count: 2, limit: 100, spent: 10 });
   });
   it('sums savings only for measurable goals in the user currency', () => {
     const goals = [

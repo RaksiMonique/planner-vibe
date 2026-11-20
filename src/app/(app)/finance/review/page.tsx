@@ -13,6 +13,7 @@ import { BudgetTaskForm } from '@/features/finance/components/budget-task-form';
 import { FinishReviewForm } from '@/features/finance/components/finish-review-form';
 import { InlineAmountForm } from '@/features/finance/components/inline-amount-form';
 import { MonthNoteForm } from '@/features/finance/components/month-note-form';
+import { PaymentBreakdown } from '@/features/finance/components/payment-breakdown';
 import { ReviewReminderForm } from '@/features/finance/components/review-reminder-form';
 import { listBudgets } from '@/features/finance/queries';
 import { setMonthSpendingAction } from '@/features/finance/review-actions';
@@ -32,6 +33,7 @@ import {
   monthTotals,
   resetByDefault,
 } from '@/features/finance/review';
+import { PAYMENT_METHOD_LABELS } from '@/features/finance/schema';
 import { formatCurrency, percentSpent } from '@/features/finance/summary';
 import { monthLabel } from '@/features/horizons/periods';
 import { parseMonthKey, shiftMonth } from '@/features/month/grid';
@@ -74,6 +76,20 @@ export default async function FinanceReviewPage({ searchParams }: PageProps<'/fi
   const figure = (b: (typeof budgets)[number]) => figureFor(b, stored.get(b.id), isCurrent);
   const groups = groupBySegment(budgets, figure);
   const totals = monthTotals(budgets.map(figure));
+  // The month's figures by how each budget is paid, for the header line.
+  const paid = budgets.flatMap((b) => {
+    const f = figure(b);
+    return f
+      ? [
+          {
+            period: b.period,
+            paymentMethod: b.paymentMethod,
+            limitAmount: f.limit,
+            spentAmount: f.spent,
+          },
+        ]
+      : [];
+  });
   const tasksByBudget = new Map<string, typeof budgetTasks>();
   for (const t of budgetTasks) {
     if (!t.budgetId) continue;
@@ -145,6 +161,7 @@ export default async function FinanceReviewPage({ searchParams }: PageProps<'/fi
                 <ReviewReminderForm dueDate={reminderDue} />
               </div>
             </div>
+            <PaymentBreakdown budgets={paid} currency={currency} compact />
             <div className="flex items-end gap-2" aria-label="Spending over the last six months">
               {strip.map((s) => {
                 const percent = s.limit > 0 ? percentSpent(s.spent, s.limit) : 0;
@@ -220,8 +237,15 @@ export default async function FinanceReviewPage({ searchParams }: PageProps<'/fi
                           <h3 className="font-sans text-sm font-medium tracking-normal">
                             {b.name}
                           </h3>
-                          {b.category && (
-                            <span className="text-muted-foreground text-xs">{b.category}</span>
+                          {(b.category || b.paymentMethod) && (
+                            <span className="text-muted-foreground text-xs">
+                              {[
+                                b.category,
+                                b.paymentMethod && PAYMENT_METHOD_LABELS[b.paymentMethod],
+                              ]
+                                .filter(Boolean)
+                                .join(' · ')}
+                            </span>
                           )}
                           {f && (
                             <Badge

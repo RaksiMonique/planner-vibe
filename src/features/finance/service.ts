@@ -25,6 +25,7 @@ function toRow(input: BudgetInput, fallbackCurrency: string) {
     name: input.name,
     category: input.category || null,
     period: input.period,
+    paymentMethod: input.paymentMethod ?? null,
     lifeSegmentId: input.lifeSegmentId,
     limitAmount: money(input.limitAmount),
     currency: input.currency ?? fallbackCurrency,

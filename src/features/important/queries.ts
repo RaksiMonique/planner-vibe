@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, asc, eq, isNull } from 'drizzle-orm';
+import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db';
 import { importantRecords } from '@/db/schema';
 import { matchesQuery, type ImportantKind } from './kinds';
@@ -33,4 +33,21 @@ export async function getRecord(userId: string, id: string): Promise<ImportantRe
     )
     .limit(1);
   return row ?? null;
+}
+
+/** The most recently edited records, capped for the dashboard preview. */
+export async function listRecentRecords(userId: string, limit: number): Promise<ImportantRecord[]> {
+  return db
+    .select()
+    .from(importantRecords)
+    .where(and(eq(importantRecords.userId, userId), isNull(importantRecords.deletedAt)))
+    .orderBy(desc(importantRecords.updatedAt), asc(importantRecords.title))
+    .limit(limit);
+}
+
+export async function countRecords(userId: string): Promise<number> {
+  return db.$count(
+    importantRecords,
+    and(eq(importantRecords.userId, userId), isNull(importantRecords.deletedAt))
+  );
 }

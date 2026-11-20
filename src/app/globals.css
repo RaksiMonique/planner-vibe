@@ -144,6 +144,19 @@
   h4 {
     @apply font-heading tracking-heading;
   }
+  /*
+    A grid with no column rule at the current width gets one implicit
+    auto-sized column. That column grows to the widest single-line row of
+    any item that does not clip its overflow, so one long goal or task title
+    widened whole pages on phones and iOS Safari zoomed out to fit it.
+    Utilities (grid-cols-*, min-w-*) sit in a later layer and still win.
+  */
+  .grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .grid > * {
+    min-width: 0;
+  }
 }
 
 /* Print and "Save as PDF" (instructions.md 9.3): the page content alone, in ink-friendly colours. */

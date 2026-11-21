@@ -137,9 +137,11 @@ export function TaskSheet(props: TaskSheetProps) {
     setAutoGoalId(next?.id ?? '');
   }
 
+  /** Closes the sheet; a new subtask returns to its parent's sheet instead. */
   function close() {
     const next = new URLSearchParams(params.toString());
     for (const k of ['new', 'task', 'parent']) next.delete(k);
+    if (!task && parentTask) next.set('task', parentTask.id);
     const qs = next.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname);
   }
@@ -449,6 +451,23 @@ export function TaskSheet(props: TaskSheetProps) {
               <FieldLabel htmlFor="task-notes">Notes</FieldLabel>
               <Textarea id="task-notes" name="notes" rows={3} defaultValue={task?.notes ?? ''} />
             </Field>
+            {!parentTask && !task?.parentTaskId && (
+              <Field data-invalid={Boolean(fieldErrors(state, 'subtaskTitles'))}>
+                <FieldLabel htmlFor="task-subtasks">
+                  {editing ? 'Add subtasks' : 'Subtasks'}
+                </FieldLabel>
+                <Textarea
+                  id="task-subtasks"
+                  name="subtaskTitles"
+                  rows={3}
+                  placeholder={'One per line\nBook the venue\nSend invitations'}
+                />
+                <FieldDescription>
+                  Each line becomes an open subtask in the same segment and project.
+                </FieldDescription>
+                <FieldError errors={fieldErrors(state, 'subtaskTitles')} />
+              </Field>
+            )}
           </FieldGroup>
           <div className="flex items-center gap-2">
             <SubmitButton>{editing ? 'Save changes' : 'Add task'}</SubmitButton>
@@ -497,7 +516,7 @@ export function TaskSheet(props: TaskSheetProps) {
           </div>
         </form>
         {task && (
-          <section className="border-t p-4">
+          <section className="border-t p-4" data-slot="sheet-subtasks">
             <h3 className="tracking-eyebrow text-muted-foreground mb-2 flex items-center justify-between text-xs uppercase">
               Subtasks
               <Link

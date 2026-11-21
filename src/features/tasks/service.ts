@@ -188,6 +188,29 @@ function toValues(input: TaskInput, ctx: TaskContext) {
   };
 }
 
+/**
+ * Subtasks typed into the sheet, one per line: open tasks under the parent
+ * in its segment, project, goal and milestone, with no date of their own.
+ * A subtask cannot have subtasks, so a new subtask's own lines are ignored.
+ */
+async function createSubtasks(userId: string, parent: Task, titles: string[] = []) {
+  if (titles.length === 0 || parent.parentTaskId) return;
+  await db.insert(tasks).values(
+    titles.map((title) => ({
+      userId,
+      title,
+      lifeSegmentId: parent.lifeSegmentId,
+      projectId: parent.projectId,
+      goalId: parent.goalId,
+      milestoneId: parent.milestoneId,
+      budgetId: parent.budgetId,
+      parentTaskId: parent.id,
+      priority: parent.priority,
+      status: 'todo' as const,
+    }))
+  );
+}
+
 export async function createTask(
   userId: string,
   input: TaskInput,
@@ -206,6 +229,7 @@ export async function createTask(
     })
     .returning();
   await syncBlockers(userId, row.id, input.blockedByIds);
+  await createSubtasks(userId, row, input.subtaskTitles);
   return row;
 }
 
@@ -236,6 +260,7 @@ export async function updateTask(
     .where(and(eq(tasks.userId, userId), eq(tasks.id, id)))
     .returning();
   await syncBlockers(userId, id, input.blockedByIds);
+  await createSubtasks(userId, row, input.subtaskTitles);
   if (nowDone && !wasDone) await spawnNextOccurrence(userId, row, ctx);
   return row;
 }

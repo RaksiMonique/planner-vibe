@@ -151,6 +151,8 @@ test('create a segment, project and goal without leaving the task sheet', async 
 });
 
 test('pickers list the most used segments and projects first', async ({ page }) => {
+  // Three full task creations with nested dialogs on a long task list.
+  test.slow();
   const quiet = { segment: `Attic ${stamp}`, project: `Boxes ${stamp}` };
   const busy = { segment: `Cellar ${stamp}`, project: `Wine ${stamp}` };
 

@@ -16,6 +16,17 @@ export const PRIORITY_LABELS: Record<(typeof PRIORITIES)[number], string> = {
   high: 'High',
 };
 
+/** Subtask titles typed one per line; blank lines are ignored. */
+export function splitSubtaskLines(text: unknown): string[] {
+  if (Array.isArray(text)) return text.filter((t): t is string => typeof t === 'string');
+  if (typeof text !== 'string') return [];
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+}
+export const MAX_SUBTASKS_AT_ONCE = 30;
+
 const dateKey = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a full date.');
 const timeKey = z.string().regex(/^\d{2}:\d{2}$/, 'Use a time like 14:30.');
 const optionalUuid = z.uuid().optional();
@@ -31,6 +42,14 @@ export const taskInput = z
     /** Budget the task came out of in a money review. */
     budgetId: optionalUuid,
     parentTaskId: optionalUuid,
+    /** Created under the task when it is saved, in the same segment and project. */
+    subtaskTitles: z.preprocess(
+      splitSubtaskLines,
+      z
+        .array(z.string().max(200, 'Keep each subtask under 200 characters.'))
+        .max(MAX_SUBTASKS_AT_ONCE, `At most ${MAX_SUBTASKS_AT_ONCE} subtasks at a time.`)
+        .optional()
+    ),
     priority: z.enum(PRIORITIES).default('medium'),
     isImportant: z.coerce.boolean().default(false),
     status: z.enum(TASK_STATUSES).default('todo'),

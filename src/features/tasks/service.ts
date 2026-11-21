@@ -1,9 +1,10 @@
 import 'server-only';
-import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
+import { and, asc, eq, inArray, isNull, notInArray, sql } from 'drizzle-orm';
 import { fromZonedTime, toZonedTime } from 'date-fns-tz';
 import { db } from '@/db';
 import {
   budgets,
+  goalProjects,
   goals,
   lifeSegments,
   milestones,
@@ -11,6 +12,7 @@ import {
   taskDependencies,
   tasks,
 } from '@/db/schema';
+import { pickLinkedGoal } from '@/features/goals/linked-goal';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { findCycles } from './dependencies';
 import type { Task } from './queries';
@@ -58,7 +60,9 @@ async function assertOwned(userId: string, input: TaskInput, selfId?: string) {
     labels.push('milestone');
   }
   if (input.budgetId) {
-    checks.push(db.$count(budgets, and(eq(budgets.id, input.budgetId), eq(budgets.userId, userId))));
+    checks.push(
+      db.$count(budgets, and(eq(budgets.id, input.budgetId), eq(budgets.userId, userId)))
+    );
     labels.push('budget');
   }
   if (input.parentTaskId) {
@@ -131,6 +135,38 @@ function toDueAt(dueDate: string | undefined, dueTime: string | undefined, timeZ
   return fromZonedTime(`${dueDate}T${dueTime}:00`, timeZone);
 }
 
+/**
+ * The goal a task is filed under when none is chosen (instructions.md 5.3):
+ * its milestone's goal, else the goal its project supports, the longest
+ * horizon when the project supports several, none when it supports none.
+ */
+async function inheritedGoalId(userId: string, input: TaskInput): Promise<string | null> {
+  if (input.goalId) return input.goalId;
+  if (input.milestoneId) {
+    const [m] = await db
+      .select({ goalId: milestones.goalId })
+      .from(milestones)
+      .where(and(eq(milestones.id, input.milestoneId), eq(milestones.userId, userId)))
+      .limit(1);
+    if (m?.goalId) return m.goalId;
+  }
+  if (!input.projectId) return null;
+  const linked = await db
+    .select({ id: goals.id, horizon: goals.horizon })
+    .from(goalProjects)
+    .innerJoin(goals, eq(goals.id, goalProjects.goalId))
+    .where(
+      and(
+        eq(goalProjects.projectId, input.projectId),
+        eq(goalProjects.userId, userId),
+        isNull(goals.deletedAt),
+        notInArray(goals.status, ['achieved', 'abandoned'])
+      )
+    )
+    .orderBy(asc(goals.createdAt));
+  return pickLinkedGoal(linked)?.id ?? null;
+}
+
 function toValues(input: TaskInput, ctx: TaskContext) {
   const rrule = input.dueDate ? buildTaskRrule(input, input.dueDate) : null;
   return {
@@ -159,10 +195,12 @@ export async function createTask(
 ): Promise<Task> {
   await assertOwned(userId, input);
   await assertBlockers(userId, input.blockedByIds);
+  const goalId = await inheritedGoalId(userId, input);
   const [row] = await db
     .insert(tasks)
     .values({
       ...toValues(input, ctx),
+      goalId,
       userId,
       completedAt: input.status === 'done' ? new Date() : null,
     })
@@ -182,10 +220,17 @@ export async function updateTask(
   await assertBlockers(userId, input.blockedByIds, id);
   const wasDone = current.status === 'done';
   const nowDone = input.status === 'done';
+  // A goal is inherited again only when the project or milestone changes;
+  // clearing the goal on its own is respected.
+  const linksChanged =
+    (input.projectId ?? null) !== current.projectId ||
+    (input.milestoneId ?? null) !== current.milestoneId;
+  const goalId = linksChanged ? await inheritedGoalId(userId, input) : (input.goalId ?? null);
   const [row] = await db
     .update(tasks)
     .set({
       ...toValues(input, ctx),
+      goalId,
       completedAt: nowDone ? (current.completedAt ?? new Date()) : null,
     })
     .where(and(eq(tasks.userId, userId), eq(tasks.id, id)))

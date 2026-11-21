@@ -31,6 +31,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { SubmitButton } from '@/components/shared/submit-button';
 import { ReminderField } from '@/features/reminders/components/reminder-field';
 import { GoalForm } from '@/features/goals/components/goal-form-dialog';
+import { goalForProject } from '@/features/goals/linked-goal';
 import type { GoalOption, Milestone } from '@/features/goals/queries';
 import { SegmentForm } from '@/features/life-segments/components/segment-form-dialog';
 import type { SegmentRef } from '@/features/life-segments/types';
@@ -101,8 +102,15 @@ export function TaskSheet(props: TaskSheetProps) {
   const [state, action] = useActionState(task ? updateTaskAction : createTaskAction, undefined);
   const [dueDate, setDueDate] = useState(task?.dueDate ?? '');
   const [deleting, startDelete] = useTransition();
-  const [goalId, setGoalId] = useState(task?.goalId ?? '');
   const [projectId, setProjectId] = useState(task?.projectId ?? defaults.projectId ?? '');
+  // A new task filed under a project starts on the goal that project supports
+  // (instructions.md 5.3); the user can still pick another or none.
+  const [goalId, setGoalId] = useState(
+    () =>
+      task?.goalId ??
+      (defaults.projectId ? (goalForProject(defaults.projectId, projects, goals)?.id ?? '') : '')
+  );
+  const [autoGoalId, setAutoGoalId] = useState(task ? '' : goalId);
   const [segmentId, setSegmentId] = useState(
     task?.lifeSegmentId ?? defaults.lifeSegmentId ?? segments[0]?.id ?? ''
   );
@@ -119,6 +127,15 @@ export function TaskSheet(props: TaskSheetProps) {
   const segmentOptions = withAdded(segments, addedSegments);
   const projectOptions = withAdded(projects, addedProjects);
   const goalOptions = withAdded(goals, addedGoals);
+
+  /** Changing the project moves the goal along unless the user chose one. */
+  function chooseProject(nextProjectId: string, options = projectOptions) {
+    setProjectId(nextProjectId);
+    if (goalId && goalId !== autoGoalId) return;
+    const next = nextProjectId ? goalForProject(nextProjectId, options, goalOptions) : null;
+    setGoalId(next?.id ?? '');
+    setAutoGoalId(next?.id ?? '');
+  }
 
   function close() {
     const next = new URLSearchParams(params.toString());
@@ -285,7 +302,7 @@ export function TaskSheet(props: TaskSheetProps) {
                       defaults={{ lifeSegmentId: segmentId || undefined }}
                       onDone={(saved) => {
                         setAddedProjects((rows) => [...rows, saved]);
-                        setProjectId(saved.id);
+                        chooseProject(saved.id, [...projectOptions, saved]);
                         done();
                       }}
                     />
@@ -296,7 +313,7 @@ export function TaskSheet(props: TaskSheetProps) {
                 id="task-project"
                 name="projectId"
                 value={projectId}
-                onChange={(e) => setProjectId(e.target.value)}
+                onChange={(e) => chooseProject(e.target.value)}
               >
                 <option value="">None</option>
                 {projectOptions.map((p) => (
@@ -334,7 +351,10 @@ export function TaskSheet(props: TaskSheetProps) {
                 id="task-goal"
                 name="goalId"
                 value={goalId}
-                onChange={(e) => setGoalId(e.target.value)}
+                onChange={(e) => {
+                  setGoalId(e.target.value);
+                  setAutoGoalId('');
+                }}
               >
                 <option value="">None</option>
                 {goalOptions.map((g) => (
@@ -343,6 +363,11 @@ export function TaskSheet(props: TaskSheetProps) {
                   </option>
                 ))}
               </NativeSelect>
+              {goalId && goalId === autoGoalId && (
+                <FieldDescription>
+                  Follows the project. Pick another goal, or None, to change it.
+                </FieldDescription>
+              )}
             </Field>
             {visibleMilestones.length > 0 && (
               <Field>

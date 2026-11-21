@@ -1,7 +1,7 @@
 import 'server-only';
 import { and, asc, count, eq, isNull, sql } from 'drizzle-orm';
 import { db } from '@/db';
-import { lifeSegments, milestones, projects, tasks } from '@/db/schema';
+import { goalProjects, lifeSegments, milestones, projects, tasks } from '@/db/schema';
 import { segmentRefColumns } from '@/features/life-segments/queries';
 import type { SegmentRef } from '@/features/life-segments/types';
 
@@ -98,7 +98,10 @@ export async function getProject(userId: string, id: string): Promise<ProjectRow
   return all.find((p) => p.id === id) ?? null;
 }
 
-export type ProjectOption = Pick<Project, 'id' | 'title' | 'lifeSegmentId'>;
+export type ProjectOption = Pick<Project, 'id' | 'title' | 'lifeSegmentId'> & {
+  /** Goals the project supports, so a task can inherit one (instructions.md 5.3). */
+  goalIds: string[];
+};
 
 /**
  * Lightweight list for pickers: every project still in play, the most used
@@ -112,7 +115,14 @@ export async function listProjectOptions(userId: string): Promise<ProjectOption[
     .groupBy(tasks.projectId)
     .as('usage');
   return db
-    .select({ id: projects.id, title: projects.title, lifeSegmentId: projects.lifeSegmentId })
+    .select({
+      id: projects.id,
+      title: projects.title,
+      lifeSegmentId: projects.lifeSegmentId,
+      goalIds: sql<
+        string[]
+      >`coalesce((select array_agg(${goalProjects.goalId}) from ${goalProjects} where ${goalProjects.projectId} = ${projects.id}), '{}')`,
+    })
     .from(projects)
     .leftJoin(usage, eq(usage.projectId, projects.id))
     .where(

@@ -349,7 +349,7 @@ Recurrence is a set of columns on Event, Task, Habit, Routine and TimeBlock (5.4
 - Child records (Milestone, RoutineStep, RoutineCompletion, HabitCheckIn, ReadingProgress, Lesson, Assignment, LearningResource, VisionBoardItem, MealPlanEntry) inherit the segment from their parent.
 - Users can create, rename, recolour, reorder and archive segments. Archiving hides a segment. Deleting one requires moving its records first.
 - Each segment has a `weight` used by analytics, so segments are not treated as equally important by default.
-- `goalId` and `projectId` are nullable on activity records. Project to Goal is many-to-many through GoalProject.
+- `goalId` and `projectId` are nullable on activity records. Project to Goal is many-to-many through GoalProject. A task filed under a project with no goal chosen inherits the project's goal (added 2026-11-20): none when the project supports no goal, that goal when it supports one, the longest-horizon goal when it supports several. A milestone's goal wins over the project's. The sheet shows the inherited goal and the user can pick another; on edit it is inherited again only when the project or milestone changes.
 - Every query that touches a related record checks that the related record belongs to the same user.
 
 ### 5.4 Historical accuracy, recurrence and time

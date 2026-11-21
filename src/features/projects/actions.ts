@@ -21,8 +21,8 @@ function revalidateProjects() {
 /** The saved row, in the shape pickers elsewhere need to select it straight away. */
 export type ProjectActionResult = ActionResult<ProjectOption>;
 
-function toOption(row: Project): ProjectOption {
-  return { id: row.id, title: row.title, lifeSegmentId: row.lifeSegmentId };
+function toOption(row: Project, goalIds: string[]): ProjectOption {
+  return { id: row.id, title: row.title, lifeSegmentId: row.lifeSegmentId, goalIds };
 }
 
 export async function createProjectAction(
@@ -35,7 +35,7 @@ export async function createProjectAction(
     if (!parsed.success) return fromZodError(parsed.error);
     const row = await createProject(user.id, parsed.data);
     revalidateProjects();
-    return ok(toOption(row));
+    return ok(toOption(row, parsed.data.goalIds));
   } catch (e) {
     return fromError(e);
   }
@@ -56,7 +56,7 @@ export async function updateProjectAction(
     if (!parsed.success) return fromZodError(parsed.error);
     const row = await updateProject(user.id, id.data.id, parsed.data);
     revalidateProjects();
-    return ok(toOption(row));
+    return ok(toOption(row, parsed.data.goalIds));
   } catch (e) {
     return fromError(e);
   }

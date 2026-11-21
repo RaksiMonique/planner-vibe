@@ -48,7 +48,12 @@ export default async function ProjectPage({ params }: PageProps<'/projects/[id]'
   const projectOptions = openProjects.some((p) => p.id === project.id)
     ? openProjects
     : [
-        { id: project.id, title: project.title, lifeSegmentId: project.lifeSegmentId },
+        {
+          id: project.id,
+          title: project.title,
+          lifeSegmentId: project.lifeSegmentId,
+          goalIds: linkedIds,
+        },
         ...openProjects,
       ];
   const todayKey = toDateKey(todayInZone(prefs.timeZone));

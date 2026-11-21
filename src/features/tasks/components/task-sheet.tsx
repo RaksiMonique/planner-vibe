@@ -137,14 +137,17 @@ export function TaskSheet(props: TaskSheetProps) {
     setAutoGoalId(next?.id ?? '');
   }
 
-  /** Closes the sheet; a new subtask returns to its parent's sheet instead. */
+  /** Closes the sheet; a subtask's sheet returns to its parent's sheet instead. */
   function close() {
     const next = new URLSearchParams(params.toString());
     for (const k of ['new', 'task', 'parent']) next.delete(k);
-    if (!task && parentTask) next.set('task', parentTask.id);
+    if (parentTask) next.set('task', parentTask.id);
     const qs = next.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname);
   }
+  const parentParams = new URLSearchParams(params.toString());
+  for (const k of ['new', 'parent']) parentParams.delete(k);
+  if (parentTask) parentParams.set('task', parentTask.id);
 
   useEffect(() => {
     if (state?.ok) close();
@@ -166,10 +169,25 @@ export function TaskSheet(props: TaskSheetProps) {
       <SheetContent side="right" className="w-full gap-0 overflow-y-auto p-0 sm:max-w-md">
         <SheetHeader className="border-b">
           <SheetTitle className="font-heading text-xl">
-            {editing ? 'Edit task' : parentTask ? 'New subtask' : 'New task'}
+            {editing
+              ? parentTask
+                ? 'Edit subtask'
+                : 'Edit task'
+              : parentTask
+                ? 'New subtask'
+                : 'New task'}
           </SheetTitle>
           <SheetDescription>
-            {parentTask ? `Under “${parentTask.title}”` : 'Every task belongs to a Life Segment.'}
+            {parentTask ? (
+              <>
+                Part of{' '}
+                <Link href={`${pathname}?${parentParams.toString()}`} className="text-primary link">
+                  {parentTask.title}
+                </Link>
+              </>
+            ) : (
+              'Every task belongs to a Life Segment.'
+            )}
           </SheetDescription>
         </SheetHeader>
         <form action={action} className="flex flex-col gap-5 p-4">
@@ -515,7 +533,7 @@ export function TaskSheet(props: TaskSheetProps) {
             )}
           </div>
         </form>
-        {task && (
+        {task && !task.parentTaskId && (
           <section className="border-t p-4" data-slot="sheet-subtasks">
             <h3 className="tracking-eyebrow text-muted-foreground mb-2 flex items-center justify-between text-xs uppercase">
               Subtasks

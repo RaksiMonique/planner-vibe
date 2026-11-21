@@ -109,9 +109,12 @@ export async function TasksWorkspace({
     if (!s.parentTaskId) continue;
     (subtasksOf[s.parentTaskId] ??= []).push(s);
   }
-  const subtasks = editing
-    ? await listTasks(userId, { parentTaskId: editing.id, status: 'all' })
-    : [];
+  const [subtasks, ownParent] = await Promise.all([
+    editing ? listTasks(userId, { parentTaskId: editing.id, status: 'all' }) : [],
+    // An existing subtask's sheet names its parent and returns to it.
+    editing?.parentTaskId && !parentTask ? getTask(userId, editing.parentTaskId) : null,
+  ]);
+  const parentOf = parentTask ?? ownParent;
 
   const base = new URLSearchParams();
   for (const [k, v] of Object.entries(sp)) {
@@ -152,7 +155,7 @@ export async function TasksWorkspace({
           key={editing?.id ?? `new-${parentId ?? ''}`}
           task={editing}
           subtasks={subtasks}
-          parentTask={parentTask ? { id: parentTask.id, title: parentTask.title } : null}
+          parentTask={parentOf ? { id: parentOf.id, title: parentOf.title } : null}
           segments={segments}
           projects={projects}
           goals={goals}

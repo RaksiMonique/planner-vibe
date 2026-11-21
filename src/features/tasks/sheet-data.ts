@@ -27,14 +27,17 @@ export async function loadTaskSheetData(
       listMilestones(userId, { open: true }),
       listBlockerOptions(userId, opts.taskId),
     ]);
-  const [subtasks, blockedByIds] = await Promise.all([
+  const [subtasks, blockedByIds, ownParent] = await Promise.all([
     task ? listTasks(userId, { parentTaskId: task.id, status: 'all' }) : Promise.resolve([]),
     task ? listDependencyIds(userId, task.id) : Promise.resolve([]),
+    // An existing subtask's sheet names its parent and returns to it.
+    task?.parentTaskId && !parentTask ? getTask(userId, task.parentTaskId) : Promise.resolve(null),
   ]);
+  const parentOf = parentTask ?? ownParent;
   return {
     task,
     subtasks,
-    parentTask: parentTask ? { id: parentTask.id, title: parentTask.title } : null,
+    parentTask: parentOf ? { id: parentOf.id, title: parentOf.title } : null,
     segments,
     projects,
     goals,

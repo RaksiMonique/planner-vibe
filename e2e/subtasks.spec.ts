@@ -21,7 +21,8 @@ test('a new task is created with its subtasks and they show under it', async ({ 
     `Send invitations ${stamp}`
   );
 
-  // Opening the parent lists both; a subtask's own sheet offers no subtask box.
+  // Opening the parent lists both; a subtask's own sheet names its parent,
+  // offers no nested subtasks, and closes back to the parent.
   await page.getByRole('link', { name: title, exact: true }).click();
   const edit = page.getByRole('dialog', { name: 'Edit task' });
   await expect(edit.locator('[data-slot=sheet-subtasks]')).toContainText(`Book the hall ${stamp}`);
@@ -31,9 +32,16 @@ test('a new task is created with its subtasks and they show under it', async ({ 
     .getByRole('link', { name: 'Open' })
     .first()
     .click();
-  await expect(
-    page.getByRole('dialog', { name: 'Edit task' }).getByLabel('Add subtasks')
-  ).toHaveCount(0);
+  const child = page.getByRole('dialog', { name: 'Edit subtask' });
+  await expect(child).toBeVisible();
+  await expect(child.getByText('Part of')).toBeVisible();
+  await expect(child.getByRole('link', { name: title })).toBeVisible();
+  await expect(child.getByLabel('Add subtasks')).toHaveCount(0);
+  await expect(child.locator('[data-slot=sheet-subtasks]')).toHaveCount(0);
+  await child.getByRole('button', { name: 'Close' }).click();
+  await expect(child).toBeHidden();
+  await expect(edit).toBeVisible();
+  await expect(edit.getByLabel('Title')).toHaveValue(title);
 });
 
 test('saving a subtask from the sheet returns to the parent task', async ({ page }) => {

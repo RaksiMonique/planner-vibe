@@ -129,7 +129,9 @@ test('create a course and a book on the reading list', async ({ page }) => {
 
   const book = `Interior Castle ${stamp}`;
   await page.goto('/media/reading');
+  // Scoped to the page body: the header's New button also matches /new/.
   await page
+    .getByRole('main')
     .getByRole('button', { name: /add|new/i })
     .first()
     .click();

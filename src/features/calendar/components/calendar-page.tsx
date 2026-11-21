@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { PlusIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -66,6 +66,8 @@ export function CalendarPage({
   initialDate?: string;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [ranges, setRanges] = useState<Range[]>([initialRange]);
   const [current, setCurrent] = useState<{ from: Date; to: Date } | null>(null);
   const [enabledCalendars, setEnabledCalendars] = useState<Set<string>>(
@@ -234,7 +236,12 @@ export function CalendarPage({
         onRangeChange={handleRangeChange}
         onCreate={openNewEvent}
         onOpenEvent={(id) => void openExisting(id)}
-        onOpenTask={(id) => router.push(`/tasks?task=${id}`)}
+        onOpenTask={(id) => {
+          // The task sheet opens over the calendar; see TaskSheetHost.
+          const next = new URLSearchParams(searchParams.toString());
+          next.set('task', id);
+          router.push(`${pathname}?${next.toString()}`);
+        }}
         onOpenTimeBlock={() => router.push('/time')}
         onOpenShift={(date) => router.push(`/work/calendar?month=${date.slice(0, 7)}`)}
         onMove={handleMove}

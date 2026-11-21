@@ -50,7 +50,7 @@ export async function TasksWorkspace({
   const includeDone = one(sp.done) === '1';
   const taskId = one(sp.task);
   const parentId = one(sp.parent);
-  const isNew = one(sp.new) === '1';
+  const isNew = one(sp.new) === '1' || one(sp.new) === 'task';
   const blocked = one(sp.blocked);
   const due = one(sp.due);
 

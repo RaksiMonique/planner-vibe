@@ -14,6 +14,7 @@ import {
 } from '@/lib/action-result';
 import { toDateKey, todayInZone } from '@/lib/dates';
 import { taskInput, taskStatusValue } from './schema';
+import { loadTaskSheetData } from './sheet-data';
 import {
   completeTask,
   createTask,
@@ -35,6 +36,20 @@ function refresh() {
 }
 
 export type TaskFormState = ActionResult<{ id: string }> | undefined;
+
+/** Data for the task sheet opened as an overlay on any page. */
+export async function loadTaskSheetAction(opts: {
+  taskId?: string;
+  parentId?: string;
+  projectId?: string;
+}): Promise<ActionResult<Awaited<ReturnType<typeof loadTaskSheetData>>>> {
+  try {
+    const user = await requireUser();
+    return ok(await loadTaskSheetData(user.id, opts));
+  } catch (e) {
+    return fromError(e);
+  }
+}
 
 export async function createTaskAction(
   _prev: TaskFormState,

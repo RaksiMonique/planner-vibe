@@ -309,7 +309,7 @@ export default async function FinanceReviewPage({ searchParams }: PageProps<'/fi
                                       todayInZone(prefs.timeZone),
                                       prefs.weekStartsOn
                                     )}
-                                    editHref={`/tasks?task=${t.id}`}
+                                    editHref={`/finance/review?month=${monthKey}&task=${t.id}`}
                                     compact
                                   />
                                 </li>

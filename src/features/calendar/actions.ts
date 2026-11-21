@@ -7,7 +7,9 @@ import { and, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { captures } from '@/db/schema';
 import { clearReminder, syncReminder } from '@/features/reminders/service';
+import { listSegments } from '@/features/life-segments/service';
 import { getPreferences } from '@/features/settings/service';
+import type { Accent } from '@/lib/accents';
 import { requireUser } from '@/lib/auth';
 import {
   fail,
@@ -18,6 +20,7 @@ import {
   type ActionResult,
 } from '@/lib/action-result';
 import type { CalendarItem } from './expand';
+import { listCalendars, listCustomCategories } from './queries';
 import { eventInput, moveInput, removeCategoryInput, renameCategoryInput } from './schema';
 import {
   buildCalendarItems,
@@ -33,6 +36,33 @@ import {
 } from './service';
 
 const AFFECTED = ['/calendar', '/dashboard'];
+
+/** Picker data for the event dialog opened as an overlay on any page. */
+export async function loadEventDialogAction(): Promise<
+  ActionResult<{
+    calendars: { id: string; name: string; accent: Accent }[];
+    segments: { id: string; name: string; accent: Accent }[];
+    customCategories: string[];
+  }>
+> {
+  try {
+    const user = await requireUser();
+    const [cals, segments, customCategories] = await Promise.all([
+      listCalendars(user.id),
+      listSegments(user.id),
+      listCustomCategories(user.id),
+    ]);
+    return ok({
+      calendars: cals
+        .filter((c) => c.isEnabled)
+        .map((c) => ({ id: c.id, name: c.name, accent: c.accent })),
+      segments: segments.map((s) => ({ id: s.id, name: s.name, accent: s.accent })),
+      customCategories,
+    });
+  } catch (e) {
+    return fromError(e);
+  }
+}
 const revalidate = () => AFFECTED.forEach((p) => revalidatePath(p));
 
 export async function saveEvent(

@@ -69,7 +69,7 @@ export async function SegmentSpotlightDashboardCard({
             const overdue = t.dueDate !== null && t.dueDate < todayKey;
             return (
               <li key={t.id} className="flex items-center gap-2 text-sm">
-                <Link href={`/tasks?task=${t.id}`} className="link min-w-0 flex-1 truncate">
+                <Link href={`/dashboard?task=${t.id}`} className="link min-w-0 flex-1 truncate">
                   {t.title}
                 </Link>
                 {t.dueDate && (

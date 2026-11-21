@@ -254,7 +254,10 @@ export function MonthView({ data }: { data: MonthData }) {
                     {w.items.map((t) => (
                       <li key={t.id} className="flex items-center gap-2 text-sm">
                         <SegmentDot accent={t.segment.accent} className="size-2" />
-                        <Link href={`/tasks?task=${t.id}`} className="link flex-1 truncate">
+                        <Link
+                          href={`/month?month=${data.monthKey}&task=${t.id}`}
+                          className="link flex-1 truncate"
+                        >
                           {t.title}
                         </Link>
                         {t.dueDate && (

@@ -89,7 +89,7 @@ export function StickyNotes({
                   >
                     <span className="min-w-0 flex-1">{n.text}</span>
                     <Link
-                      href="/tasks?new=1"
+                      href="/time?new=task"
                       className={cn(buttonVariants({ variant: 'ghost', size: 'icon-xs' }))}
                       aria-label="Make a task"
                       title="Make a task"

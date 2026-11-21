@@ -23,7 +23,7 @@ export function UpcomingAppointments({
         <h3 className="font-heading text-lg">Work appointments</h3>
         <CardAction>
           <Link
-            href="/calendar?new=1"
+            href="/work/calendar?new=event"
             className={cn(buttonVariants({ variant: 'outline', size: 'xs' }))}
           >
             <PlusIcon data-icon="inline-start" />

@@ -308,14 +308,14 @@ export function Dashboard({
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center gap-2">
         <Link
-          href="/tasks?new=1"
+          href="/dashboard?new=task"
           className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
         >
           <PlusIcon data-icon="inline-start" />
           Task
         </Link>
         <Link
-          href="/calendar?new=1"
+          href="/dashboard?new=event"
           className={cn(buttonVariants({ variant: 'outline', size: 'sm' }))}
         >
           <PlusIcon data-icon="inline-start" />

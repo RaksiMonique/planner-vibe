@@ -58,7 +58,7 @@ export async function WorkTasksDashboardCard({
                 key={t.id}
                 task={t}
                 status={dueStatus(t.dueDate, today, weekStartsOn)}
-                editHref={`/work/tasks?task=${t.id}`}
+                editHref={`/dashboard?task=${t.id}`}
                 compact
               />
             ))}

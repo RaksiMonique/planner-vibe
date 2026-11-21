@@ -37,12 +37,12 @@ export async function WaitingDashboardCard({
                 <li key={t.id} className="flex items-start gap-2 text-sm">
                   <SegmentDot accent={t.segment.accent} className="mt-1.5" />
                   <div className="min-w-0 flex-1">
-                    <Link href={`/tasks?task=${t.id}`} className="link block truncate">
+                    <Link href={`/dashboard?task=${t.id}`} className="link block truncate">
                       {t.title}
                     </Link>
                     <p className="text-muted-foreground truncate text-xs">
                       after{' '}
-                      <Link href={`/tasks?task=${first.id}`} className="link">
+                      <Link href={`/dashboard?task=${first.id}`} className="link">
                         {first.title}
                       </Link>
                       {rest.length > 0 && ` and ${rest.length} more`}

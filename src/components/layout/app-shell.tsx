@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { LogOutIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -9,6 +10,8 @@ import { cn } from '@/lib/utils';
 import { NotificationsBell } from '@/features/reminders/components/notifications-bell';
 import { MobileNav } from './mobile-nav';
 import { NewMenu } from './new-menu';
+import { EventDialogHost } from '@/features/calendar/components/event-dialog-host';
+import { TaskSheetHost } from '@/features/tasks/components/task-sheet-host';
 import { RouteTitle } from './route-title';
 import { SidebarNav } from './sidebar-nav';
 
@@ -60,7 +63,9 @@ export function AppShell({
           <div className="ml-auto flex shrink-0 items-center gap-2">
             {user ? (
               <>
-                <NewMenu />
+                <Suspense>
+                  <NewMenu />
+                </Suspense>
                 <CommandPalette enabledModules={enabledModules} />
                 <NotificationsBell userId={user.id} />
                 <form action={signOut}>
@@ -81,6 +86,12 @@ export function AppShell({
           </div>
         </header>
         <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">{children}</main>
+        {user && (
+          <Suspense>
+            <TaskSheetHost />
+            <EventDialogHost />
+          </Suspense>
+        )}
       </div>
     </div>
   );

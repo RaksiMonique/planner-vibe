@@ -53,7 +53,7 @@ export function UpcomingActions({
               return (
                 <li key={t.id}>
                   <Link
-                    href={`/tasks?task=${t.id}`}
+                    href={`/finance?task=${t.id}`}
                     className="hover:bg-muted/50 flex items-center gap-2 rounded-lg px-2 py-1.5 text-sm"
                   >
                     <ListChecksIcon className="text-primary size-4 shrink-0" aria-hidden />

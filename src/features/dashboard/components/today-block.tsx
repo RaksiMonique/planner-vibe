@@ -100,7 +100,7 @@ export async function TodayBlock({
     wellnessEnabled ? getMoodForDate(userId, todayKey) : Promise.resolve(null),
   ]);
   const moodPending = wellnessEnabled && !mood;
-  const editHref = (id: string) => `/tasks?task=${id}`;
+  const editHref = (id: string) => `/dashboard?task=${id}`;
   const timeOf = (e: EventRow) =>
     e.isAllDay || !e.startsAt ? 'All day' : format(toZonedTime(e.startsAt, timeZone), 'HH:mm');
   const dayOf = (e: EventRow) =>

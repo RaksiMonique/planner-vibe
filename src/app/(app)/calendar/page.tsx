@@ -67,7 +67,7 @@ export default async function CalendarRoute({ searchParams }: { searchParams: Se
         customCategories={customCategories}
         initialRange={{ from: from.toISOString(), to: to.toISOString(), items }}
         weekStartsOn={prefs.weekStartsOn}
-        openNew={params.new === '1'}
+        openNew={params.new === '1' || params.new === 'event'}
         capture={capture}
         initialDate={initialDate as string | undefined}
       />

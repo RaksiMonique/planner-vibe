@@ -43,7 +43,7 @@ export async function CompletedDashboardCard({
               <li key={t.id} className="flex items-center gap-2 text-sm">
                 <SegmentDot accent={t.segment.accent} />
                 <Link
-                  href={`/tasks?task=${t.id}`}
+                  href={`/dashboard?task=${t.id}`}
                   className="link text-muted-foreground min-w-0 flex-1 truncate line-through"
                 >
                   {t.title}

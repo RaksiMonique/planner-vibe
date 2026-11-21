@@ -162,7 +162,7 @@ export default async function SelfCarePage() {
               <h2>Appointments</h2>
             </CardTitle>
             <Link
-              href="/calendar?new=1"
+              href="/wellness/self-care?new=event"
               className={cn(
                 buttonVariants({ variant: 'outline', size: 'xs' }),
                 'col-start-2 row-start-1 justify-self-end'

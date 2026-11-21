@@ -15,5 +15,7 @@ export function RouteTitle({ fallback = 'Planner' }: { fallback?: string }) {
     .flatMap((g) => g.items)
     .sort((a, b) => b.href.length - a.href.length)
     .find((i) => pathname === i.href || pathname.startsWith(`${i.href}/`));
-  return <h1 className="font-heading text-xl">{exact ?? item?.label ?? fallback}</h1>;
+  return (
+    <h1 className="font-heading min-w-0 truncate text-xl">{exact ?? item?.label ?? fallback}</h1>
+  );
 }

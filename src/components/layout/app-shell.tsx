@@ -8,6 +8,7 @@ import { signOut } from '@/features/auth/actions';
 import { cn } from '@/lib/utils';
 import { NotificationsBell } from '@/features/reminders/components/notifications-bell';
 import { MobileNav } from './mobile-nav';
+import { NewMenu } from './new-menu';
 import { RouteTitle } from './route-title';
 import { SidebarNav } from './sidebar-nav';
 
@@ -51,16 +52,21 @@ export function AppShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="bg-card/70 flex h-16 items-center gap-3 border-b px-4 backdrop-blur sm:px-6 lg:px-8">
           <MobileNav enabledModules={enabledModules} />
-          {title ? <h1 className="font-heading text-xl">{title}</h1> : <RouteTitle />}
-          <div className="ml-auto flex items-center gap-2">
+          {title ? (
+            <h1 className="font-heading min-w-0 truncate text-xl">{title}</h1>
+          ) : (
+            <RouteTitle />
+          )}
+          <div className="ml-auto flex shrink-0 items-center gap-2">
             {user ? (
               <>
+                <NewMenu />
                 <CommandPalette enabledModules={enabledModules} />
                 <NotificationsBell userId={user.id} />
                 <form action={signOut}>
-                  <Button type="submit" variant="ghost" size="sm">
+                  <Button type="submit" variant="ghost" size="sm" aria-label="Sign out">
                     <LogOutIcon data-icon="inline-start" />
-                    Sign out
+                    <span className="hidden sm:inline">Sign out</span>
                   </Button>
                 </form>
               </>

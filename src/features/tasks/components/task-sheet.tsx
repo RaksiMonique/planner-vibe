@@ -155,7 +155,8 @@ export function TaskSheet(props: TaskSheetProps) {
   const editing = Boolean(task);
   const subtaskParams = new URLSearchParams(params.toString());
   subtaskParams.delete('task');
-  subtaskParams.set('new', '1');
+  // 'task' rather than '1': the overlay host on other pages opens on this value too.
+  subtaskParams.set('new', 'task');
   if (task) subtaskParams.set('parent', task.id);
 
   return (

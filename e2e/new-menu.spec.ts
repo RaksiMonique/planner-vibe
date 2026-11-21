@@ -40,7 +40,13 @@ test('editing a task from the Today page keeps you on the Today page', async ({ 
   const sheet = page.getByRole('dialog', { name: 'Edit task' });
   await expect(sheet).toBeVisible();
   await expect(sheet.getByLabel('Title')).toHaveValue(title);
-  await sheet.getByRole('button', { name: 'Close' }).click();
-  await expect(sheet).toBeHidden();
+
+  // Adding a subtask from here stays on the Today page as well.
+  await sheet.getByRole('link', { name: 'Add subtask' }).click();
+  const subtaskSheet = page.getByRole('dialog', { name: 'New subtask' });
+  await expect(subtaskSheet).toBeVisible();
+  await expect(page).toHaveURL(/\/dashboard\?new=task&parent=/);
+  await subtaskSheet.getByRole('button', { name: 'Close' }).click();
+  await expect(subtaskSheet).toBeHidden();
   await expect(page).toHaveURL(/\/dashboard$/);
 });

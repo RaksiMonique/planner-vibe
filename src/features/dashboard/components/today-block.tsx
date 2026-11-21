@@ -111,175 +111,184 @@ export async function TodayBlock({
 
   return (
     <Card className="lg:col-span-3" data-slot="today-block">
-      <CardContent className="flex flex-col gap-5">
-        <Section
-          title="Today"
-          icon={ListChecksIcon}
-          count={todayCount}
-          aside={
-            <Link
-              href={`/calendar?date=${todayKey}`}
-              className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }))}
-            >
-              Open the day
-            </Link>
-          }
-        >
-          {wellnessEnabled && (
-            <div
-              data-slot="mood-check-in"
-              className="bg-muted/50 mb-1 flex flex-col gap-2 rounded-lg px-3 py-2.5"
-            >
-              {mood ? (
-                <p className="flex flex-wrap items-center gap-x-3 text-sm">
-                  <SmileIcon className="text-primary size-4" aria-hidden />
-                  <span>
-                    Mood <span className="font-medium">{mood.mood}</span> · {MOOD_WORDS[mood.mood]},
-                    energy <span className="font-medium">{mood.energy}</span> ·{' '}
-                    {ENERGY_WORDS[mood.energy]}
-                  </span>
-                  <Link href="/wellness/mood" className="text-muted-foreground link text-xs">
-                    Change
-                  </Link>
-                </p>
-              ) : (
-                <>
-                  <p className="flex items-center gap-2 text-sm font-medium">
-                    <SmileIcon className="text-primary size-4" aria-hidden />
-                    How are you today?
-                  </p>
-                  <MoodQuickPick dateKey={todayKey} inline />
-                </>
-              )}
-            </div>
-          )}
-          {todayCount - (moodPending ? 1 : 0) === 0 ? (
-            <Quiet>Nothing due today. Pick something from this week or from To schedule.</Quiet>
-          ) : (
-            <ul className="flex flex-col">
-              {events.map((e) => (
-                <li key={e.id} className="flex items-center gap-2.5 px-1.5 py-1 text-sm">
-                  <span className="text-muted-foreground w-12 shrink-0 text-xs tabular-nums">
-                    {timeOf(e)}
-                  </span>
-                  <SegmentDot accent={e.calendar.accent} />
-                  <Link
-                    href={`/calendar?date=${todayKey}`}
-                    className="link min-w-0 flex-1 truncate"
-                  >
-                    {e.title}
-                  </Link>
-                </li>
-              ))}
-              {dueToday.map((t) => (
-                <li key={t.id}>
-                  <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
-                </li>
-              ))}
-              {habits.map((h) => (
-                <li key={h.id} className="flex items-center gap-2.5 px-1.5 py-1 text-sm">
-                  <HabitToggle
-                    key={`${h.id}:${todayKey}`}
-                    habitId={h.id}
-                    dateKey={todayKey}
-                    done={false}
-                    label={`Check in ${h.name}`}
-                  />
-                  <SegmentDot accent={habitAccent(h)} />
-                  <Link href="/habits" className="link min-w-0 flex-1 truncate">
-                    {h.name}
-                  </Link>
-                  <span className="text-muted-foreground text-xs">Habit</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-
-        <Section title="Overdue" icon={TriangleAlertIcon} count={overdue.length}>
-          {overdue.length === 0 ? (
-            <Quiet>Nothing overdue.</Quiet>
-          ) : (
-            <ul className="flex flex-col">
-              {overdue.map((t) => (
-                <li key={t.id}>
-                  <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-
-        <Section title="This week" icon={CalendarDaysIcon} count={dueThisWeek.length}>
-          {dueThisWeek.length === 0 ? (
-            <Quiet>Nothing else due this week.</Quiet>
-          ) : (
-            <ul className="flex flex-col">
-              {dueThisWeek.map((t) => (
-                <li key={t.id} className="flex items-center gap-2.5">
-                  <span className="text-muted-foreground w-12 shrink-0 pl-1.5 text-xs">
-                    {t.dueDate && format(parseISO(t.dueDate), 'EEE')}
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-
-        <Section title="Appointments" icon={ClockIcon} count={appointments.length}>
-          {appointments.length === 0 ? (
-            <Quiet>No appointments in the next seven days.</Quiet>
-          ) : (
-            <ul className="flex flex-col">
-              {appointments.map((e) => (
-                <li key={e.id} className="flex items-center gap-2.5 px-1.5 py-1 text-sm">
-                  <span className="text-muted-foreground w-12 shrink-0 text-xs">
-                    {dayOf(e) === todayKey ? 'Today' : format(parseISO(dayOf(e)), 'EEE d')}
-                  </span>
-                  <SegmentDot accent={e.calendar.accent} />
-                  <Link
-                    href={`/calendar?date=${dayOf(e)}`}
-                    className="link min-w-0 flex-1 truncate"
-                  >
-                    {e.title}
-                  </Link>
-                  <span className="text-muted-foreground text-xs tabular-nums">{timeOf(e)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
-
-        <Section
-          title="To schedule"
-          icon={CalendarClockIcon}
-          count={undatedCount}
-          aside={
-            undatedCount > 0 ? (
+      {/*
+        Short rows should not stretch across the page: two columns from lg
+        (Today beside the rest), three from xl (Today, due work, the horizon).
+      */}
+      <CardContent className="grid gap-5 lg:grid-cols-2 lg:grid-rows-[auto_1fr] lg:gap-x-8 xl:grid-cols-3 xl:grid-rows-1">
+        <div className="flex min-w-0 flex-col gap-5 lg:row-span-2 xl:row-span-1">
+          <Section
+            title="Today"
+            icon={ListChecksIcon}
+            count={todayCount}
+            aside={
               <Link
-                href="/tasks?due=none"
+                href={`/calendar?date=${todayKey}`}
                 className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }))}
               >
-                All {undatedCount} without a date
+                Open the day
               </Link>
-            ) : undefined
-          }
-        >
-          {undated.length === 0 ? (
-            <Quiet>Every open task has a date.</Quiet>
-          ) : (
-            <ul className="flex flex-col">
-              {undated.map((t) => (
-                <li key={t.id}>
-                  <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
-                </li>
-              ))}
-            </ul>
-          )}
-        </Section>
+            }
+          >
+            {wellnessEnabled && (
+              <div
+                data-slot="mood-check-in"
+                className="bg-muted/50 mb-1 flex flex-col gap-2 rounded-lg px-3 py-2.5"
+              >
+                {mood ? (
+                  <p className="flex flex-wrap items-center gap-x-3 text-sm">
+                    <SmileIcon className="text-primary size-4" aria-hidden />
+                    <span>
+                      Mood <span className="font-medium">{mood.mood}</span> ·{' '}
+                      {MOOD_WORDS[mood.mood]}, energy{' '}
+                      <span className="font-medium">{mood.energy}</span> ·{' '}
+                      {ENERGY_WORDS[mood.energy]}
+                    </span>
+                    <Link href="/wellness/mood" className="text-muted-foreground link text-xs">
+                      Change
+                    </Link>
+                  </p>
+                ) : (
+                  <>
+                    <p className="flex items-center gap-2 text-sm font-medium">
+                      <SmileIcon className="text-primary size-4" aria-hidden />
+                      How are you today?
+                    </p>
+                    <MoodQuickPick dateKey={todayKey} inline />
+                  </>
+                )}
+              </div>
+            )}
+            {todayCount - (moodPending ? 1 : 0) === 0 ? (
+              <Quiet>Nothing due today. Pick something from this week or from To schedule.</Quiet>
+            ) : (
+              <ul className="flex flex-col">
+                {events.map((e) => (
+                  <li key={e.id} className="flex items-center gap-2.5 px-1.5 py-1 text-sm">
+                    <span className="text-muted-foreground w-12 shrink-0 text-xs tabular-nums">
+                      {timeOf(e)}
+                    </span>
+                    <SegmentDot accent={e.calendar.accent} />
+                    <Link
+                      href={`/calendar?date=${todayKey}`}
+                      className="link min-w-0 flex-1 truncate"
+                    >
+                      {e.title}
+                    </Link>
+                  </li>
+                ))}
+                {dueToday.map((t) => (
+                  <li key={t.id}>
+                    <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
+                  </li>
+                ))}
+                {habits.map((h) => (
+                  <li key={h.id} className="flex items-center gap-2.5 px-1.5 py-1 text-sm">
+                    <HabitToggle
+                      key={`${h.id}:${todayKey}`}
+                      habitId={h.id}
+                      dateKey={todayKey}
+                      done={false}
+                      label={`Check in ${h.name}`}
+                    />
+                    <SegmentDot accent={habitAccent(h)} />
+                    <Link href="/habits" className="link min-w-0 flex-1 truncate">
+                      {h.name}
+                    </Link>
+                    <span className="text-muted-foreground text-xs">Habit</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        </div>
+        <div className="flex min-w-0 flex-col gap-5 lg:col-start-2 lg:row-start-1 xl:col-start-2">
+          <Section title="Overdue" icon={TriangleAlertIcon} count={overdue.length}>
+            {overdue.length === 0 ? (
+              <Quiet>Nothing overdue.</Quiet>
+            ) : (
+              <ul className="flex flex-col">
+                {overdue.map((t) => (
+                  <li key={t.id}>
+                    <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+
+          <Section title="This week" icon={CalendarDaysIcon} count={dueThisWeek.length}>
+            {dueThisWeek.length === 0 ? (
+              <Quiet>Nothing else due this week.</Quiet>
+            ) : (
+              <ul className="flex flex-col">
+                {dueThisWeek.map((t) => (
+                  <li key={t.id} className="flex items-center gap-2.5">
+                    <span className="text-muted-foreground w-12 shrink-0 pl-1.5 text-xs">
+                      {t.dueDate && format(parseISO(t.dueDate), 'EEE')}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        </div>
+        <div className="flex min-w-0 flex-col gap-5 lg:col-start-2 lg:row-start-2 xl:col-start-3 xl:row-start-1">
+          <Section title="Appointments" icon={ClockIcon} count={appointments.length}>
+            {appointments.length === 0 ? (
+              <Quiet>No appointments in the next seven days.</Quiet>
+            ) : (
+              <ul className="flex flex-col">
+                {appointments.map((e) => (
+                  <li key={e.id} className="flex items-center gap-2.5 px-1.5 py-1 text-sm">
+                    <span className="text-muted-foreground w-12 shrink-0 text-xs">
+                      {dayOf(e) === todayKey ? 'Today' : format(parseISO(dayOf(e)), 'EEE d')}
+                    </span>
+                    <SegmentDot accent={e.calendar.accent} />
+                    <Link
+                      href={`/calendar?date=${dayOf(e)}`}
+                      className="link min-w-0 flex-1 truncate"
+                    >
+                      {e.title}
+                    </Link>
+                    <span className="text-muted-foreground text-xs tabular-nums">{timeOf(e)}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+
+          <Section
+            title="To schedule"
+            icon={CalendarClockIcon}
+            count={undatedCount}
+            aside={
+              undatedCount > 0 ? (
+                <Link
+                  href="/tasks?due=none"
+                  className={cn(buttonVariants({ variant: 'ghost', size: 'xs' }))}
+                >
+                  All {undatedCount} without a date
+                </Link>
+              ) : undefined
+            }
+          >
+            {undated.length === 0 ? (
+              <Quiet>Every open task has a date.</Quiet>
+            ) : (
+              <ul className="flex flex-col">
+                {undated.map((t) => (
+                  <li key={t.id}>
+                    <TaskRow task={t} status={t.due} editHref={editHref(t.id)} compact />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Section>
+        </div>
       </CardContent>
     </Card>
   );

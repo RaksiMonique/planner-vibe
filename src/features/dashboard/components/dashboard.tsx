@@ -280,7 +280,7 @@ export function Dashboard({
       node: (
         <DashboardCard title="Life Segments" icon={ChartPieIcon} href="/segments" release={1}>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
-            {data.segments.slice(0, 10).map((s) => (
+            {data.segments.map((s) => (
               <Link
                 key={s.id}
                 href={`/segments/${s.slug}`}
@@ -292,11 +292,6 @@ export function Dashboard({
               </Link>
             ))}
           </div>
-          {data.segments.length > 10 && (
-            <Link href="/segments" className="text-primary link text-xs">
-              All {data.segments.length} segments
-            </Link>
-          )}
         </DashboardCard>
       ),
     },

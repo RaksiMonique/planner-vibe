@@ -18,7 +18,7 @@ import { ownerPolicies } from './_policies';
 import { bibleStudies, readingPlans } from './faith';
 import { courses, subjects } from './learning';
 import { accentEnum, lifeSegments } from './organisation';
-import { projects, tasks } from './planning';
+import { goals, projects, tasks } from './planning';
 import { ownerId } from './profiles';
 import { timeBlocks } from './scheduling';
 
@@ -52,6 +52,9 @@ export const habits = planner.table(
     accent: accentEnum('accent'),
     reminderTime: time('reminder_time'),
     details: text('details'),
+    /** The personal reason for the habit; shown on its page and when it slips. */
+    why: text('why'),
+    goalId: uuid('goal_id').references(() => goals.id, { onDelete: 'set null' }),
     courseId: uuid('course_id').references(() => courses.id, { onDelete: 'set null' }),
     subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
     bibleStudyId: uuid('bible_study_id').references(() => bibleStudies.id, {
@@ -231,6 +234,27 @@ export const timeEntries = planner.table(
 export type Habit = typeof habits.$inferSelect;
 export type NewHabit = typeof habits.$inferInsert;
 export type HabitCheckIn = typeof habitCheckIns.$inferSelect;
+/**
+ * The user's own break ideas. A session that ends offers one at random
+ * instead of the scroll reflex; movement breaks suit seated work. A break
+ * that is also a habit checks the habit in when taken.
+ */
+export const breakIdeas = planner.table(
+  'break_ideas',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: ownerId(),
+    title: text('title').notNull(),
+    isMovement: boolean('is_movement').notNull().default(false),
+    habitId: uuid('habit_id').references(() => habits.id, { onDelete: 'set null' }),
+    sortOrder: integer('sort_order').notNull().default(0),
+    ...timestamps(),
+  },
+  (t) => [index('break_ideas_user_idx').on(t.userId, t.sortOrder), ...ownerPolicies('break_ideas')]
+);
+
+export type BreakIdea = typeof breakIdeas.$inferSelect;
+
 export type HabitPlanItem = typeof habitPlanItems.$inferSelect;
 export type NewHabitCheckIn = typeof habitCheckIns.$inferInsert;
 export type Routine = typeof routines.$inferSelect;

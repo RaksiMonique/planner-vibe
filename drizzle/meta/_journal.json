@@ -169,6 +169,13 @@
       "when": 1795480540858,
       "tag": "0023_habit_guides",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1795494602779,
+      "tag": "0024_second_brain",
+      "breakpoints": true
     }
   ]
 }

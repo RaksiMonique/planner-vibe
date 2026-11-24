@@ -1,13 +1,22 @@
 import { z } from 'zod';
 import type { Accent } from '@/lib/accents';
 
-export const ACTIVITY_TYPES = ['deep_work', 'light_work', 'break', 'custom'] as const;
+export const ACTIVITY_TYPES = [
+  'deep_work',
+  'light_work',
+  'break',
+  'fun',
+  'admin',
+  'custom',
+] as const;
 export type ActivityType = (typeof ACTIVITY_TYPES)[number];
 
 export const ACTIVITY_LABELS: Record<ActivityType, string> = {
   deep_work: 'Deep work',
   light_work: 'Light work',
   break: 'Break',
+  fun: 'Fun',
+  admin: 'Admin',
   custom: 'Custom',
 };
 
@@ -16,6 +25,8 @@ export const ACTIVITY_ACCENT: Record<ActivityType, Accent> = {
   deep_work: 'plum',
   light_work: 'rose',
   break: 'blush',
+  fun: 'coral',
+  admin: 'ochre',
   custom: 'crimson',
 };
 

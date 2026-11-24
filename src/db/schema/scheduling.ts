@@ -21,6 +21,8 @@ export const activityTypeEnum = planner.enum('activity_type', [
   'deep_work',
   'light_work',
   'break',
+  'fun',
+  'admin',
   'custom',
 ]);
 export const templateKindEnum = planner.enum('template_kind', ['day', 'week']);

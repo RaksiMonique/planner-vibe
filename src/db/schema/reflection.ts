@@ -3,7 +3,7 @@ import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
 import { planner } from './_schema';
 import { lifeSegments } from './organisation';
-import { goals } from './planning';
+import { goals, tasks } from './planning';
 import { ownerId } from './profiles';
 
 export const journalKindEnum = planner.enum('journal_kind', [
@@ -34,6 +34,8 @@ export const journalEntries = planner.table(
     content: text('content').notNull(),
     /** Optional 1 to 5 mood noted with the entry. */
     mood: smallint('mood'),
+    /** Set when the entry was written to get unstuck on a task. */
+    taskId: uuid('task_id').references(() => tasks.id, { onDelete: 'set null' }),
     ...softDelete(),
     search: searchColumn(['title', 'content']),
     ...timestamps(),

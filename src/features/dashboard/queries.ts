@@ -55,7 +55,7 @@ export type DashboardData = {
   appointments: EventRow[];
   captures: Capture[];
   segments: Array<LifeSegment & { openTasks: number }>;
-  quote: { quote: string; author: string };
+  quote: { quote: string; author: string; why?: string | null };
   /** Today plus six days of shifts and leave; null when the Work module is off. */
   workDays: WorkDay[] | null;
 };
@@ -181,11 +181,11 @@ export async function getDashboardData(userId: string): Promise<DashboardData> {
 async function pickQuote(
   userId: string,
   dayOfYear: number
-): Promise<{ quote: string; author: string }> {
+): Promise<{ quote: string; author: string; why?: string | null }> {
   const own = await listQuotes(userId).catch(() => []);
   if (own.length === 0) return quoteForDay(dayOfYear);
   const pinned = own.filter((q) => q.isPinned);
   const pool = pinned.length > 0 ? pinned : own;
   const q = pool[dayOfYear % pool.length];
-  return { quote: q.content, author: q.author ?? q.source ?? '' };
+  return { quote: q.content, author: q.author ?? q.source ?? '', why: q.why };
 }

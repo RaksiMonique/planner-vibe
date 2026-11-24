@@ -272,6 +272,11 @@ export function Dashboard({
                 {data.quote.quote}
               </blockquote>
               <figcaption className="text-muted-foreground text-xs">{data.quote.author}</figcaption>
+              {data.quote.why && (
+                <p className="text-muted-foreground border-primary/40 border-l-2 pl-2 text-xs">
+                  {data.quote.why}
+                </p>
+              )}
             </figure>
           </CardContent>
         </Card>

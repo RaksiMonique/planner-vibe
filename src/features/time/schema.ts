@@ -157,6 +157,9 @@ export type TimerStartInput = z.infer<typeof timerStartInput>;
 export const TEMPLATE_KINDS = ['day', 'week'] as const;
 export type TemplateKind = (typeof TEMPLATE_KINDS)[number];
 
+/** Names of the starter day shapes `createStarterTemplates` adds; the panel offers them while any is missing. */
+export const STARTER_TEMPLATE_NAMES = ['Energy day', 'Admin day', 'Six plus one'] as const;
+
 export const templateSaveInput = z.object({
   name: z.string().trim().min(1, 'Name the template.').max(80),
   kind: z.enum(TEMPLATE_KINDS).default('day'),

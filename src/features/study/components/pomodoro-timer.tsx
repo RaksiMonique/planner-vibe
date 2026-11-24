@@ -1,22 +1,26 @@
 'use client';
 
-import { useEffect, useRef, useState, useTransition } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { PlayIcon, SquareIcon, TimerIcon } from 'lucide-react';
+import { InfinityIcon, PlayIcon, SquareIcon, TimerIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { BreakPicker } from '@/features/breaks/components/break-picker';
+import type { BreakIdeaView } from '@/features/breaks/schema';
 import type { SegmentRef } from '@/features/life-segments/types';
 import { NativeSelect } from '@/features/tasks/components/native-select';
 import { cn } from '@/lib/utils';
 import { startPomodoroAction, stopPomodoroAction } from '../actions';
 import {
   DEFAULT_POMODORO,
+  elapsedMs,
   formatClock,
   PHASE_LABELS,
   remainingMs,
-  stateFromElapsed,
+  stateFor,
+  type PomodoroMode,
   type PomodoroState,
 } from '../pomodoro';
 import type { CourseOption, SubjectOption } from './study-forms';
@@ -28,6 +32,32 @@ export type RunningPomodoro = {
   label: string;
 };
 
+// The mode is not stored with the session, so this browser remembers it per session.
+const modeKey = (sessionId: string) => `pomodoro-mode:${sessionId}`;
+
+function readMode(sessionId: string): PomodoroMode {
+  try {
+    return window.localStorage.getItem(modeKey(sessionId)) === 'open' ? 'open' : 'intervals';
+  } catch {
+    return 'intervals';
+  }
+}
+
+// The stored mode only changes from this component or another tab, which fires `storage`.
+function subscribeStorage(onChange: () => void) {
+  window.addEventListener('storage', onChange);
+  return () => window.removeEventListener('storage', onChange);
+}
+
+function writeMode(sessionId: string, mode: PomodoroMode | null) {
+  try {
+    if (mode) window.localStorage.setItem(modeKey(sessionId), mode);
+    else window.localStorage.removeItem(modeKey(sessionId));
+  } catch {
+    // Private windows may refuse storage; the session then runs in intervals after a reload.
+  }
+}
+
 export function PomodoroTimer({
   segments,
   subjects,
@@ -35,6 +65,8 @@ export function PomodoroTimer({
   running,
   defaultSegmentId,
   defaultCourseId,
+  breakIdeas = [],
+  todayKey,
 }: {
   segments: SegmentRef[];
   subjects: SubjectOption[];
@@ -42,17 +74,30 @@ export function PomodoroTimer({
   running: RunningPomodoro | null;
   defaultSegmentId?: string;
   defaultCourseId?: string;
+  /** Offered when a break phase comes round. */
+  breakIdeas?: BreakIdeaView[];
+  /** yyyy-MM-dd in the user's zone, for a break that checks a habit in. */
+  todayKey: string;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [session, setSession] = useState<RunningPomodoro | null>(running);
+  // A session started here knows its mode; one that arrived with the page reads it back
+  // from this browser, with the server assuming intervals until hydration.
+  const [chosenMode, setChosenMode] = useState<PomodoroMode | null>(null);
+  const storedMode = useSyncExternalStore(
+    subscribeStorage,
+    () => (session ? readMode(session.sessionId) : 'intervals'),
+    () => 'intervals' as PomodoroMode
+  );
+  const mode: PomodoroMode = chosenMode ?? storedMode;
   const [now, setNow] = useState(() => Date.now());
   const [note, setNote] = useState('');
   const settings = DEFAULT_POMODORO;
-  // The phase and count follow from the start time and the clock, so nothing drifts.
+  // The phase and count follow from the mode, the start time and the clock, so nothing drifts.
   const state: PomodoroState | null = session
-    ? stateFromElapsed(Date.parse(session.startedAt), now, settings)
+    ? stateFor(mode, Date.parse(session.startedAt), now, settings)
     : null;
   const courseRef = useRef<HTMLSelectElement>(null);
   const subjectRef = useRef<HTMLSelectElement>(null);
@@ -75,7 +120,7 @@ export function PomodoroTimer({
     );
   }
 
-  function start() {
+  function start(nextMode: PomodoroMode) {
     setError(null);
     const courseId = courseRef.current?.value || undefined;
     const course = courses.find((c) => c.id === courseId);
@@ -88,6 +133,8 @@ export function PomodoroTimer({
         return;
       }
       const label = course?.title ?? subjects.find((s) => s.id === subjectId)?.name ?? 'Study';
+      writeMode(result.data.sessionId, nextMode);
+      setChosenMode(nextMode);
       setSession({ sessionId: result.data.sessionId, startedAt: result.data.startedAt, label });
       setNow(Date.now());
     });
@@ -96,13 +143,16 @@ export function PomodoroTimer({
   function stop() {
     if (!session || !state) return;
     setError(null);
-    const pomodoros = state.completedWork;
+    // An open-ended stretch is saved as time, not as Pomodoros.
+    const pomodoros = mode === 'open' ? 0 : state.completedWork;
     startTransition(async () => {
       const result = await stopPomodoroAction({ sessionId: session.sessionId, pomodoros, note });
       if (!result.ok) {
         setError(result.error);
         return;
       }
+      writeMode(session.sessionId, null);
+      setChosenMode(null);
       setSession(null);
       setNote('');
       router.refresh();
@@ -110,17 +160,19 @@ export function PomodoroTimer({
   }
 
   if (session && state) {
+    const open = mode === 'open';
     const remaining = remainingMs(state, settings, now);
     const total = msOf(state, settings);
     const pct = Math.round(((total - remaining) / total) * 100);
+    const onBreak = !open && state.phase !== 'work';
     return (
       <Card className={cn(state.phase === 'work' ? 'ring-primary/40' : 'ring-rose/60')}>
         <CardContent className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <TimerIcon className="text-primary size-5" aria-hidden />
             <div className="min-w-0 flex-1">
-              <p className="tracking-eyebrow text-muted-foreground text-xs uppercase">
-                {PHASE_LABELS[state.phase]} · {session.label}
+              <p className="tracking-eyebrow text-muted-foreground truncate text-xs uppercase">
+                {open ? 'Focus, open-ended' : PHASE_LABELS[state.phase]} · {session.label}
               </p>
               {/* Relative to now, so the server and the hydrating client can disagree. */}
               <p
@@ -128,22 +180,36 @@ export function PomodoroTimer({
                 aria-live="polite"
                 suppressHydrationWarning
               >
-                {formatClock(remaining)}
+                {formatClock(open ? elapsedMs(state, now) : remaining)}
               </p>
             </div>
             <p className="text-muted-foreground text-sm">
-              {state.completedWork} Pomodoro{state.completedWork === 1 ? '' : 's'} done
+              {open
+                ? 'Stop when you are done.'
+                : `${state.completedWork} Pomodoro${state.completedWork === 1 ? '' : 's'} done`}
             </p>
           </div>
-          <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
-            <div
-              className={cn(
-                'h-full transition-all',
-                state.phase === 'work' ? 'bg-primary' : 'bg-rose'
-              )}
-              style={{ width: `${pct}%` }}
-            />
-          </div>
+          {!open && (
+            <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
+              <div
+                className={cn(
+                  'h-full transition-all',
+                  state.phase === 'work' ? 'bg-primary' : 'bg-rose'
+                )}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          )}
+          {onBreak && (
+            <div className="bg-secondary rounded-lg px-3 py-2" data-slot="pomodoro-break">
+              <BreakPicker
+                ideas={breakIdeas}
+                preferMovement
+                todayKey={todayKey}
+                prompt="Away from the screen. Roll a break?"
+              />
+            </div>
+          )}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
             <div className="flex-1">
               <Label htmlFor="pomodoro-note" className="text-xs">
@@ -176,7 +242,7 @@ export function PomodoroTimer({
   return (
     <Card>
       <CardContent className="flex flex-col gap-3">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <TimerIcon className="text-primary size-4" aria-hidden />
           <h3 className="font-heading text-lg">Pomodoro</h3>
           <span className="text-muted-foreground text-xs">
@@ -238,12 +304,18 @@ export function PomodoroTimer({
             </NativeSelect>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          <Button type="button" onClick={start} disabled={pending}>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button type="button" onClick={() => start('intervals')} disabled={pending}>
             <PlayIcon data-icon="inline-start" />
             {pending ? 'Starting…' : 'Start Pomodoro'}
           </Button>
-          <p className="text-muted-foreground text-xs">Also starts the time tracker.</p>
+          <Button type="button" variant="outline" onClick={() => start('open')} disabled={pending}>
+            <InfinityIcon data-icon="inline-start" />
+            Stop when done
+          </Button>
+          <p className="text-muted-foreground text-xs">
+            Both start the time tracker. Stop when done counts up and never cuts you off.
+          </p>
         </div>
         {error && (
           <p role="alert" className="text-destructive text-sm">

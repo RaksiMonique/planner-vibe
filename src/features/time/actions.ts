@@ -24,6 +24,7 @@ import {
   buildTimeRange,
   createBlock,
   createEntry,
+  createStarterTemplates,
   getBlock,
   getEntry,
   moveBlock,
@@ -209,6 +210,17 @@ export async function applyTemplateAction(
     if (!parsed.success) return fromZodError(parsed.error);
     const prefs = await getPreferences(user.id);
     const created = await applyTemplate(user.id, parsed.data, prefs.timeZone, prefs.weekStartsOn);
+    revalidate();
+    return ok({ created });
+  } catch (e) {
+    return fromError(e);
+  }
+}
+
+export async function addStarterTemplatesAction(): Promise<ActionResult<{ created: number }>> {
+  try {
+    const user = await requireUser();
+    const created = await createStarterTemplates(user.id);
     revalidate();
     return ok({ created });
   } catch (e) {

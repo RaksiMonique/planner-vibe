@@ -36,10 +36,13 @@ export function TimerPanel({
   running,
   segments,
   onChanged,
+  onStopped,
 }: {
   running: RunningEntryView | null;
   segments: SegmentOption[];
   onChanged: () => void;
+  /** Called once a running timer has been stopped, before the page re-reads. */
+  onStopped?: () => void;
 }) {
   const [state, action] = useActionState(startTimerAction, null);
   const [stopping, setStopping] = useState(false);
@@ -58,16 +61,16 @@ export function TimerPanel({
     setStopping(true);
     const result = await stopTimerAction(running.id);
     setStopping(false);
-    if (result.ok) onChanged();
+    if (result.ok) {
+      onStopped?.();
+      onChanged();
+    }
   }
 
   if (running) {
     return (
       <div className="bg-secondary flex flex-wrap items-center gap-3 rounded-xl px-4 py-3">
-        <span
-          className="bg-crimson inline-block size-2.5 animate-pulse rounded-full"
-          aria-hidden
-        />
+        <span className="bg-crimson inline-block size-2.5 animate-pulse rounded-full" aria-hidden />
         <div className="min-w-0 flex-1">
           {/* Elapsed time is relative to now, so the server and the hydrating client can disagree. */}
           <p className="text-sm font-medium" suppressHydrationWarning>

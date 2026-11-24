@@ -41,6 +41,8 @@ import { MoodTrendDashboardCard } from '@/features/wellness/components/mood-tren
 import { RoutinesDashboardCard } from '@/features/routines/components/routines-dashboard-card';
 import { TimeDashboardCard } from '@/features/time/components/time-dashboard-card';
 import { ProjectsDashboardCard } from '@/features/projects/components/projects-dashboard-card';
+import { SegmentFormDialog } from '@/features/life-segments/components/segment-form-dialog';
+import { fillerSpanClasses } from '@/features/dashboard/segment-tiles';
 import { SegmentSpotlightDashboardCard } from '@/features/life-segments/components/segment-spotlight-card';
 import { MonthGlanceDashboardCard } from '@/features/month/components/month-glance-card';
 import { QuarterFocusDashboardCard } from '@/features/horizons/components/quarter-focus-card';
@@ -298,6 +300,19 @@ export function Dashboard({
                 <span className="text-muted-foreground text-xs tabular-nums">{s.openTasks}</span>
               </Link>
             ))}
+            <SegmentFormDialog
+              variant="ghost"
+              triggerClassName={cn(
+                'text-muted-foreground h-auto justify-start rounded-lg border border-dashed px-3 py-2 text-sm font-normal',
+                fillerSpanClasses(data.segments.length)
+              )}
+              trigger={
+                <>
+                  <PlusIcon data-icon="inline-start" />
+                  Add a segment
+                </>
+              }
+            />
           </div>
         </DashboardCard>
       ),

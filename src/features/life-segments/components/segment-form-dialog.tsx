@@ -27,15 +27,20 @@ export function SegmentFormDialog({
   segment,
   trigger,
   variant = 'default',
+  triggerClassName,
 }: {
   segment?: LifeSegment;
   trigger: React.ReactNode;
   variant?: React.ComponentProps<typeof Button>['variant'];
+  /** Reshapes the trigger, e.g. into a tile that sits in a grid of segments. */
+  triggerClassName?: string;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant={variant} size="sm" />}>{trigger}</DialogTrigger>
+      <DialogTrigger render={<Button variant={variant} size="sm" className={triggerClassName} />}>
+        {trigger}
+      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="font-heading text-lg">

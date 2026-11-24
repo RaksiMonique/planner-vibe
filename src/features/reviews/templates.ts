@@ -40,6 +40,10 @@ export const REVIEW_TEMPLATES: Record<ReviewKind, ReviewTemplate> = {
     prompts: [
       ...CORE_PROMPTS,
       { id: 'energy', label: 'How were my energy and mood this week?' },
+      {
+        id: 'fun',
+        label: 'Where was the fun this week, and did the hard parts get paid back with rest?',
+      },
       { id: 'next_three', label: 'What are the three things that matter most next week?' },
     ],
   },
@@ -48,7 +52,11 @@ export const REVIEW_TEMPLATES: Record<ReviewKind, ReviewTemplate> = {
     description: 'Habits, balance across Life Segments, and the month ahead.',
     prompts: [
       ...CORE_PROMPTS,
-      { id: 'habits', label: 'Which habits held, and which slipped?' },
+      {
+        id: 'habits',
+        label: 'Which habits held over the month, and which slipped?',
+        hint: 'Judge the month, not the day. A miss is a day, not a verdict.',
+      },
       { id: 'balance', label: 'Which Life Segments got too little attention?' },
     ],
   },

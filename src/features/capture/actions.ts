@@ -63,8 +63,15 @@ export async function convertCaptureAction(
       return parsed.error.issues[0]?.path[0] === 'id'
         ? fail('Which capture?')
         : fromZodError(parsed.error);
-    if (parsed.data.as === 'note') {
-      const note = await convertCaptureToNote(user.id, parsed.data.id, parsed.data.lifeSegmentId);
+    if (parsed.data.as === 'note' || parsed.data.as === 'quote') {
+      const { as, author, source, why, tags } = parsed.data;
+      const note = await convertCaptureToNote(user.id, parsed.data.id, parsed.data.lifeSegmentId, {
+        kind: as,
+        author,
+        source,
+        why,
+        tags,
+      });
       revalidatePath('/', 'layout');
       return ok({ id: note.id });
     }

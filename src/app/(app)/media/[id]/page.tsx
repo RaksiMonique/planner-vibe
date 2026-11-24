@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { format } from 'date-fns';
-import { ArrowLeftIcon, HeartIcon, PencilIcon, Trash2Icon, XIcon } from 'lucide-react';
+import { ArrowLeftIcon, HeartIcon, PencilIcon, PlusIcon, Trash2Icon, XIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -10,6 +10,9 @@ import { PageHeader } from '@/components/shared/page-header';
 import { SegmentBadge } from '@/components/shared/segment-badge';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import { listSegments } from '@/features/life-segments/service';
+import { NoteCard } from '@/features/notes/components/note-card';
+import { NoteFormDialog } from '@/features/notes/components/note-form-dialog';
+import { listNotesForMediaItem, listTags } from '@/features/notes/queries';
 import { NativeSelect } from '@/features/tasks/components/native-select';
 import {
   addToListAction,
@@ -47,13 +50,18 @@ export default async function MediaItemPage({ params }: { params: Promise<{ id: 
   const { id } = await params;
   const item = await getMediaItemRow(user.id, id);
   if (!item) notFound();
-  const [segments, prefs, logs, lists, covers] = await Promise.all([
+  const [segments, prefs, logs, lists, covers, notes, tags] = await Promise.all([
     listSegments(user.id),
     getPreferences(user.id),
     listMediaLogs(user.id, id),
     listMediaLists(user.id),
     resolveCoverSrcs([item]),
+    listNotesForMediaItem(user.id, id),
+    listTags(user.id),
   ]);
+  const tagSuggestions = tags.map((t) => t.tag);
+  const noteSegmentId = item.lifeSegmentId ?? segments.find((s) => s.slug === 'growth')?.id;
+  const sourceItems = [{ id: item.id, title: item.title, kind: item.kind }];
   const todayKey = toDateKey(todayInZone(prefs.timeZone));
   const labels = item.kind === 'book' ? BOOK_STATUS_LABELS : STATUS_LABELS;
   const memberOf = lists.filter((l) => l.items.some((i) => i.id === item.id));
@@ -236,6 +244,63 @@ export default async function MediaItemPage({ params }: { params: Promise<{ id: 
                   </li>
                 ))}
               </ul>
+            )}
+          </section>
+
+          <section className="flex flex-col gap-2" data-slot="item-notes">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="font-heading text-xl">Worth keeping</h2>
+              <span className="text-muted-foreground text-xs">{notes.length}</span>
+              <span className="ml-auto flex gap-1">
+                <NoteFormDialog
+                  kind="quote"
+                  segments={segments}
+                  defaultSegmentId={noteSegmentId}
+                  sourceItems={sourceItems}
+                  defaultMediaItemId={item.id}
+                  tagSuggestions={tagSuggestions}
+                  size="sm"
+                  trigger={
+                    <>
+                      <PlusIcon data-icon="inline-start" />
+                      Quote
+                    </>
+                  }
+                />
+                <NoteFormDialog
+                  kind="note"
+                  segments={segments}
+                  defaultSegmentId={noteSegmentId}
+                  sourceItems={sourceItems}
+                  defaultMediaItemId={item.id}
+                  tagSuggestions={tagSuggestions}
+                  variant="outline"
+                  size="sm"
+                  trigger={
+                    <>
+                      <PlusIcon data-icon="inline-start" />
+                      Note
+                    </>
+                  }
+                />
+              </span>
+            </div>
+            {notes.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Nothing saved from this yet. Keep the lines that surprised you, and say why.
+              </p>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2">
+                {notes.map((n) => (
+                  <NoteCard
+                    key={n.id}
+                    note={n}
+                    segments={segments}
+                    sourceItems={sourceItems}
+                    tagSuggestions={tagSuggestions}
+                  />
+                ))}
+              </div>
             )}
           </section>
 

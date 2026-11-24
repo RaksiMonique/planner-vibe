@@ -207,7 +207,7 @@ test('quick capture lands in the Inbox and files as a task', async ({ page, isMo
   const item = page.locator('li', { hasText: text }).first();
   await expect(item).toBeVisible();
 
-  await item.getByRole('button', { name: 'File as task or note' }).click();
+  await item.getByRole('button', { name: 'File as task, note or quote' }).click();
   await item.getByLabel('Life Segment').selectOption({ label: 'Finance' });
   await item.getByRole('button', { name: 'File as task' }).click();
   await expect(page.locator('li', { hasText: text })).toHaveCount(0);
@@ -297,7 +297,7 @@ test('a capture can be filed as a note', async ({ page, isMobile }) => {
   const item = page.locator('li', { hasText: text }).first();
   await expect(item).toBeVisible();
 
-  await item.getByRole('button', { name: 'File as task or note' }).click();
+  await item.getByRole('button', { name: 'File as task, note or quote' }).click();
   await item.getByLabel('Life Segment').selectOption({ label: 'Finance' });
   await item.getByRole('button', { name: 'File as note' }).click();
   await expect(page.locator('li', { hasText: text })).toHaveCount(0);

@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { captures } from '@/db/schema';
 import { createTask, type TaskContext } from '@/features/tasks/service';
 import { createNote } from '@/features/notes/service';
+import { parseTags } from '@/features/notes/tags';
 import { NotFoundError } from '@/lib/errors';
 import type { Capture } from './queries';
 
@@ -79,13 +80,32 @@ export async function convertCaptureToTask(
   return task;
 }
 
-/** The capture's text becomes the body of a note in the chosen segment. */
-export async function convertCaptureToNote(userId: string, id: string, lifeSegmentId: string) {
+/**
+ * The capture's text becomes the body of a note or quote in the chosen
+ * segment. A quote takes its author, source, why and tags in the same step,
+ * so nothing is saved without the reason it mattered.
+ */
+export async function convertCaptureToNote(
+  userId: string,
+  id: string,
+  lifeSegmentId: string,
+  extras: {
+    kind?: 'note' | 'quote';
+    author?: string;
+    source?: string;
+    why?: string;
+    tags?: string;
+  } = {}
+) {
   const capture = await getCaptureOrThrow(userId, id);
   const note = await createNote(userId, {
     lifeSegmentId,
-    kind: 'note',
+    kind: extras.kind ?? 'note',
     content: capture.text,
+    author: extras.author,
+    source: extras.source,
+    why: extras.why,
+    tags: parseTags(extras.tags),
     isPinned: false,
   });
   await markCaptureConverted(userId, id, 'note', note.id);

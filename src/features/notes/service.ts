@@ -1,7 +1,7 @@
 import 'server-only';
 import { and, eq, isNull } from 'drizzle-orm';
 import { db } from '@/db';
-import { lifeSegments, notes } from '@/db/schema';
+import { lifeSegments, mediaItems, notes } from '@/db/schema';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import type { Note } from './queries';
 import type { NoteInput } from './schema';
@@ -24,23 +24,51 @@ async function assertSegmentOwned(userId: string, lifeSegmentId: string) {
   if (count === 0) throw new ValidationError('That Life Segment does not exist.');
 }
 
-function toValues(input: NoteInput) {
+/** The media item a note comes from, when one is chosen; it must be the user's. */
+async function sourceItem(userId: string, mediaItemId: string | undefined) {
+  if (!mediaItemId) return null;
+  const [row] = await db
+    .select({ id: mediaItems.id, title: mediaItems.title, creator: mediaItems.creator })
+    .from(mediaItems)
+    .where(
+      and(
+        eq(mediaItems.id, mediaItemId),
+        eq(mediaItems.userId, userId),
+        isNull(mediaItems.deletedAt)
+      )
+    )
+    .limit(1);
+  if (!row) throw new ValidationError('That item is not in your media tracker any more.');
+  return row;
+}
+
+/**
+ * Column values from the form. A chosen source item fills in the source and
+ * author when those were left blank, so a quote from a book is attributed
+ * without typing the title twice.
+ */
+async function toValues(userId: string, input: NoteInput) {
+  const item = await sourceItem(userId, input.mediaItemId);
   return {
     lifeSegmentId: input.lifeSegmentId,
     kind: input.kind,
     title: input.title || null,
     content: input.content,
-    author: input.author || null,
-    source: input.source || null,
+    author: input.author || item?.creator || null,
+    source: input.source || item?.title || null,
+    mediaItemId: item?.id ?? null,
+    why: input.why || null,
+    tags: input.tags,
     isPinned: input.isPinned,
   };
 }
 
 export async function createNote(userId: string, input: NoteInput): Promise<Note> {
   await assertSegmentOwned(userId, input.lifeSegmentId);
+  const values = await toValues(userId, input);
   const [row] = await db
     .insert(notes)
-    .values({ userId, ...toValues(input) })
+    .values({ userId, ...values })
     .returning();
   return row;
 }
@@ -48,9 +76,10 @@ export async function createNote(userId: string, input: NoteInput): Promise<Note
 export async function updateNote(userId: string, id: string, input: NoteInput): Promise<Note> {
   await getNoteOrThrow(userId, id);
   await assertSegmentOwned(userId, input.lifeSegmentId);
+  const values = await toValues(userId, input);
   const [row] = await db
     .update(notes)
-    .set(toValues(input))
+    .set(values)
     .where(and(eq(notes.userId, userId), eq(notes.id, id)))
     .returning();
   return row;
@@ -61,6 +90,15 @@ export async function setNotePinned(userId: string, id: string, isPinned: boolea
   await db
     .update(notes)
     .set({ isPinned })
+    .where(and(eq(notes.userId, userId), eq(notes.id, id)));
+}
+
+/** "Still useful? Keep." A kept note counts as touched today and leaves the review pile. */
+export async function touchNote(userId: string, id: string): Promise<void> {
+  await getNoteOrThrow(userId, id);
+  await db
+    .update(notes)
+    .set({ updatedAt: new Date() })
     .where(and(eq(notes.userId, userId), eq(notes.id, id)));
 }
 

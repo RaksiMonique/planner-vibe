@@ -64,3 +64,35 @@ test('a long habit name and plan item do not widen the habits pages', async ({ p
     expect(widths.beyond, `${route} elements past the right edge`).toBe(0);
   }
 });
+
+test('a long quote with long tags does not widen the quotes page', async ({ page }) => {
+  const tag = `the best way to never get anything done at all is to wait for the mood ${stamp}`;
+  await page.goto('/notes/quotes');
+  await page
+    .getByRole('button', { name: /new quote/i })
+    .first()
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'New quote' });
+  await dialog
+    .getByLabel('Quote', { exact: true })
+    .fill(`Supercalifragilisticexpialidociousnessesandotherlongwordswithoutanyspaces ${stamp}`);
+  await dialog.getByLabel('Why it matters to me').fill('Because long words happen.');
+  await dialog.getByLabel('Tags').fill(tag);
+  await dialog.getByRole('button', { name: 'Add quote' }).click();
+  await expect(dialog).toBeHidden();
+
+  for (const route of ['/notes/quotes', `/notes/quotes?tag=${encodeURIComponent(tag)}`]) {
+    await page.goto(route);
+    await page.waitForLoadState('networkidle').catch(() => {});
+    const widths = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth,
+      client: document.documentElement.clientWidth,
+      beyond: [...document.querySelectorAll('main *')].filter((el) => {
+        const r = el.getBoundingClientRect();
+        return r.width > 0 && r.right > window.innerWidth + 1;
+      }).length,
+    }));
+    expect(widths.scroll, `${route} scroll width`).toBeLessThanOrEqual(widths.client);
+    expect(widths.beyond, `${route} elements past the right edge`).toBe(0);
+  }
+});

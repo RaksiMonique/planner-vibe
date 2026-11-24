@@ -13,7 +13,8 @@ import {
   type ActionResult,
 } from '@/lib/action-result';
 import { toDateKey, todayInZone } from '@/lib/dates';
-import { taskInput, taskStatusValue } from './schema';
+import { getTask, type TaskRow } from './queries';
+import { taskInput, taskStatusValue, writeItOutInput } from './schema';
 import { loadTaskSheetData } from './sheet-data';
 import {
   completeTask,
@@ -22,6 +23,7 @@ import {
   setTaskStatus,
   uncompleteTask,
   updateTask,
+  writeItOut,
   type TaskContext,
 } from './service';
 
@@ -127,6 +129,30 @@ export async function setTaskStatusAction(
     await setTaskStatus(user.id, id, parsed.data, await context(user.id));
     refresh();
     return ok(undefined);
+  } catch (e) {
+    return fromError(e);
+  }
+}
+
+export type WriteItOutState =
+  ActionResult<{ entryId: string; subtask: TaskRow | null }> | undefined;
+
+/**
+ * "Write it out" on a stuck task: a journal reflection, plus the smallest next
+ * step as a subtask. The subtask row comes back so the sheet can list it at once.
+ */
+export async function writeItOutAction(
+  _prev: WriteItOutState,
+  formData: FormData
+): Promise<WriteItOutState> {
+  try {
+    const user = await requireUser();
+    const parsed = writeItOutInput.safeParse(formValues(formData));
+    if (!parsed.success) return fromZodError(parsed.error);
+    const { entry, subtask } = await writeItOut(user.id, parsed.data, await context(user.id));
+    const row = subtask ? await getTask(user.id, subtask.id) : null;
+    refresh();
+    return ok({ entryId: entry.id, subtask: row });
   } catch (e) {
     return fromError(e);
   }

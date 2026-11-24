@@ -12,6 +12,8 @@ export const journalEntryInput = z.object({
   title: z.string().trim().max(160).optional(),
   content: z.string().trim().min(1, 'Write something first.').max(20_000),
   mood: z.coerce.number().int().min(1).max(5).optional(),
+  /** The task a reflection is about, when it came from one (tasks/stuck.ts). */
+  taskId: z.uuid().optional(),
 });
 export type JournalEntryInput = z.infer<typeof journalEntryInput>;
 

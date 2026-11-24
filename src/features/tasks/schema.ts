@@ -99,3 +99,16 @@ export const taskInput = z
 export type TaskInput = z.infer<typeof taskInput>;
 
 export const taskStatusValue = z.enum(TASK_STATUSES);
+
+/** The two prompts behind "Write it out" on a stuck task (stuck.ts). */
+export const writeItOutInput = z
+  .object({
+    taskId: z.uuid(),
+    avoiding: z.string().trim().max(5000, 'Keep it under 5000 characters.').optional(),
+    nextStep: z.string().trim().max(200, 'Keep the next step under 200 characters.').optional(),
+  })
+  .refine((d) => Boolean(d.avoiding || d.nextStep), {
+    message: 'Write a line in one of the boxes first.',
+    path: ['avoiding'],
+  });
+export type WriteItOutInput = z.infer<typeof writeItOutInput>;

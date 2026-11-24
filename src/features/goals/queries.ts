@@ -4,6 +4,7 @@ import { db } from '@/db';
 import { goalProjects, goals, lifeSegments, milestones, tasks } from '@/db/schema';
 import { segmentRefColumns } from '@/features/life-segments/queries';
 import type { SegmentRef } from '@/features/life-segments/types';
+import { listProjects } from '@/features/projects/queries';
 import { computeGoalProgress, type Horizon } from './progress';
 
 export type Goal = typeof goals.$inferSelect;
@@ -97,6 +98,47 @@ export async function listGoals(userId: string, filters: GoalFilters = {}): Prom
 export async function getGoal(userId: string, id: string): Promise<GoalRow | null> {
   const all = await listGoals(userId, { status: 'all' });
   return all.find((g) => g.id === id) ?? null;
+}
+
+export type SomedayItem = {
+  kind: 'goal' | 'project';
+  id: string;
+  title: string;
+  segment: SegmentRef;
+};
+
+/**
+ * The someday pile (someday.ts): goals and projects still only planned, with
+ * no date set. Oldest first, so the pick is stable as new ones arrive at the end.
+ */
+export async function listSomedayCandidates(userId: string): Promise<SomedayItem[]> {
+  const [goals, projects] = await Promise.all([
+    listGoals(userId, { status: 'all' }),
+    listProjects(userId, { status: 'all' }),
+  ]);
+  const items: Array<SomedayItem & { createdAt: Date }> = [
+    ...goals
+      .filter((g) => g.status === 'planned' && g.targetDate === null)
+      .map((g) => ({
+        kind: 'goal' as const,
+        id: g.id,
+        title: g.title,
+        segment: g.segment,
+        createdAt: g.createdAt,
+      })),
+    ...projects
+      .filter((p) => p.status === 'planned' && p.dueDate === null)
+      .map((p) => ({
+        kind: 'project' as const,
+        id: p.id,
+        title: p.title,
+        segment: p.segment,
+        createdAt: p.createdAt,
+      })),
+  ];
+  return items
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime() || a.id.localeCompare(b.id))
+    .map(({ kind, id, title, segment }) => ({ kind, id, title, segment }));
 }
 
 export type GoalOption = Pick<Goal, 'id' | 'title' | 'horizon' | 'lifeSegmentId' | 'parentGoalId'>;

@@ -157,6 +157,21 @@ export async function updateGoalProgress(
   return row;
 }
 
+/** Status alone, as when a someday goal is started from the dashboard. */
+export async function setGoalStatus(
+  userId: string,
+  id: string,
+  status: Goal['status']
+): Promise<Goal> {
+  await requireGoal(userId, id);
+  const [row] = await db
+    .update(goals)
+    .set({ status })
+    .where(and(eq(goals.userId, userId), eq(goals.id, id)))
+    .returning();
+  return row;
+}
+
 /** Soft delete. Children become top-level goals so they stay reachable. */
 export async function deleteGoal(userId: string, id: string): Promise<void> {
   await requireGoal(userId, id);

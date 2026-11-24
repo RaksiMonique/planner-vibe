@@ -20,6 +20,7 @@ export function TaskRow({
   editHref,
   subtaskCount = 0,
   compact = false,
+  stuck = false,
 }: {
   task: TaskRowData;
   status: DueStatus;
@@ -27,6 +28,8 @@ export function TaskRow({
   editHref: string;
   subtaskCount?: number;
   compact?: boolean;
+  /** Keeps rolling over (stuck.ts); the sheet offers to write it out. */
+  stuck?: boolean;
 }) {
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -90,6 +93,11 @@ export function TaskRow({
         </span>
       )}
       {blocked && <BlockedBadge blockedBy={task.blockedBy} />}
+      {stuck && !done && !compact && (
+        <span className="text-muted-foreground text-xs" title="It keeps rolling over">
+          Stuck?
+        </span>
+      )}
       {task.isImportant && !compact && (
         <Badge variant="secondary" className="hidden sm:inline-flex">
           Important

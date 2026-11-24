@@ -95,6 +95,21 @@ export async function updateProject(
   return row;
 }
 
+/** Status alone, as when a someday project is started from the dashboard. */
+export async function setProjectStatus(
+  userId: string,
+  id: string,
+  status: Project['status']
+): Promise<Project> {
+  await requireProject(userId, id);
+  const [row] = await db
+    .update(projects)
+    .set({ status })
+    .where(and(eq(projects.userId, userId), eq(projects.id, id)))
+    .returning();
+  return row;
+}
+
 /** Soft delete. Tasks keep their project id and stay visible in Tasks. */
 export async function deleteProject(userId: string, id: string): Promise<void> {
   await requireProject(userId, id);

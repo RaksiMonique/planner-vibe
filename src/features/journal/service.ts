@@ -74,6 +74,8 @@ export async function saveEntry(
     title: input.title || null,
     content: input.content,
     mood: input.mood ?? null,
+    // Left alone unless given, so editing a day's entry never drops a link.
+    ...(input.taskId !== undefined ? { taskId: input.taskId } : {}),
   };
   const existing = id
     ? await getEntryOrThrow(userId, id)

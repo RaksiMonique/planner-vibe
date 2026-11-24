@@ -20,6 +20,7 @@ import { QuickCapture } from '@/features/capture/components/quick-capture';
 import { JobScheduleCard } from '@/features/work/components/job-schedule-card';
 import { ACCENT_BG } from '@/lib/accents';
 import { GoalProgress } from '@/features/goals/components/goal-progress';
+import { SomedayDashboardCard } from '@/features/goals/components/someday-dashboard-card';
 import { cn } from '@/lib/utils';
 import type { DashboardLayout, EnabledModules } from '@/db/schema';
 import { normaliseLayout, visibleCards, type DashboardCardKey } from '../layout';
@@ -138,6 +139,7 @@ export function Dashboard({
     'wellness-journal': one(<WellnessJournalDashboardCard {...cardProps} />),
     'mood-trend': one(<MoodTrendDashboardCard {...cardProps} />),
     projects: one(<ProjectsDashboardCard {...cardProps} />),
+    someday: one(<SomedayDashboardCard {...cardProps} />),
     spotlight: one(<SegmentSpotlightDashboardCard {...cardProps} />),
     month: one(<MonthGlanceDashboardCard {...cardProps} />),
     quarter: one(<QuarterFocusDashboardCard {...cardProps} />),

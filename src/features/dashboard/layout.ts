@@ -16,6 +16,7 @@ export type DashboardCardKey =
   | 'mood'
   | 'week'
   | 'goals'
+  | 'someday'
   | 'inbox'
   | 'quote'
   | 'segments'
@@ -131,6 +132,13 @@ export const DASHBOARD_CARDS: CardDefinition[] = [
     key: 'goals',
     label: 'Active goals',
     description: 'Progress on live goals',
+    group: 'Life Segments',
+    module: 'life-segments',
+  },
+  {
+    key: 'someday',
+    label: 'Someday',
+    description: 'One undated goal or project a week, asking if you still want it',
     group: 'Life Segments',
     module: 'life-segments',
   },

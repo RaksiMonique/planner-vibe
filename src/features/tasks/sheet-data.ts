@@ -5,6 +5,7 @@ import { listGoalOptions, listMilestones } from '@/features/goals/queries';
 import { listSegmentsByUsage } from '@/features/life-segments/service';
 import { listProjectOptions } from '@/features/projects/queries';
 import { getPreferences } from '@/features/settings/service';
+import { toDateKey, todayInZone } from '@/lib/dates';
 import type { TaskSheetProps } from './components/task-sheet';
 import { getTask, listBlockerOptions, listDependencyIds, listTasks } from './queries';
 
@@ -49,5 +50,6 @@ export async function loadTaskSheetData(
       projectId: opts.projectId ?? parentTask?.projectId ?? undefined,
     },
     dueTime: task?.dueAt ? format(toZonedTime(task.dueAt, prefs.timeZone), 'HH:mm') : '',
+    todayKey: toDateKey(todayInZone(prefs.timeZone)),
   };
 }

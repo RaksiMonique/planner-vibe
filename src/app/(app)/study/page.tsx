@@ -18,6 +18,7 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { PageHeader } from '@/components/shared/page-header';
 import { SegmentDot } from '@/components/shared/segment-badge';
 import { listGoals } from '@/features/goals/queries';
+import { LinkedHabits } from '@/features/habits/components/linked-habits';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import { listSegments } from '@/features/life-segments/service';
 import { listProjectOptions } from '@/features/projects/queries';
@@ -235,6 +236,14 @@ export default async function StudyPage({ searchParams }: { searchParams: Promis
             </Card>
           </Link>
         </div>
+
+        <LinkedHabits
+          userId={user.id}
+          segments={segments}
+          match={{ kinds: ['course', 'subject'] }}
+          title="Study habits"
+          emptyText="No study habit yet. On a course page, add a habit for it: when study time comes, the habit tells you what to do."
+        />
 
         <section className="flex flex-col gap-3">
           <div className="flex flex-wrap items-center gap-2">

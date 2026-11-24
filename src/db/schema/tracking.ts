@@ -1,4 +1,5 @@
 import {
+  type AnyPgColumn,
   boolean,
   date,
   index,
@@ -14,6 +15,8 @@ import {
 import { planner } from './_schema';
 import { softDelete, timestamps, searchColumn } from './_columns';
 import { ownerPolicies } from './_policies';
+import { bibleStudies, readingPlans } from './faith';
+import { courses, subjects } from './learning';
 import { accentEnum, lifeSegments } from './organisation';
 import { projects, tasks } from './planning';
 import { ownerId } from './profiles';
@@ -28,7 +31,12 @@ export const routineKindEnum = planner.enum('routine_kind', [
   'haircare',
 ]);
 
-/** A habit describes what should happen; a check-in records what happened (5.4). */
+/**
+ * A habit describes what should happen; a check-in records what happened (5.4).
+ * `details` says how it goes (where to start, what counts), and at most one of
+ * the link columns names the thing the habit serves, so the habit can show
+ * what to do next when its time comes (8.2).
+ */
 export const habits = planner.table(
   'habits',
   {
@@ -43,6 +51,18 @@ export const habits = planner.table(
     target: smallint('target').notNull().default(1),
     accent: accentEnum('accent'),
     reminderTime: time('reminder_time'),
+    details: text('details'),
+    courseId: uuid('course_id').references(() => courses.id, { onDelete: 'set null' }),
+    subjectId: uuid('subject_id').references(() => subjects.id, { onDelete: 'set null' }),
+    bibleStudyId: uuid('bible_study_id').references(() => bibleStudies.id, {
+      onDelete: 'set null',
+    }),
+    readingPlanId: uuid('reading_plan_id').references(() => readingPlans.id, {
+      onDelete: 'set null',
+    }),
+    routineId: uuid('routine_id').references((): AnyPgColumn => routines.id, {
+      onDelete: 'set null',
+    }),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     ...softDelete(),
     search: searchColumn(['name']),
@@ -73,6 +93,28 @@ export const habitCheckIns = planner.table(
     uniqueIndex('habit_check_ins_habit_date_idx').on(t.habitId, t.date),
     index('habit_check_ins_user_date_idx').on(t.userId, t.date),
     ...ownerPolicies('habit_check_ins'),
+  ]
+);
+
+/** One thing to do the next time a habit's time comes; ticked off in order (8.2). */
+export const habitPlanItems = planner.table(
+  'habit_plan_items',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: ownerId(),
+    habitId: uuid('habit_id')
+      .notNull()
+      .references(() => habits.id, { onDelete: 'cascade' }),
+    title: text('title').notNull(),
+    /** Optional day this is meant for; undated items simply queue in order. */
+    plannedDate: date('planned_date'),
+    sortOrder: integer('sort_order').notNull().default(0),
+    completedAt: timestamp('completed_at', { withTimezone: true }),
+    ...timestamps(),
+  },
+  (t) => [
+    index('habit_plan_items_habit_idx').on(t.habitId, t.sortOrder),
+    ...ownerPolicies('habit_plan_items'),
   ]
 );
 
@@ -189,6 +231,7 @@ export const timeEntries = planner.table(
 export type Habit = typeof habits.$inferSelect;
 export type NewHabit = typeof habits.$inferInsert;
 export type HabitCheckIn = typeof habitCheckIns.$inferSelect;
+export type HabitPlanItem = typeof habitPlanItems.$inferSelect;
 export type NewHabitCheckIn = typeof habitCheckIns.$inferInsert;
 export type Routine = typeof routines.$inferSelect;
 export type NewRoutine = typeof routines.$inferInsert;

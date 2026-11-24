@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
 import { ProgressBar } from '@/components/shared/progress-bar';
 import { SegmentBadge } from '@/components/shared/segment-badge';
+import { LinkedHabits } from '@/features/habits/components/linked-habits';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import { listSegments } from '@/features/life-segments/service';
 import { listProjectOptions } from '@/features/projects/queries';
@@ -227,14 +228,24 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
           }
         />
 
-        <section className="flex flex-col gap-3">
-          <h3 className="font-heading text-xl">Lessons</h3>
-          <Card size="sm">
-            <CardContent>
-              <LessonList courseId={course.id} lessons={lessons} />
-            </CardContent>
-          </Card>
-        </section>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <section className="flex flex-col gap-3">
+            <h3 className="font-heading text-xl">Lessons</h3>
+            <Card size="sm">
+              <CardContent>
+                <LessonList courseId={course.id} lessons={lessons} />
+              </CardContent>
+            </Card>
+          </section>
+          <LinkedHabits
+            userId={user.id}
+            segments={segments}
+            match={{ kind: 'course', id: course.id }}
+            defaultSegmentId={course.lifeSegmentId}
+            title="Study habits"
+            emptyText="No habit studies this course yet. Add one, and the next lesson plus your own plan show wherever you check in."
+          />
+        </div>
 
         <div className="grid gap-6 lg:grid-cols-2">
           <section className="flex flex-col gap-3">

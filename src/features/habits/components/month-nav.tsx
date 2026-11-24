@@ -38,7 +38,7 @@ export function MonthNav({
       {habits.length > 1 && (
         <NativeSelect
           aria-label="Habit"
-          className="ml-auto w-auto"
+          className="ml-auto w-auto max-w-full"
           value={selectedId ?? ''}
           onChange={(e) => router.push(buildHabitsHref({ ...params, habit: e.target.value }))}
         >

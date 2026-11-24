@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
+import { LinkedHabits } from '@/features/habits/components/linked-habits';
 import { SegmentBadge } from '@/components/shared/segment-badge';
 import {
   deleteStudyAction,
@@ -85,6 +86,16 @@ export default async function StudyPage({ params }: { params: Promise<{ id: stri
           </>
         }
       />
+
+      <div className="mb-4">
+        <LinkedHabits
+          userId={user.id}
+          segments={segments}
+          match={{ kind: 'bible_study', id: study.id }}
+          defaultSegmentId={study.lifeSegmentId}
+          emptyText="No habit carries this study yet. Add one, and your plan for it shows wherever you check in."
+        />
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-12">
         <Card className="lg:col-span-4">

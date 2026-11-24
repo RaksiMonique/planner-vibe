@@ -8,6 +8,7 @@ import { getHabitOverview } from '../queries';
 import { PERIOD_NOUN } from '../schema';
 import { habitAccent, streakLabel } from './habit-card';
 import { HabitToggle } from './habit-toggle';
+import { NextUp } from './next-up';
 
 const PREVIEW = 8;
 
@@ -44,7 +45,7 @@ export async function HabitsDashboardCard({
           </p>
           <ul className="flex flex-col gap-1.5">
             {shown.map((h) => (
-              <li key={h.id} className="flex items-center gap-2.5 text-sm">
+              <li key={h.id} className="flex items-start gap-2.5 text-sm">
                 <HabitToggle
                   key={`${h.id}:${todayKey}:${h.doneToday}`}
                   habitId={h.id}
@@ -53,15 +54,20 @@ export async function HabitsDashboardCard({
                   label={
                     h.doneToday ? `Remove today's check-in for ${h.name}` : `Check in ${h.name}`
                   }
+                  className="mt-0.5"
                 />
-                <SegmentDot accent={habitAccent(h)} />
-                <span
-                  className={cn(
-                    'min-w-0 flex-1 truncate',
-                    h.doneToday && 'text-muted-foreground line-through'
-                  )}
-                >
-                  {h.name}
+                <SegmentDot accent={habitAccent(h)} className="mt-1.5" />
+                <span className="min-w-0 flex-1">
+                  <Link
+                    href={`/habits/${h.id}`}
+                    className={cn(
+                      'hover:text-primary block truncate',
+                      h.doneToday && 'text-muted-foreground line-through'
+                    )}
+                  >
+                    {h.name}
+                  </Link>
+                  <NextUp habit={h} todayKey={todayKey} />
                 </span>
                 <span className="text-muted-foreground hidden text-xs sm:inline">
                   {h.frequency === 'daily'

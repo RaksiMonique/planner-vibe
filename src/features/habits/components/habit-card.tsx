@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { format, parseISO } from 'date-fns';
 import { ArchiveIcon, ArchiveRestoreIcon, PencilIcon, Trash2Icon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
@@ -9,11 +10,13 @@ import { ConfirmActionButton } from '@/features/life-segments/components/confirm
 import type { SegmentRef } from '@/features/life-segments/types';
 import { cn } from '@/lib/utils';
 import { deleteHabitAction, setHabitArchivedAction } from '../actions';
+import type { HabitLinkOption } from '../links';
 import type { HabitOverview } from '../queries';
 import { FREQUENCY_LABELS, PERIOD_NOUN } from '../schema';
 import { isFutureKey } from '../streaks';
 import { HabitFormDialog } from './habit-form-dialog';
 import { HabitToggle } from './habit-toggle';
+import { NextUp } from './next-up';
 
 export const habitAccent = (h: HabitOverview) => h.accent ?? h.segment.accent;
 
@@ -29,12 +32,14 @@ export function HabitCard({
   weekKeys,
   todayKey,
   segments,
+  links,
 }: {
   habit: HabitOverview;
   /** yyyy-MM-dd for each day of the current week, in display order. */
   weekKeys: string[];
   todayKey: string;
   segments: SegmentRef[];
+  links: HabitLinkOption[];
 }) {
   const archived = habit.archivedAt !== null;
   const { period } = habit.stats;
@@ -46,15 +51,22 @@ export function HabitCard({
         <div className="flex items-start gap-2">
           <SegmentDot accent={habitAccent(habit)} className="mt-1.5" />
           <div className="min-w-0 flex-1">
-            <h3 className="font-heading truncate text-lg leading-snug">{habit.name}</h3>
+            <h3 className="font-heading text-lg leading-snug">
+              <Link href={`/habits/${habit.id}`} className="hover:text-primary block truncate">
+                {habit.name}
+              </Link>
+            </h3>
             <p className="text-muted-foreground text-xs">
               {habit.segment.name} · {FREQUENCY_LABELS[habit.frequency]}
               {habit.target > 1 && ` · ${habit.target}× per ${PERIOD_NOUN[habit.frequency]}`}
+              {habit.link && ` · ${habit.link.title}`}
             </p>
+            <NextUp habit={habit} todayKey={todayKey} className="mt-0.5" />
           </div>
           {!archived && (
             <HabitFormDialog
               segments={segments}
+              links={links}
               habit={habit}
               variant="ghost"
               size="icon-sm"

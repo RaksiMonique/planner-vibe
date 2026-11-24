@@ -14,6 +14,7 @@ import {
 } from '@/components/ui/dialog';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { SegmentDot } from '@/components/shared/segment-badge';
 import { SubmitButton } from '@/components/shared/submit-button';
 import { ChoiceSelect } from '@/features/life-segments/components/choice-select';
@@ -21,22 +22,37 @@ import { fieldErrors, hasFieldError } from '@/features/life-segments/components/
 import { SegmentSelect } from '@/features/life-segments/components/segment-select';
 import { ACCENT_LABELS, ACCENTS } from '@/features/life-segments/schema';
 import type { SegmentRef } from '@/features/life-segments/types';
+import { NativeSelect } from '@/features/tasks/components/native-select';
 import type { ActionResult } from '@/lib/action-result';
 import { createHabitAction, updateHabitAction } from '../actions';
+import {
+  HABIT_LINK_GROUP_LABELS,
+  HABIT_LINK_KINDS,
+  linkOf,
+  linkValue,
+  type HabitLinkOption,
+  type HabitLinkValue,
+} from '../links';
 import type { Habit } from '../queries';
 import { FREQUENCY_LABELS, HABIT_FREQUENCIES, PERIOD_NOUN, type HabitFrequency } from '../schema';
 
 export function HabitFormDialog({
   segments,
+  links,
   habit,
   defaultSegmentId,
+  defaultLink,
   trigger,
   variant = 'default',
   size = 'sm',
 }: {
   segments: SegmentRef[];
+  /** Everything a habit can be linked to; see listHabitLinkOptions. */
+  links: HabitLinkOption[];
   habit?: Habit;
   defaultSegmentId?: string;
+  /** Pre-selects the link, e.g. the course whose page opened the dialog. */
+  defaultLink?: HabitLinkValue;
   trigger: React.ReactNode;
   variant?: React.ComponentProps<typeof Button>['variant'];
   size?: React.ComponentProps<typeof Button>['size'];
@@ -56,8 +72,10 @@ export function HabitFormDialog({
         </DialogHeader>
         <HabitForm
           segments={segments}
+          links={links}
           habit={habit}
           defaultSegmentId={defaultSegmentId}
+          defaultLink={defaultLink}
           onDone={() => setOpen(false)}
         />
       </DialogContent>
@@ -67,25 +85,40 @@ export function HabitFormDialog({
 
 function HabitForm({
   segments,
+  links,
   habit,
   defaultSegmentId,
+  defaultLink,
   onDone,
 }: {
   segments: SegmentRef[];
+  links: HabitLinkOption[];
   habit?: Habit;
   defaultSegmentId?: string;
+  defaultLink?: HabitLinkValue;
   onDone: () => void;
 }) {
-  const action = habit ? updateHabitAction : createHabitAction;
   const [state, formAction] = useActionState(
-    async (prev: ActionResult | null, formData: FormData) => {
-      const result = await action(prev, formData);
+    async (_prev: ActionResult<unknown> | null, formData: FormData) => {
+      const result: ActionResult<unknown> = habit
+        ? await updateHabitAction(null, formData)
+        : await createHabitAction(null, formData);
       if (result.ok) onDone();
       return result;
     },
     null
   );
   const [frequency, setFrequency] = useState<HabitFrequency>(habit?.frequency ?? 'daily');
+  const current = habit ? linkOf(habit) : null;
+  const currentLink: HabitLinkValue = current
+    ? linkValue(current.kind, current.id)
+    : (defaultLink ?? '');
+  // A habit may point at something no longer offered (a finished course): keep it selectable.
+  const options = links.some((o) => linkValue(o.kind, o.id) === currentLink)
+    ? links
+    : current
+      ? [...links, { ...current, title: 'Current link' }]
+      : links;
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
@@ -172,6 +205,45 @@ function HabitForm({
             <FieldError errors={fieldErrors(state, 'reminderTime')} />
           </Field>
         </div>
+        <Field data-invalid={hasFieldError(state, 'link')}>
+          <FieldLabel htmlFor="habit-link">Linked to</FieldLabel>
+          <NativeSelect id="habit-link" name="link" defaultValue={currentLink}>
+            <option value="">Nothing in particular</option>
+            {HABIT_LINK_KINDS.map((kind) => {
+              const group = options.filter((o) => o.kind === kind);
+              if (group.length === 0) return null;
+              return (
+                <optgroup key={kind} label={HABIT_LINK_GROUP_LABELS[kind]}>
+                  {group.map((o) => (
+                    <option key={o.id} value={linkValue(o.kind, o.id)}>
+                      {o.title}
+                    </option>
+                  ))}
+                </optgroup>
+              );
+            })}
+          </NativeSelect>
+          <FieldDescription>
+            The course, subject, Bible study, reading plan or routine this habit serves. Its next
+            lesson or reading shows beside the habit.
+          </FieldDescription>
+          <FieldError errors={fieldErrors(state, 'link')} />
+        </Field>
+        <Field data-invalid={hasFieldError(state, 'details')}>
+          <FieldLabel htmlFor="habit-details">How it goes</FieldLabel>
+          <Textarea
+            id="habit-details"
+            name="details"
+            rows={4}
+            maxLength={5000}
+            defaultValue={habit?.details ?? ''}
+            placeholder="Where to start, what counts, what a good session looks like. Sit at the desk, open the course, do the next lesson, write three lines in the notes."
+          />
+          <FieldDescription>
+            Shown on the habit&apos;s page, so you never have to work out where to start.
+          </FieldDescription>
+          <FieldError errors={fieldErrors(state, 'details')} />
+        </Field>
       </FieldGroup>
       {state && !state.ok && (
         <p role="alert" className="text-destructive text-sm">

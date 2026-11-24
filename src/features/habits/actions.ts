@@ -10,13 +10,19 @@ import {
   ok,
   type ActionResult,
 } from '@/lib/action-result';
+import { getPreferences } from '@/features/settings/service';
 import { requireUser } from '@/lib/auth';
-import { dateKeyValue, habitInput } from './schema';
+import { toDateKey, todayInZone } from '@/lib/dates';
+import { dateKeyValue, habitInput, planItemInput } from './schema';
 import {
+  addPlanItem,
   checkIn,
   createHabit,
+  movePlanItem,
   removeHabit,
+  removePlanItem,
   setHabitArchived,
+  setPlanItemDone,
   uncheck,
   updateHabit,
 } from './service';
@@ -31,14 +37,14 @@ const withId = z.object({ id: z.uuid() });
 export async function createHabitAction(
   _prev: ActionResult | null,
   formData: FormData
-): Promise<ActionResult> {
+): Promise<ActionResult<{ id: string }>> {
   try {
     const user = await requireUser();
     const parsed = habitInput.safeParse(formValues(formData));
     if (!parsed.success) return fromZodError(parsed.error);
-    await createHabit(user.id, parsed.data);
+    const habit = await createHabit(user.id, parsed.data);
     refresh();
-    return ok(undefined);
+    return ok({ id: habit.id });
   } catch (e) {
     return fromError(e);
   }
@@ -96,6 +102,64 @@ export async function toggleHabitCheckIn(
     if (!parsed.success) return fail('That check-in is not valid.');
     if (done) await checkIn(user.id, habitId, dateKey);
     else await uncheck(user.id, habitId, dateKey);
+    refresh();
+    return ok(undefined);
+  } catch (e) {
+    return fromError(e);
+  }
+}
+
+// ── Plan items ──
+
+export async function addPlanItemAction(
+  _prev: ActionResult | null,
+  formData: FormData
+): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    const parsed = planItemInput.safeParse(formValues(formData));
+    if (!parsed.success) return fromZodError(parsed.error);
+    await addPlanItem(user.id, parsed.data);
+    refresh();
+    return ok(undefined);
+  } catch (e) {
+    return fromError(e);
+  }
+}
+
+export async function setPlanItemDoneAction(id: string, done: boolean): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    if (!z.uuid().safeParse(id).success) return fail('That plan item is not valid.');
+    const prefs = await getPreferences(user.id);
+    await setPlanItemDone(user.id, id, done, toDateKey(todayInZone(prefs.timeZone)));
+    refresh();
+    return ok(undefined);
+  } catch (e) {
+    return fromError(e);
+  }
+}
+
+export async function movePlanItemAction(
+  id: string,
+  direction: 'up' | 'down'
+): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    if (!z.uuid().safeParse(id).success) return fail('That plan item is not valid.');
+    await movePlanItem(user.id, id, direction);
+    refresh();
+    return ok(undefined);
+  } catch (e) {
+    return fromError(e);
+  }
+}
+
+export async function deletePlanItemAction(id: string): Promise<ActionResult> {
+  try {
+    const user = await requireUser();
+    if (!z.uuid().safeParse(id).success) return fail('That plan item is not valid.');
+    await removePlanItem(user.id, id);
     refresh();
     return ok(undefined);
   } catch (e) {

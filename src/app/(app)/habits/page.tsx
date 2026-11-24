@@ -11,8 +11,9 @@ import { HabitCard, habitAccent, streakLabel } from '@/features/habits/component
 import { HabitFormDialog } from '@/features/habits/components/habit-form-dialog';
 import { HabitMonthCalendar } from '@/features/habits/components/habit-month-calendar';
 import { HabitToggle } from '@/features/habits/components/habit-toggle';
+import { NextUp } from '@/features/habits/components/next-up';
 import { buildHabitsHref } from '@/features/habits/hrefs';
-import { getHabitOverview } from '@/features/habits/queries';
+import { getHabitOverview, listHabitLinkOptions } from '@/features/habits/queries';
 import { PERIOD_NOUN } from '@/features/habits/schema';
 import { SegmentFilter } from '@/features/life-segments/components/segment-filter';
 import { listSegments } from '@/features/life-segments/service';
@@ -43,9 +44,10 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
     : todayKey.slice(0, 7);
 
   const segment = segments.find((s) => s.slug === segmentSlug);
-  const all = await getHabitOverview(user.id, todayKey, prefs.weekStartsOn, {
-    includeArchived: true,
-  });
+  const [all, links] = await Promise.all([
+    getHabitOverview(user.id, todayKey, prefs.weekStartsOn, { includeArchived: true }),
+    listHabitLinkOptions(user.id),
+  ]);
   const filtered = segment ? all.filter((h) => h.lifeSegmentId === segment.id) : all;
   const active = filtered.filter((h) => h.archivedAt === null);
   const archived = filtered.filter((h) => h.archivedAt !== null);
@@ -73,6 +75,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
             </Link>
             <HabitFormDialog
               segments={segments}
+              links={links}
               defaultSegmentId={segment?.id}
               trigger={
                 <>
@@ -99,6 +102,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
           action={
             <HabitFormDialog
               segments={segments}
+              links={links}
               defaultSegmentId={segment?.id}
               trigger={
                 <>
@@ -126,7 +130,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
                 />
                 <ul className="flex flex-col gap-1.5">
                   {active.map((h) => (
-                    <li key={h.id} className="flex items-center gap-2.5 text-sm">
+                    <li key={h.id} className="flex items-start gap-2.5 text-sm">
                       <HabitToggle
                         key={`${h.id}:${todayKey}:${h.doneToday}`}
                         habitId={h.id}
@@ -139,13 +143,17 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
                         }
                       />
                       <SegmentDot accent={habitAccent(h)} />
-                      <span
-                        className={cn(
-                          'min-w-0 flex-1 truncate',
-                          h.doneToday && 'text-muted-foreground line-through'
-                        )}
-                      >
-                        {h.name}
+                      <span className="min-w-0 flex-1">
+                        <Link
+                          href={`/habits/${h.id}`}
+                          className={cn(
+                            'hover:text-primary block truncate',
+                            h.doneToday && 'text-muted-foreground line-through'
+                          )}
+                        >
+                          {h.name}
+                        </Link>
+                        <NextUp habit={h} todayKey={todayKey} />
                       </span>
                       <span className="text-muted-foreground text-xs">
                         {h.frequency === 'daily'
@@ -169,6 +177,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
                   weekKeys={weekKeys}
                   todayKey={todayKey}
                   segments={segments}
+                  links={links}
                 />
               ))}
             </div>
@@ -202,6 +211,7 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
                   weekKeys={weekKeys}
                   todayKey={todayKey}
                   segments={segments}
+                  links={links}
                 />
               ))}
             </div>

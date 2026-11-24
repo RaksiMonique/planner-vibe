@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { groupRoutinesByKind, historyStatus, isScheduledOn, routineProgress } from './grouping';
+import { groupRoutinesByKind, historyStatus, routineProgress } from './grouping';
 
 describe('groupRoutinesByKind', () => {
   it('keeps the fixed kind order and drops empty groups', () => {
@@ -10,15 +10,6 @@ describe('groupRoutinesByKind', () => {
     ]);
     expect(groups.map((g) => g.kind)).toEqual(['morning', 'custom']);
     expect(groups[0].routines).toHaveLength(2);
-  });
-});
-
-describe('isScheduledOn', () => {
-  it('uses the weekday of the date key', () => {
-    // 2026-11-07 is a Saturday (6), 2026-11-09 a Monday (1)
-    expect(isScheduledOn([6], '2026-11-07')).toBe(true);
-    expect(isScheduledOn([1, 2], '2026-11-07')).toBe(false);
-    expect(isScheduledOn([1], '2026-11-09')).toBe(true);
   });
 });
 

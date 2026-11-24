@@ -1,13 +1,17 @@
-import { CopyPlusIcon, PencilIcon, SaveIcon, Trash2Icon } from 'lucide-react';
+import Link from 'next/link';
+import { format, parseISO } from 'date-fns';
+import { CalendarClockIcon, CopyPlusIcon, PencilIcon, SaveIcon, Trash2Icon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { SegmentDot } from '@/components/shared/segment-badge';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import type { SegmentRef } from '@/features/life-segments/types';
+import type { WeekStartsOn } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import { createFromTemplateAction, deleteRoutineAction, saveAsTemplateAction } from '../actions';
 import type { RoutineCompletion, RoutineRow } from '../queries';
+import { describeSchedule, needsAnchor, nextDueOn } from '../schedule';
 import { DAY_LABELS, ROUTINE_KIND_LABELS } from '../schema';
 import { RoutineFormDialog, type HabitOption } from './routine-form-dialog';
 import { RoutineHistory } from './routine-history';
@@ -19,6 +23,7 @@ export function RoutineCard({
   completions,
   historyKeys,
   todayKey,
+  weekStartsOn,
 }: {
   routine: RoutineRow;
   segments: SegmentRef[];
@@ -26,9 +31,16 @@ export function RoutineCard({
   completions: RoutineCompletion[];
   historyKeys: string[];
   todayKey: string;
+  weekStartsOn: WeekStartsOn;
 }) {
   const minutes = routine.steps.reduce((sum, s) => sum + (s.durationMinutes ?? 0), 0);
   const days = new Set(routine.daysOfWeek);
+  const next = routine.isTemplate ? null : nextDueOn(routine, todayKey, weekStartsOn);
+  const nextLabel = next
+    ? next === todayKey
+      ? 'today'
+      : format(parseISO(next), 'EEE d MMM')
+    : null;
 
   return (
     <Card>
@@ -59,7 +71,7 @@ export function RoutineCard({
           />
         </div>
 
-        {!routine.isTemplate && (
+        {!routine.isTemplate && routine.frequency === 'weekly' && (
           <div className="flex gap-1" aria-label="Scheduled days">
             {[1, 2, 3, 4, 5, 6, 0].map((d) => (
               <span
@@ -76,6 +88,25 @@ export function RoutineCard({
             ))}
           </div>
         )}
+        {(needsAnchor(routine) || routine.isTemplate) && (
+          <p className="text-muted-foreground text-xs" data-slot="routine-cadence">
+            {describeSchedule(routine)}
+            {nextLabel && ` · next ${nextLabel}`}
+          </p>
+        )}
+        {routine.appointmentTime && (
+          <p className="flex items-center gap-1.5 text-xs" data-slot="routine-appointment">
+            <CalendarClockIcon className="text-primary size-3.5 shrink-0" aria-hidden />
+            <Link
+              href={next ? `/calendar?date=${next}` : '/calendar'}
+              className="text-primary link truncate"
+            >
+              Appointment {routine.appointmentTime}
+              {routine.appointmentMinutes && ` · ${routine.appointmentMinutes} min`}
+              {routine.location && ` · ${routine.location}`}
+            </Link>
+          </p>
+        )}
 
         <ol className="text-muted-foreground list-inside list-decimal text-xs">
           {routine.steps.slice(0, 5).map((s) => (
@@ -89,7 +120,8 @@ export function RoutineCard({
         {!routine.isTemplate && (
           <RoutineHistory
             dayKeys={historyKeys}
-            daysOfWeek={routine.daysOfWeek}
+            schedule={routine}
+            weekStartsOn={weekStartsOn}
             completions={completions}
             todayKey={todayKey}
           />

@@ -20,7 +20,7 @@ import { courses, subjects } from './learning';
 import { accentEnum, lifeSegments } from './organisation';
 import { goals, projects, tasks } from './planning';
 import { ownerId } from './profiles';
-import { timeBlocks } from './scheduling';
+import { events, timeBlocks } from './scheduling';
 
 export const habitFrequencyEnum = planner.enum('habit_frequency', ['daily', 'weekly', 'monthly']);
 export const routineKindEnum = planner.enum('routine_kind', [
@@ -121,6 +121,9 @@ export const habitPlanItems = planner.table(
   ]
 );
 
+/** How often a routine comes round: on weekdays every N weeks, or on one day of the month every N months. */
+export const routineFrequencyEnum = planner.enum('routine_frequency', ['weekly', 'monthly']);
+
 export const routines = planner.table(
   'routines',
   {
@@ -131,8 +134,19 @@ export const routines = planner.table(
       .references(() => lifeSegments.id, { onDelete: 'restrict' }),
     kind: routineKindEnum('kind').notNull().default('custom'),
     name: text('name').notNull(),
+    frequency: routineFrequencyEnum('frequency').notNull().default('weekly'),
+    /** Every N weeks or months; 1 is every time. */
+    interval: integer('interval').notNull().default(1),
+    /** First day the routine runs: anchors every-N-weeks counting and the day of the month. */
+    startsOn: date('starts_on'),
     // 0 = Sunday … 6 = Saturday. Different days can run different routines.
     daysOfWeek: jsonb('days_of_week').$type<number[]>().notNull().default([0, 1, 2, 3, 4, 5, 6]),
+    // A routine with an appointment: the time, length and place of each run, mirrored
+    // into a recurring calendar Event (`eventId`) so it shows wherever events do.
+    appointmentTime: text('appointment_time'),
+    appointmentMinutes: integer('appointment_minutes'),
+    location: text('location'),
+    eventId: uuid('event_id').references(() => events.id, { onDelete: 'set null' }),
     isTemplate: boolean('is_template').notNull().default(false),
     ...softDelete(),
     search: searchColumn(['name']),
@@ -141,6 +155,7 @@ export const routines = planner.table(
   (t) => [
     index('routines_search_idx').using('gin', t.search),
     index('routines_user_kind_idx').on(t.userId, t.kind),
+    index('routines_event_idx').on(t.eventId),
     ...ownerPolicies('routines'),
   ]
 );

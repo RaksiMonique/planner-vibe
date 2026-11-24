@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { needsAnchor, REPEAT_KEYS, REPEATS } from './schedule';
 
 export const ROUTINE_KINDS = ['morning', 'evening', 'custom', 'skincare', 'haircare'] as const;
 export type RoutineKind = (typeof ROUTINE_KINDS)[number];
@@ -10,17 +11,7 @@ export const ROUTINE_KIND_LABELS: Record<RoutineKind, string> = {
   haircare: 'Haircare',
 };
 
-/** Index = JavaScript `Date#getDay()`: 0 is Sunday. */
-export const DAY_LABELS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
-export const DAY_LONG_LABELS = [
-  'Sunday',
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-] as const;
+export { DAY_LABELS, DAY_LONG_LABELS } from './schedule';
 
 export const dateKeyValue = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Use a full date.');
 
@@ -46,22 +37,55 @@ const stepsFromJson = z.preprocess(
   z.array(stepInput).min(1, 'Add at least one step.')
 );
 
+export const timeValue = z.string().regex(/^\d{2}:\d{2}$/, 'Choose a time.');
+
 export const routineInput = z
   .object({
     name: z.string().trim().min(1, 'Give the routine a name.').max(120),
     kind: z.enum(ROUTINE_KINDS).default('custom'),
     lifeSegmentId: z.uuid('Choose a Life Segment.'),
+    repeat: z.enum(REPEAT_KEYS).default('weekly-1'),
+    startsOn: dateKeyValue.optional(),
     daysOfWeek: z
       .preprocess(
         (v) => (v === undefined ? [] : Array.isArray(v) ? v : [v]),
         z.array(z.coerce.number().int().min(0).max(6))
       )
       .transform((d) => [...new Set(d)].sort((a, b) => a - b)),
+    hasAppointment: z.coerce.boolean().default(false),
+    appointmentTime: timeValue.optional(),
+    appointmentMinutes: z.coerce.number().int().min(5).max(600).default(60),
+    location: z.string().trim().max(200).optional(),
     isTemplate: z.coerce.boolean().default(false),
     steps: stepsFromJson,
   })
-  .refine((d) => d.isTemplate || d.daysOfWeek.length > 0, {
-    message: 'Pick at least one day, or save it as a template.',
-    path: ['daysOfWeek'],
+  .superRefine((d, ctx) => {
+    const { frequency, interval } = REPEATS[d.repeat];
+    if (frequency === 'weekly' && !d.isTemplate && d.daysOfWeek.length === 0) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['daysOfWeek'],
+        message: 'Pick at least one day, or save it as a template.',
+      });
+    }
+    if (needsAnchor({ frequency, interval }) && !d.startsOn && !d.isTemplate) {
+      ctx.addIssue({ code: 'custom', path: ['startsOn'], message: 'Choose the first day.' });
+    }
+    if (d.hasAppointment && !d.appointmentTime) {
+      ctx.addIssue({ code: 'custom', path: ['appointmentTime'], message: 'Choose a time.' });
+    }
+  })
+  .transform((d) => {
+    const { frequency, interval } = REPEATS[d.repeat];
+    return {
+      ...d,
+      frequency,
+      interval,
+      daysOfWeek: frequency === 'weekly' ? d.daysOfWeek : [],
+      startsOn: needsAnchor({ frequency, interval }) ? (d.startsOn ?? null) : null,
+      appointmentTime: d.hasAppointment ? (d.appointmentTime ?? null) : null,
+      appointmentMinutes: d.hasAppointment ? d.appointmentMinutes : null,
+      location: d.hasAppointment ? d.location || null : null,
+    };
   });
 export type RoutineInput = z.infer<typeof routineInput>;

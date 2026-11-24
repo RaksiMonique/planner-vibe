@@ -65,7 +65,7 @@ export default async function RoutinesPage() {
     <>
       <PageHeader
         title="Routines"
-        description="Morning, evening and custom sequences, scheduled by weekday and ticked off step by step."
+        description="Morning, evening and custom sequences on your own cadence: chosen weekdays, every few weeks or monthly, ticked off step by step. A routine can carry an appointment."
         actions={newDialog}
       />
 
@@ -133,6 +133,7 @@ export default async function RoutinesPage() {
                     completions={completions.filter((c) => c.routineId === r.id)}
                     historyKeys={historyKeys}
                     todayKey={todayKey}
+                    weekStartsOn={prefs.weekStartsOn}
                   />
                 ))}
               </div>
@@ -152,6 +153,7 @@ export default async function RoutinesPage() {
                     completions={[]}
                     historyKeys={historyKeys}
                     todayKey={todayKey}
+                    weekStartsOn={prefs.weekStartsOn}
                   />
                 ))}
               </div>

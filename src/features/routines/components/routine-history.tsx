@@ -1,7 +1,9 @@
 import { format, parseISO } from 'date-fns';
+import type { WeekStartsOn } from '@/lib/dates';
 import { cn } from '@/lib/utils';
-import { historyStatus, isScheduledOn, type HistoryStatus } from '../grouping';
+import { historyStatus, type HistoryStatus } from '../grouping';
 import type { RoutineCompletion } from '../queries';
+import { isDueOn, type RoutineSchedule } from '../schedule';
 
 const STYLE: Record<HistoryStatus, string> = {
   done: 'bg-rose border-transparent',
@@ -19,12 +21,14 @@ const LABEL: Record<HistoryStatus, string> = {
 /** One cell per day, oldest first, for the routine's recent completion history. */
 export function RoutineHistory({
   dayKeys,
-  daysOfWeek,
+  schedule,
+  weekStartsOn,
   completions,
   todayKey,
 }: {
   dayKeys: string[];
-  daysOfWeek: number[];
+  schedule: RoutineSchedule;
+  weekStartsOn: WeekStartsOn;
   completions: RoutineCompletion[];
   todayKey: string;
 }) {
@@ -32,7 +36,7 @@ export function RoutineHistory({
     <div className="flex items-center gap-1" aria-label="Recent history">
       {dayKeys.map((key) => {
         const completion = completions.find((c) => c.date === key);
-        const scheduled = isScheduledOn(daysOfWeek, key);
+        const scheduled = isDueOn(schedule, key, weekStartsOn);
         const status = historyStatus(completion, scheduled && key !== todayKey);
         const finalStatus: HistoryStatus =
           status === 'missed' && key === todayKey ? 'unscheduled' : status;

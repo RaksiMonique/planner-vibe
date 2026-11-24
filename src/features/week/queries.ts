@@ -6,6 +6,7 @@ import { listEventsBetween } from '@/features/calendar/queries';
 import { listGoals, listMilestones, type GoalRow, type Milestone } from '@/features/goals/queries';
 import { listCheckInsBetween, listHabits, type HabitRow } from '@/features/habits/queries';
 import { listCompletionsBetween, listRoutines, type RoutineRow } from '@/features/routines/queries';
+import { isDueOn } from '@/features/routines/schedule';
 import { getPreferences } from '@/features/settings/service';
 import { listTasks, type TaskRow } from '@/features/tasks/queries';
 import { expandTimeBlocks } from '@/features/time/expand';
@@ -144,7 +145,7 @@ export async function getWeekData(userId: string, dateParam?: string): Promise<W
       tasks: tasks.filter((t) => t.dueDate === key),
       milestones: milestones.filter((m) => m.dueDate === key),
       routines: routines
-        .filter((r) => r.daysOfWeek.includes(dayOfWeek))
+        .filter((r) => isDueOn(r, key, prefs.weekStartsOn))
         .map((routine) => ({
           routine,
           doneStepIds: completionMap.get(`${routine.id}|${key}`) ?? [],

@@ -1,4 +1,3 @@
-import { parseISO } from 'date-fns';
 import { ROUTINE_KINDS, type RoutineKind } from './schema';
 
 /** Groups in the fixed kind order, dropping empty groups. */
@@ -9,10 +8,6 @@ export function groupRoutinesByKind<T extends { kind: RoutineKind }>(
     kind,
     routines: routines.filter((r) => r.kind === kind),
   })).filter((g) => g.routines.length > 0);
-}
-
-export function isScheduledOn(daysOfWeek: number[], dateKey: string): boolean {
-  return daysOfWeek.includes(parseISO(dateKey).getDay());
 }
 
 /** Progress counts only steps that still exist, so deleted steps never block completion. */

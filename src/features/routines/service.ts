@@ -1,10 +1,18 @@
 import 'server-only';
 import { and, eq, inArray, isNull } from 'drizzle-orm';
+import { addMinutes, format, parseISO } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { db } from '@/db';
 import { habits, lifeSegments, routineCompletions, routineSteps, routines } from '@/db/schema';
+import { listCalendars } from '@/features/calendar/queries';
+import { WEEKDAY_CODES } from '@/features/calendar/recurrence';
+import { eventInput } from '@/features/calendar/schema';
+import { createEvent, removeEvent, updateEvent } from '@/features/calendar/service';
 import { checkIn, uncheck } from '@/features/habits/service';
+import { getPreferences } from '@/features/settings/service';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import type { Routine, RoutineCompletion, RoutineStep } from './queries';
+import { nextDueOn } from './schedule';
 import type { RoutineInput, StepInput } from './schema';
 
 export async function getRoutineOrThrow(userId: string, id: string): Promise<Routine> {
@@ -47,9 +55,83 @@ function toValues(input: RoutineInput) {
     name: input.name,
     kind: input.kind,
     lifeSegmentId: input.lifeSegmentId,
+    frequency: input.frequency,
+    interval: input.interval,
+    startsOn: input.startsOn,
     daysOfWeek: input.daysOfWeek,
+    appointmentTime: input.appointmentTime,
+    appointmentMinutes: input.appointmentMinutes,
+    location: input.location,
     isTemplate: input.isTemplate,
   };
+}
+
+/**
+ * Keeps a routine's appointment on the calendar: one recurring Event in the
+ * appointment category, on the routine's own cadence, starting from its first
+ * run. Removed again when the routine loses its appointment or becomes a
+ * template. Returns the event id the routine should carry.
+ */
+async function syncAppointment(userId: string, routine: Routine): Promise<string | null> {
+  const dropExisting = async () => {
+    if (routine.eventId) await removeEvent(userId, routine.eventId).catch(() => undefined);
+    return null;
+  };
+  if (routine.isTemplate || !routine.appointmentTime) return dropExisting();
+
+  const prefs = await getPreferences(userId);
+  const fromKey =
+    routine.startsOn ?? formatInTimeZone(routine.createdAt, prefs.timeZone, 'yyyy-MM-dd');
+  const firstKey = nextDueOn(routine, fromKey, prefs.weekStartsOn);
+  if (!firstKey) return dropExisting();
+
+  const calendars = await listCalendars(userId);
+  const calendar = calendars.find((c) => c.kind === 'personal') ?? calendars[0];
+  const startsAt = `${firstKey}T${routine.appointmentTime}`;
+  const endsAt = format(
+    addMinutes(parseISO(startsAt), routine.appointmentMinutes ?? 60),
+    "yyyy-MM-dd'T'HH:mm"
+  );
+  const input = eventInput.parse({
+    title: routine.name,
+    calendarId: calendar.id,
+    lifeSegmentId: routine.lifeSegmentId,
+    category: 'appointment',
+    isAllDay: false,
+    startsAt,
+    endsAt,
+    location: routine.location ?? undefined,
+    recurrence: routine.frequency,
+    recurrenceInterval: routine.interval,
+    recurrenceDays:
+      routine.frequency === 'weekly'
+        ? routine.daysOfWeek.map((d) => WEEKDAY_CODES[(d + 6) % 7])
+        : [],
+    recurrenceMonthly: 'day',
+    recurrenceEnd: 'never',
+  });
+  if (routine.eventId) {
+    try {
+      await updateEvent(userId, routine.eventId, input, prefs.timeZone);
+      return routine.eventId;
+    } catch (e) {
+      // The event was deleted from the calendar; make a fresh one.
+      if (!(e instanceof NotFoundError)) throw e;
+    }
+  }
+  const created = await createEvent(userId, input, prefs.timeZone);
+  return created.id;
+}
+
+async function saveEventId(userId: string, routine: Routine): Promise<Routine> {
+  const eventId = await syncAppointment(userId, routine);
+  if (eventId === routine.eventId) return routine;
+  const [row] = await db
+    .update(routines)
+    .set({ eventId })
+    .where(and(eq(routines.userId, userId), eq(routines.id, routine.id)))
+    .returning();
+  return row;
 }
 
 function stepValues(userId: string, routineId: string, step: StepInput, sortOrder: number) {
@@ -65,7 +147,7 @@ function stepValues(userId: string, routineId: string, step: StepInput, sortOrde
 
 export async function createRoutine(userId: string, input: RoutineInput): Promise<Routine> {
   await assertOwned(userId, input);
-  return db.transaction(async (tx) => {
+  const routine = await db.transaction(async (tx) => {
     const [routine] = await tx
       .insert(routines)
       .values({ ...toValues(input), userId })
@@ -75,6 +157,7 @@ export async function createRoutine(userId: string, input: RoutineInput): Promis
       .values(input.steps.map((s, i) => stepValues(userId, routine.id, s, i)));
     return routine;
   });
+  return saveEventId(userId, routine);
 }
 
 /** Keeps existing step rows (by id) so completion history stays attached to them. */
@@ -91,7 +174,7 @@ export async function updateRoutine(
     input.steps.flatMap((s) => (s.id && existingIds.has(s.id) ? [s.id] : []))
   );
 
-  return db.transaction(async (tx) => {
+  const routine = await db.transaction(async (tx) => {
     const [routine] = await tx
       .update(routines)
       .set(toValues(input))
@@ -111,14 +194,17 @@ export async function updateRoutine(
     }
     return routine;
   });
+  return saveEventId(userId, routine);
 }
 
+/** The routine's appointment leaves the calendar with it. */
 export async function removeRoutine(userId: string, id: string) {
-  await getRoutineOrThrow(userId, id);
+  const routine = await getRoutineOrThrow(userId, id);
   await db
     .update(routines)
     .set({ deletedAt: new Date() })
     .where(and(eq(routines.userId, userId), eq(routines.id, id)));
+  if (routine.eventId) await removeEvent(userId, routine.eventId).catch(() => undefined);
 }
 
 /**
@@ -132,7 +218,7 @@ export async function duplicateRoutine(
 ): Promise<Routine> {
   const source = await getRoutineOrThrow(userId, id);
   const steps = await listSteps(id);
-  return db.transaction(async (tx) => {
+  const copy = await db.transaction(async (tx) => {
     const [copy] = await tx
       .insert(routines)
       .values({
@@ -140,7 +226,13 @@ export async function duplicateRoutine(
         name: source.name,
         kind: source.kind,
         lifeSegmentId: source.lifeSegmentId,
+        frequency: source.frequency,
+        interval: source.interval,
+        startsOn: source.startsOn,
         daysOfWeek: source.daysOfWeek,
+        appointmentTime: source.appointmentTime,
+        appointmentMinutes: source.appointmentMinutes,
+        location: source.location,
         isTemplate: opts.asTemplate,
       })
       .returning();
@@ -158,6 +250,7 @@ export async function duplicateRoutine(
     }
     return copy;
   });
+  return saveEventId(userId, copy);
 }
 
 /**

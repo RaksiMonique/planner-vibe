@@ -25,6 +25,7 @@ import type { ActionResult } from '@/lib/action-result';
 import { cn } from '@/lib/utils';
 import { createRoutineAction, updateRoutineAction } from '../actions';
 import type { RoutineRow } from '../queries';
+import { needsAnchor, REPEAT_KEYS, REPEATS, repeatKeyOf, type RepeatKey } from '../schedule';
 import { DAY_LABELS, ROUTINE_KIND_LABELS, ROUTINE_KINDS } from '../schema';
 
 export type HabitOption = { id: string; name: string };
@@ -67,7 +68,8 @@ export function RoutineFormDialog({
             {routine ? 'Edit routine' : 'New routine'}
           </DialogTitle>
           <DialogDescription>
-            Ordered steps you run on chosen days. Steps can record a habit check-in when ticked.
+            Ordered steps you run on chosen days, every few weeks or monthly. A routine can carry an
+            appointment, which goes on your calendar.
           </DialogDescription>
         </DialogHeader>
         <RoutineForm
@@ -117,6 +119,11 @@ function RoutineForm({
       : [draft()]
   );
   const days = new Set(routine?.daysOfWeek ?? [1, 2, 3, 4, 5, 6, 0]);
+  const [repeat, setRepeat] = useState<RepeatKey>(() =>
+    routine ? repeatKeyOf(routine) : 'weekly-1'
+  );
+  const cadence = REPEATS[repeat];
+  const [hasAppointment, setHasAppointment] = useState(Boolean(routine?.appointmentTime));
 
   const stepsJson = JSON.stringify(
     steps.map((s) => ({
@@ -178,27 +185,116 @@ function RoutineForm({
             <FieldError errors={fieldErrors(state, 'lifeSegmentId')} />
           </Field>
         </div>
-        <Field data-invalid={hasFieldError(state, 'daysOfWeek')}>
-          <FieldLabel>Days</FieldLabel>
-          <div className="flex flex-wrap gap-1.5" role="group" aria-label="Days of the week">
-            {[1, 2, 3, 4, 5, 6, 0].map((d) => (
-              <label
-                key={d}
-                className="has-checked:border-primary has-checked:bg-secondary has-checked:text-secondary-foreground bg-card hover:bg-muted inline-flex cursor-pointer items-center rounded-full border px-2.5 py-1 text-xs select-none"
-              >
-                <input
-                  type="checkbox"
-                  name="daysOfWeek[]"
-                  value={d}
-                  defaultChecked={days.has(d)}
-                  className="sr-only"
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Field>
+            <FieldLabel htmlFor="routine-repeat">Repeats</FieldLabel>
+            <ChoiceSelect
+              id="routine-repeat"
+              name="repeat"
+              value={repeat}
+              onValueChange={(v) => setRepeat(v as RepeatKey)}
+              options={REPEAT_KEYS.map((k) => ({ value: k, label: REPEATS[k].label }))}
+            />
+          </Field>
+          {needsAnchor(cadence) && (
+            <Field data-invalid={hasFieldError(state, 'startsOn')}>
+              <FieldLabel htmlFor="routine-starts-on">First on</FieldLabel>
+              <Input
+                id="routine-starts-on"
+                name="startsOn"
+                type="date"
+                defaultValue={routine?.startsOn ?? ''}
+                required
+              />
+              <FieldDescription>
+                {cadence.frequency === 'monthly'
+                  ? 'Then the same day each time.'
+                  : 'Counts the weeks from this one.'}
+              </FieldDescription>
+              <FieldError errors={fieldErrors(state, 'startsOn')} />
+            </Field>
+          )}
+        </div>
+        {cadence.frequency === 'weekly' && (
+          <Field data-invalid={hasFieldError(state, 'daysOfWeek')}>
+            <FieldLabel>Days</FieldLabel>
+            <div className="flex flex-wrap gap-1.5" role="group" aria-label="Days of the week">
+              {[1, 2, 3, 4, 5, 6, 0].map((d) => (
+                <label
+                  key={d}
+                  className="has-checked:border-primary has-checked:bg-secondary has-checked:text-secondary-foreground bg-card hover:bg-muted inline-flex cursor-pointer items-center rounded-full border px-2.5 py-1 text-xs select-none"
+                >
+                  <input
+                    type="checkbox"
+                    name="daysOfWeek[]"
+                    value={d}
+                    defaultChecked={days.has(d)}
+                    className="sr-only"
+                  />
+                  {DAY_LABELS[d]}
+                </label>
+              ))}
+            </div>
+            <FieldError errors={fieldErrors(state, 'daysOfWeek')} />
+          </Field>
+        )}
+
+        <div className="flex flex-col gap-3" data-slot="routine-appointment-fields">
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="hasAppointment"
+              checked={hasAppointment}
+              onChange={(e) => setHasAppointment(e.target.checked)}
+              className="accent-primary size-4"
+            />
+            This routine has an appointment
+          </label>
+          {hasAppointment && (
+            <div className="grid gap-4 sm:grid-cols-[auto_auto_1fr]">
+              <Field data-invalid={hasFieldError(state, 'appointmentTime')}>
+                <FieldLabel htmlFor="routine-appointment-time">Time</FieldLabel>
+                <Input
+                  id="routine-appointment-time"
+                  name="appointmentTime"
+                  type="time"
+                  defaultValue={routine?.appointmentTime ?? ''}
+                  required
                 />
-                {DAY_LABELS[d]}
-              </label>
-            ))}
-          </div>
-          <FieldError errors={fieldErrors(state, 'daysOfWeek')} />
-        </Field>
+                <FieldError errors={fieldErrors(state, 'appointmentTime')} />
+              </Field>
+              <Field data-invalid={hasFieldError(state, 'appointmentMinutes')}>
+                <FieldLabel htmlFor="routine-appointment-minutes">Minutes</FieldLabel>
+                <Input
+                  id="routine-appointment-minutes"
+                  name="appointmentMinutes"
+                  type="number"
+                  inputMode="numeric"
+                  min={5}
+                  max={600}
+                  defaultValue={routine?.appointmentMinutes ?? 60}
+                  className="w-24"
+                />
+                <FieldError errors={fieldErrors(state, 'appointmentMinutes')} />
+              </Field>
+              <Field data-invalid={hasFieldError(state, 'location')}>
+                <FieldLabel htmlFor="routine-location">Place</FieldLabel>
+                <Input
+                  id="routine-location"
+                  name="location"
+                  defaultValue={routine?.location ?? ''}
+                  maxLength={200}
+                  placeholder="Glow Salon"
+                />
+                <FieldError errors={fieldErrors(state, 'location')} />
+              </Field>
+              <FieldDescription className="sm:col-span-3">
+                Each run goes on your calendar as an appointment, so it shows in Coming up and the
+                week.
+              </FieldDescription>
+            </div>
+          )}
+        </div>
 
         <Field data-invalid={hasFieldError(state, 'steps')}>
           <FieldLabel>Steps</FieldLabel>

@@ -4,6 +4,8 @@ import { db } from '@/db';
 import { lifeSegments, routineCompletions, routineSteps, routines } from '@/db/schema';
 import { segmentRefColumns } from '@/features/life-segments/queries';
 import type { SegmentRef } from '@/features/life-segments/types';
+import { getPreferences } from '@/features/settings/service';
+import { isDueOn } from './schedule';
 
 export type Routine = typeof routines.$inferSelect;
 export type RoutineStep = typeof routineSteps.$inferSelect;
@@ -40,10 +42,10 @@ export async function listRoutines(
   }));
 }
 
-/** Routines scheduled on a weekday (0 = Sunday … 6 = Saturday). */
-export async function listRoutinesForDay(userId: string, dayOfWeek: number): Promise<RoutineRow[]> {
-  const all = await listRoutines(userId);
-  return all.filter((r) => r.daysOfWeek.includes(dayOfWeek));
+/** Live routines that run on a yyyy-MM-dd date, by their own cadence. */
+export async function listRoutinesDueOn(userId: string, dateKey: string): Promise<RoutineRow[]> {
+  const [all, prefs] = await Promise.all([listRoutines(userId), getPreferences(userId)]);
+  return all.filter((r) => isDueOn(r, dateKey, prefs.weekStartsOn));
 }
 
 /** Completions with yyyy-MM-dd dates in [fromKey, toKey], inclusive. */
@@ -67,16 +69,14 @@ export async function listCompletionsBetween(
 
 // ── Today's routines with their completion rows ───────────────────────────────
 
-import { parseISO } from 'date-fns';
-
 export type RoutineDay = RoutineRow & { completion: RoutineCompletion | null };
 
-/** Routines scheduled on the weekday of `dateKey`, with that day's completion row if any. */
+/** Routines due on `dateKey`, with that day's completion row if any. */
 export async function listRoutinesWithCompletions(
   userId: string,
   dateKey: string
 ): Promise<RoutineDay[]> {
-  const scheduled = await listRoutinesForDay(userId, parseISO(dateKey).getDay());
+  const scheduled = await listRoutinesDueOn(userId, dateKey);
   if (scheduled.length === 0) return [];
   const completions = await listCompletionsBetween(userId, dateKey, dateKey);
   return scheduled.map((r) => ({

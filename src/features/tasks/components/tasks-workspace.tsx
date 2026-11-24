@@ -6,7 +6,7 @@ import type { LifeSegment } from '@/features/life-segments/service';
 import { listSegmentsByUsage } from '@/features/life-segments/service';
 import { listProjectOptions } from '@/features/projects/queries';
 import { getPreferences } from '@/features/settings/service';
-import { todayInZone } from '@/lib/dates';
+import { toDateKey, todayInZone } from '@/lib/dates';
 import {
   countOpenSubtasks,
   type TaskRow as TaskRowData,
@@ -167,6 +167,7 @@ export async function TasksWorkspace({
             projectId: one(sp.project) ?? parentTask?.projectId ?? undefined,
           }}
           dueTime={dueTime}
+          todayKey={toDateKey(today)}
         />
       )}
     </div>

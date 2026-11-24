@@ -42,12 +42,15 @@ import {
   createTaskAction,
   deleteTaskAction,
   updateTaskAction,
+  writeItOutAction,
   type TaskFormState,
+  type WriteItOutState,
 } from '../actions';
 import type { BlockerOption, TaskRow } from '../queries';
 import { RecurrenceFields } from '@/features/calendar/components/recurrence-fields';
 import { fieldsFromRrule } from '../recurrence';
 import { PRIORITIES, PRIORITY_LABELS, STATUS_LABELS, TASK_STATUSES } from '../schema';
+import { isStuck } from '../stuck';
 import { NativeSelect } from './native-select';
 import { NewOptionDialog } from './new-option-dialog';
 
@@ -66,9 +69,11 @@ export type TaskSheetProps = {
   defaults: { lifeSegmentId?: string; projectId?: string };
   /** HH:mm of the existing due time in the user's zone, if any. */
   dueTime: string;
+  /** yyyy-MM-dd in the user's zone, to tell a stuck task (stuck.ts). */
+  todayKey: string;
 };
 
-function fieldErrors(state: TaskFormState, name: string) {
+function fieldErrors(state: TaskFormState | WriteItOutState, name: string) {
   if (!state || state.ok || !state.fieldErrors?.[name]) return undefined;
   return state.fieldErrors[name]!.map((message) => ({ message }));
 }
@@ -95,6 +100,7 @@ export function TaskSheet(props: TaskSheetProps) {
     blockedByIds,
     defaults,
     dueTime,
+    todayKey,
   } = props;
   const router = useRouter();
   const pathname = usePathname();
@@ -119,6 +125,14 @@ export function TaskSheet(props: TaskSheetProps) {
   const [addedGoals, setAddedGoals] = useState<GoalOption[]>([]);
   const [waitingOn, setWaitingOn] = useState(() => new Set(blockedByIds));
   const [blockerFilter, setBlockerFilter] = useState('');
+  const [writing, setWriting] = useState(false);
+  const [stuckState, writeItOut] = useActionState(writeItOutAction, undefined);
+  const stuck = task ? isStuck(task, todayKey) : false;
+  // The next step written out shows under Subtasks before the page catches up.
+  const shownSubtasks = withAdded(
+    subtasks,
+    stuckState?.ok && stuckState.data.subtask ? [stuckState.data.subtask] : []
+  );
   const needle = blockerFilter.trim().toLowerCase();
   // Ticked rows stay visible whatever the filter, or their value would not be submitted.
   const shownBlockers = blockerOptions.filter(
@@ -533,6 +547,58 @@ export function TaskSheet(props: TaskSheetProps) {
             )}
           </div>
         </form>
+        {task && stuck && (
+          <section className="border-t p-4" data-slot="sheet-stuck">
+            <h3 className="tracking-eyebrow text-muted-foreground mb-2 text-xs uppercase">
+              Stuck on this?
+            </h3>
+            {stuckState?.ok ? (
+              <p className="text-sm" role="status">
+                Saved to your journal.
+                {stuckState.data.subtask && ' The next step is a subtask now.'}
+              </p>
+            ) : writing ? (
+              <form action={writeItOut} className="flex flex-col gap-3">
+                <input type="hidden" name="taskId" value={task.id} />
+                {stuckState && !stuckState.ok && !stuckState.fieldErrors && (
+                  <p role="alert" className="text-destructive text-sm">
+                    {stuckState.error}
+                  </p>
+                )}
+                <Field data-invalid={Boolean(fieldErrors(stuckState, 'avoiding')) || undefined}>
+                  <FieldLabel htmlFor="stuck-avoiding">What am I avoiding?</FieldLabel>
+                  <Textarea id="stuck-avoiding" name="avoiding" rows={3} autoFocus />
+                  <FieldError errors={fieldErrors(stuckState, 'avoiding')} />
+                </Field>
+                <Field data-invalid={Boolean(fieldErrors(stuckState, 'nextStep')) || undefined}>
+                  <FieldLabel htmlFor="stuck-next-step">What is the smallest next step?</FieldLabel>
+                  <Textarea id="stuck-next-step" name="nextStep" rows={2} maxLength={200} />
+                  {!task.parentTaskId && (
+                    <FieldDescription>
+                      It becomes a subtask, so there is somewhere to start.
+                    </FieldDescription>
+                  )}
+                  <FieldError errors={fieldErrors(stuckState, 'nextStep')} />
+                </Field>
+                <div className="flex items-center gap-2">
+                  <SubmitButton size="sm">Save</SubmitButton>
+                  <Button type="button" variant="ghost" size="sm" onClick={() => setWriting(false)}>
+                    Not now
+                  </Button>
+                </div>
+              </form>
+            ) : (
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="text-muted-foreground min-w-0 text-sm">
+                  It has been rolling over. Writing it out usually loosens it.
+                </p>
+                <Button type="button" variant="outline" size="sm" onClick={() => setWriting(true)}>
+                  Write it out
+                </Button>
+              </div>
+            )}
+          </section>
+        )}
         {task && !task.parentTaskId && (
           <section className="border-t p-4" data-slot="sheet-subtasks">
             <h3 className="tracking-eyebrow text-muted-foreground mb-2 flex items-center justify-between text-xs uppercase">
@@ -544,24 +610,27 @@ export function TaskSheet(props: TaskSheetProps) {
                 Add subtask
               </Link>
             </h3>
-            {subtasks.length === 0 ? (
+            {shownSubtasks.length === 0 ? (
               <p className="text-muted-foreground text-sm">None yet.</p>
             ) : (
               <ul className="flex flex-col gap-1">
-                {subtasks.map((s) => {
+                {shownSubtasks.map((s) => {
                   const p = new URLSearchParams(params.toString());
                   p.set('task', s.id);
                   p.delete('new');
                   return (
                     <li key={s.id} className="flex items-center gap-2 text-sm">
                       <span
-                        className={s.status === 'done' ? 'text-muted-foreground line-through' : ''}
+                        className={cn(
+                          'min-w-0 flex-1 truncate',
+                          s.status === 'done' && 'text-muted-foreground line-through'
+                        )}
                       >
                         {s.title}
                       </span>
                       <Link
                         href={`${pathname}?${p.toString()}`}
-                        className="text-primary link ml-auto text-xs"
+                        className="text-primary link shrink-0 text-xs"
                       >
                         Open
                       </Link>

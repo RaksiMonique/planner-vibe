@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { dueStatus, type WeekStartsOn } from '@/lib/dates';
+import { dueStatus, toDateKey, type WeekStartsOn } from '@/lib/dates';
 import { EmptyState } from '@/components/shared/empty-state';
 import { ListChecksIcon } from 'lucide-react';
 import {
@@ -11,6 +11,7 @@ import {
   QUADRANTS,
 } from '../grouping';
 import type { TaskRow as TaskRowData } from '../queries';
+import { isStuck } from '../stuck';
 import { BoardMove } from './board-move';
 import { TaskRow } from './task-row';
 
@@ -74,6 +75,7 @@ export function TaskListView({
 }: ViewProps) {
   if (tasks.length === 0) return <Empty />;
   const groups = groupForList(tasks, today, weekStartsOn);
+  const todayKey = toDateKey(today);
   return (
     <div className="flex flex-col gap-6">
       {LIST_GROUPS.filter((g) => groups[g.key].length > 0).map((g) => (
@@ -90,6 +92,7 @@ export function TaskListView({
                   status={g.key}
                   editHref={editHref(t.id)}
                   subtaskCount={subtaskCounts[t.id]}
+                  stuck={isStuck(t, todayKey)}
                 />
                 <Subtasks
                   items={subtasksOf[t.id]}

@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
+import { setProjectStatus } from '@/features/projects/service';
 import { formValues, fromError, fromZodError, ok, type ActionResult } from '@/lib/action-result';
 import { requireUser } from '@/lib/auth';
 import type { GoalOption } from './queries';
@@ -11,6 +12,7 @@ import {
   createGoal,
   deleteGoal,
   linkProject,
+  setGoalStatus,
   unlinkProject,
   updateGoal,
   type Goal,
@@ -84,6 +86,18 @@ export async function deleteGoalAction(formData: FormData): Promise<void> {
   await deleteGoal(user.id, parsed.data.id);
   revalidateGoals();
   redirect('/goals');
+}
+
+const somedayItem = z.object({ kind: z.enum(['goal', 'project']), id: z.uuid() });
+
+/** "Start it" on the Someday card: the planned goal or project becomes active. */
+export async function startSomedayAction(formData: FormData): Promise<void> {
+  const user = await requireUser();
+  const parsed = somedayItem.safeParse(formValues(formData));
+  if (!parsed.success) return;
+  if (parsed.data.kind === 'goal') await setGoalStatus(user.id, parsed.data.id, 'active');
+  else await setProjectStatus(user.id, parsed.data.id, 'active');
+  revalidateGoals();
 }
 
 const link = z.object({ goalId: z.uuid(), projectId: z.uuid() });

@@ -13,11 +13,13 @@ import {
   tasks,
 } from '@/db/schema';
 import { pickLinkedGoal } from '@/features/goals/linked-goal';
+import { saveEntry } from '@/features/journal/service';
+import type { JournalEntry } from '@/features/journal/queries';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { findCycles } from './dependencies';
 import type { Task } from './queries';
 import { buildTaskRrule, dateKeyToUtc, nextOccurrence } from './recurrence';
-import type { TaskInput } from './schema';
+import type { TaskInput, WriteItOutInput } from './schema';
 
 export type TaskContext = { timeZone: string; todayKey: string };
 
@@ -193,22 +195,64 @@ function toValues(input: TaskInput, ctx: TaskContext) {
  * in its segment, project, goal and milestone, with no date of their own.
  * A subtask cannot have subtasks, so a new subtask's own lines are ignored.
  */
-async function createSubtasks(userId: string, parent: Task, titles: string[] = []) {
-  if (titles.length === 0 || parent.parentTaskId) return;
-  await db.insert(tasks).values(
-    titles.map((title) => ({
-      userId,
-      title,
-      lifeSegmentId: parent.lifeSegmentId,
-      projectId: parent.projectId,
-      goalId: parent.goalId,
-      milestoneId: parent.milestoneId,
-      budgetId: parent.budgetId,
-      parentTaskId: parent.id,
-      priority: parent.priority,
-      status: 'todo' as const,
-    }))
-  );
+async function createSubtasks(
+  userId: string,
+  parent: Task,
+  titles: string[] = []
+): Promise<Task[]> {
+  if (titles.length === 0 || parent.parentTaskId) return [];
+  return db
+    .insert(tasks)
+    .values(
+      titles.map((title) => ({
+        userId,
+        title,
+        lifeSegmentId: parent.lifeSegmentId,
+        projectId: parent.projectId,
+        goalId: parent.goalId,
+        milestoneId: parent.milestoneId,
+        budgetId: parent.budgetId,
+        parentTaskId: parent.id,
+        priority: parent.priority,
+        status: 'todo' as const,
+      }))
+    )
+    .returning();
+}
+
+export const STUCK_TITLE_PREFIX = 'Stuck on: ';
+const STUCK_PROMPTS = {
+  avoiding: 'What am I avoiding?',
+  nextStep: 'What is the smallest next step?',
+} as const;
+
+/**
+ * "Write it out" for a task that keeps rolling over (stuck.ts): the two
+ * answers go into the journal as a reflection dated today, in the task's
+ * segment and pointing back at the task; the smallest next step, when given,
+ * becomes an open subtask so the task has somewhere to start. A subtask
+ * cannot have subtasks, so for one of those only the entry is written.
+ */
+export async function writeItOut(
+  userId: string,
+  input: WriteItOutInput,
+  ctx: TaskContext
+): Promise<{ entry: JournalEntry; subtask: Task | null }> {
+  const task = await getTaskOrThrow(userId, input.taskId);
+  const content = (['avoiding', 'nextStep'] as const)
+    .filter((k) => input[k])
+    .map((k) => `${STUCK_PROMPTS[k]}\n${input[k]}`)
+    .join('\n\n');
+  const entry = await saveEntry(userId, {
+    lifeSegmentId: task.lifeSegmentId,
+    kind: 'reflection',
+    date: ctx.todayKey,
+    title: `${STUCK_TITLE_PREFIX}${task.title}`.slice(0, 160),
+    content,
+    taskId: task.id,
+  });
+  const [subtask] = input.nextStep ? await createSubtasks(userId, task, [input.nextStep]) : [];
+  return { entry, subtask: subtask ?? null };
 }
 
 export async function createTask(

@@ -126,7 +126,7 @@ export function JournalTimeline({
           ) : (
             <ul className="flex flex-col gap-3">
               {recent.map((e) => (
-                <li key={e.id}>
+                <li key={e.id} className="flex flex-col">
                   <Link
                     href={journalHref({ date: e.date, month: e.date.slice(0, 7) })}
                     className="hover:bg-muted/60 -mx-1 flex flex-col gap-0.5 rounded-lg px-1 py-1"
@@ -138,6 +138,14 @@ export function JournalTimeline({
                     </span>
                     <span className="text-sm">{e.title ?? excerpt(e.content, 100)}</span>
                   </Link>
+                  {e.taskId && (
+                    <Link
+                      href={`/tasks?task=${e.taskId}`}
+                      className="text-primary link self-start text-xs"
+                    >
+                      About a task
+                    </Link>
+                  )}
                 </li>
               ))}
             </ul>

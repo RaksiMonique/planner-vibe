@@ -10,6 +10,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
 import { ProgressBar } from '@/components/shared/progress-bar';
 import { SegmentBadge } from '@/components/shared/segment-badge';
+import { listBreakIdeas, toBreakIdeaView } from '@/features/breaks/service';
 import { LinkedHabits } from '@/features/habits/components/linked-habits';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import { listSegments } from '@/features/life-segments/service';
@@ -65,6 +66,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
     resources,
     sessions,
     running,
+    breakIdeas,
   ] = await Promise.all([
     listSegments(user.id),
     getPreferences(user.id),
@@ -77,6 +79,7 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
     listResources(user.id, { courseId: id }),
     listSessions(user.id, { courseId: id, limit: 20 }),
     getRunningStudySession(user.id),
+    listBreakIdeas(user.id),
   ]);
   const tz = prefs.timeZone;
   const todayKey = toDateKey(todayInZone(tz));
@@ -217,6 +220,8 @@ export default async function CoursePage({ params }: { params: Promise<{ id: str
           courses={courseOptions}
           defaultCourseId={course.id}
           defaultSegmentId={course.lifeSegmentId}
+          breakIdeas={breakIdeas.map(toBreakIdeaView)}
+          todayKey={todayKey}
           running={
             running
               ? {

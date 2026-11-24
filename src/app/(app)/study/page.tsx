@@ -17,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { EmptyState } from '@/components/shared/empty-state';
 import { PageHeader } from '@/components/shared/page-header';
 import { SegmentDot } from '@/components/shared/segment-badge';
+import { listBreakIdeas, toBreakIdeaView } from '@/features/breaks/service';
 import { listGoals } from '@/features/goals/queries';
 import { LinkedHabits } from '@/features/habits/components/linked-habits';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
@@ -85,6 +86,7 @@ export default async function StudyPage({ searchParams }: { searchParams: Promis
     projects,
     running,
     goals,
+    breakIdeas,
   ] = await Promise.all([
     listSubjects(user.id, { includeArchived: showArchived }),
     listCourses(user.id, { status: showAllCourses ? 'all' : 'active' }),
@@ -96,6 +98,7 @@ export default async function StudyPage({ searchParams }: { searchParams: Promis
     listProjectOptions(user.id),
     getRunningStudySession(user.id),
     learning ? listGoals(user.id, { lifeSegmentId: learning.id }) : Promise.resolve([]),
+    listBreakIdeas(user.id),
   ]);
 
   const subjectOptions = subjects
@@ -159,6 +162,8 @@ export default async function StudyPage({ searchParams }: { searchParams: Promis
           subjects={subjectOptions}
           courses={courseOptions}
           defaultSegmentId={learning?.id}
+          breakIdeas={breakIdeas.map(toBreakIdeaView)}
+          todayKey={todayKey}
           running={
             running
               ? {

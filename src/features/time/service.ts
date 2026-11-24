@@ -38,6 +38,7 @@ import {
   type EntryInput,
   type MoveBlockInput,
   type TemplateApplyInput,
+  type TemplateKind,
   type TemplateSaveInput,
   type TimerStartInput,
 } from './schema';
@@ -649,6 +650,80 @@ export async function applyTemplate(
   if (values.length === 0) return 0;
   await db.insert(timeBlocks).values(values);
   return values.length;
+}
+
+/**
+ * Day shapes to start from: a day built around energy, a day for the small
+ * stuff, and a week of maker mornings with one admin morning. Blocks carry no
+ * segment, so applying one asks for it.
+ */
+const STARTER_TEMPLATES: ReadonlyArray<{
+  name: string;
+  kind: TemplateKind;
+  blocks: TemplateBlock[];
+}> = [
+  {
+    name: 'Energy day',
+    kind: 'day',
+    blocks: [
+      {
+        start: '08:00',
+        end: '11:00',
+        activityType: 'deep_work',
+        title: 'Hardest thing first, while willpower is high',
+      },
+      {
+        start: '11:30',
+        end: '13:30',
+        activityType: 'light_work',
+        title: 'Demanding but enjoyable',
+      },
+      { start: '15:00', end: '17:00', activityType: 'fun', title: 'Creative, light, yours' },
+    ],
+  },
+  {
+    name: 'Admin day',
+    kind: 'day',
+    blocks: [
+      {
+        start: '09:00',
+        end: '12:00',
+        activityType: 'admin',
+        title: 'Emails, errands, the small stuff',
+      },
+      { start: '13:00', end: '14:00', activityType: 'fun', title: 'Lunch out, or a walk' },
+      { start: '14:00', end: '16:00', activityType: 'admin', title: 'Finish the pile' },
+    ],
+  },
+  {
+    name: 'Six plus one',
+    kind: 'week',
+    blocks: [0, 1, 2, 3, 4, 5, 6].flatMap((dayOfWeek): TemplateBlock[] => [
+      dayOfWeek === 6
+        ? { dayOfWeek, start: '09:00', end: '12:00', activityType: 'admin', title: 'Admin morning' }
+        : {
+            dayOfWeek,
+            start: '09:00',
+            end: '12:00',
+            activityType: 'deep_work',
+            title: 'Maker morning',
+          },
+      { dayOfWeek, start: '17:00', end: '18:00', activityType: 'fun', title: 'Fun, on purpose' },
+    ]),
+  },
+];
+
+/** Adds the starter day shapes the user does not already have by name. Returns how many. */
+export async function createStarterTemplates(userId: string): Promise<number> {
+  const existing = new Set((await listTimeBlockTemplates(userId)).map((t) => t.name));
+  const missing = STARTER_TEMPLATES.filter((t) => !existing.has(t.name));
+  if (missing.length === 0) return 0;
+  const rows = await db
+    .insert(timeBlockTemplates)
+    .values(missing.map((t) => ({ userId, name: t.name, kind: t.kind, blocks: t.blocks })))
+    .onConflictDoNothing({ target: [timeBlockTemplates.userId, timeBlockTemplates.name] })
+    .returning({ id: timeBlockTemplates.id });
+  return rows.length;
 }
 
 export async function removeTemplate(userId: string, id: string): Promise<void> {

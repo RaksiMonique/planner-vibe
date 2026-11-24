@@ -1,13 +1,18 @@
 'use client';
 
-import { useActionState, useEffect, useRef, useState } from 'react';
-import { LayoutTemplateIcon, Trash2Icon } from 'lucide-react';
+import { useActionState, useEffect, useRef, useState, useTransition } from 'react';
+import { LayoutTemplateIcon, SparklesIcon, Trash2Icon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SubmitButton } from '@/components/shared/submit-button';
 import { NativeSelect } from '@/features/tasks/components/native-select';
-import { applyTemplateAction, deleteTemplateAction, saveTemplateAction } from '../actions';
-import { TEMPLATE_KINDS } from '../schema';
+import {
+  addStarterTemplatesAction,
+  applyTemplateAction,
+  deleteTemplateAction,
+  saveTemplateAction,
+} from '../actions';
+import { STARTER_TEMPLATE_NAMES, TEMPLATE_KINDS } from '../schema';
 import type { SegmentOption } from './block-dialog';
 
 export type TemplateView = { id: string; name: string; kind: 'day' | 'week'; blockCount: number };
@@ -32,6 +37,24 @@ export function TemplatesPanel({
   const handledSave = useRef<typeof saveState>(null);
   const handledApply = useRef<typeof applyState>(null);
   const saveForm = useRef<HTMLFormElement>(null);
+  const [starterPending, startStarter] = useTransition();
+  const [starterResult, setStarterResult] = useState<string | null>(null);
+  const names = new Set(templates.map((t) => t.name));
+  const starterMissing = STARTER_TEMPLATE_NAMES.some((n) => !names.has(n));
+
+  function addStarters() {
+    setStarterResult(null);
+    startStarter(async () => {
+      const result = await addStarterTemplatesAction();
+      if (!result.ok) {
+        setStarterResult(result.error);
+        return;
+      }
+      const n = result.data.created;
+      setStarterResult(`Added ${n} day shape${n === 1 ? '' : 's'}.`);
+      onChanged();
+    });
+  }
 
   useEffect(() => {
     if (saveState?.ok && handledSave.current !== saveState) {
@@ -91,6 +114,29 @@ export function TemplatesPanel({
           </p>
         )}
       </form>
+
+      {starterMissing && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={addStarters}
+            disabled={starterPending}
+          >
+            <SparklesIcon data-icon="inline-start" />
+            {starterPending ? 'Adding…' : 'Starter day shapes'}
+          </Button>
+          <span className="text-muted-foreground text-xs">
+            An energy day, an admin day and a maker week.
+          </span>
+        </div>
+      )}
+      {starterResult && (
+        <p className="text-muted-foreground text-xs" role="status">
+          {starterResult}
+        </p>
+      )}
 
       {templates.length === 0 ? (
         <p className="text-muted-foreground text-sm">

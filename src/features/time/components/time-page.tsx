@@ -3,10 +3,16 @@
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { PlusIcon } from 'lucide-react';
+import { CoffeeIcon, PlusIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
+import {
+  BreakIdeasPanel,
+  type BreakHabitOption,
+} from '@/features/breaks/components/break-ideas-panel';
+import { BreakPicker } from '@/features/breaks/components/break-picker';
+import type { BreakIdeaView } from '@/features/breaks/schema';
 import { getTimeRange, loadBlock, loadEntry, moveBlockAction } from '../actions';
 import type { MoveBlockInput } from '../schema';
 import type { TimeRangeData } from '../service';
@@ -47,6 +53,8 @@ export function TimePage({
   templates,
   running,
   labels,
+  breakIdeas,
+  habits,
 }: {
   initial: TimeRangeData;
   initialView: TimeViewName;
@@ -59,9 +67,14 @@ export function TimePage({
   templates: TemplateView[];
   running: RunningEntryView | null;
   labels: LabelMaps;
+  breakIdeas: BreakIdeaView[];
+  habits: BreakHabitOption[];
 }) {
   const router = useRouter();
   const [data, setData] = useState<TimeRangeData>(initial);
+  // Set when Stop is pressed, so the break picker asks; it only shows while no timer runs.
+  const [stopped, setStopped] = useState(false);
+  const sessionOver = stopped && !running;
   const [current, setCurrent] = useState<{ from: Date; to: Date; view: TimeViewName }>({
     from: new Date(initial.from),
     to: new Date(initial.to),
@@ -166,7 +179,33 @@ export function TimePage({
 
   return (
     <div className="flex flex-col gap-4">
-      <TimerPanel running={running} segments={segments} onChanged={refresh} />
+      <TimerPanel
+        running={running}
+        segments={segments}
+        onChanged={refresh}
+        onStopped={() => setStopped(true)}
+      />
+
+      <section
+        className="bg-card flex flex-col gap-2 rounded-xl border px-4 py-3"
+        aria-labelledby="take-a-break"
+      >
+        <h3 id="take-a-break" className="font-heading flex items-center gap-2 text-lg">
+          <CoffeeIcon className="text-primary size-4" aria-hidden />
+          Take a break
+        </h3>
+        <BreakPicker
+          ideas={breakIdeas}
+          preferMovement
+          todayKey={todayKey}
+          prompt={
+            sessionOver
+              ? 'Session over. Roll a break?'
+              : 'Something other than scrolling, chosen for you.'
+          }
+          onChanged={refresh}
+        />
+      </section>
 
       <div className="flex flex-wrap items-center gap-3">
         <div className="flex items-center gap-2">
@@ -217,6 +256,7 @@ export function TimePage({
             visibleKind={visibleKind}
             onChanged={refresh}
           />
+          <BreakIdeasPanel ideas={breakIdeas} habits={habits} onChanged={refresh} />
         </div>
       </div>
 

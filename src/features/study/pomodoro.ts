@@ -16,6 +16,12 @@ export const DEFAULT_POMODORO: PomodoroSettings = {
 
 export type PomodoroPhase = 'work' | 'break' | 'long_break';
 
+/**
+ * `intervals` is the classic cycle. `open` is one focus phase that counts up
+ * and ends only when the user stops, for work that should not be cut off.
+ */
+export type PomodoroMode = 'intervals' | 'open';
+
 export type PomodoroState = {
   phase: PomodoroPhase;
   /** Work phases finished so far in this session. */
@@ -90,4 +96,24 @@ export function stateFromElapsed(
     state = nextPhase(state, settings, state.phaseStartedAt + length);
   }
   return state;
+}
+
+/** An open-ended session: one focus phase from the start, however long ago that was. */
+export function openEndedState(startedAt: number): PomodoroState {
+  return { phase: 'work', completedWork: 0, phaseStartedAt: startedAt };
+}
+
+/** The state for either mode, from the start time and the clock alone. */
+export function stateFor(
+  mode: PomodoroMode,
+  startedAt: number,
+  now: number,
+  settings: PomodoroSettings
+): PomodoroState {
+  return mode === 'open' ? openEndedState(startedAt) : stateFromElapsed(startedAt, now, settings);
+}
+
+/** Time spent in the current phase; the count-up clock for an open-ended session. */
+export function elapsedMs(state: PomodoroState, now: number): number {
+  return Math.max(0, now - state.phaseStartedAt);
 }

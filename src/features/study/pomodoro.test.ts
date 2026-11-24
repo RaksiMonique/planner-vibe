@@ -1,13 +1,16 @@
 import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_POMODORO,
+  elapsedMs,
   stateFromElapsed,
   formatClock,
   isPhaseOver,
   nextPhase,
+  openEndedState,
   phaseMinutes,
   remainingMs,
   startPomodoro,
+  stateFor,
 } from './pomodoro';
 
 const MIN = 60_000;
@@ -60,5 +63,24 @@ describe('pomodoro cycle', () => {
     expect(s.phaseStartedAt).toBe(55 * MIN);
     const t = stateFromElapsed(0, 10 * MIN, DEFAULT_POMODORO);
     expect(t).toEqual({ phase: 'work', completedWork: 0, phaseStartedAt: 0 });
+  });
+});
+
+describe('open-ended session', () => {
+  it('stays in focus however long it runs and counts up from the start', () => {
+    const s = openEndedState(1000);
+    expect(s).toEqual({ phase: 'work', completedWork: 0, phaseStartedAt: 1000 });
+    expect(elapsedMs(s, 1000 + 90 * MIN)).toBe(90 * MIN);
+    expect(elapsedMs(s, 500)).toBe(0);
+    expect(formatClock(elapsedMs(s, 1000 + 61_000))).toBe('01:01');
+  });
+
+  it('picks the state machine by mode', () => {
+    const at = 55 * MIN + 1;
+    expect(stateFor('open', 0, at, DEFAULT_POMODORO)).toEqual(openEndedState(0));
+    expect(stateFor('intervals', 0, at, DEFAULT_POMODORO)).toEqual(
+      stateFromElapsed(0, at, DEFAULT_POMODORO)
+    );
+    expect(stateFor('intervals', 0, at, DEFAULT_POMODORO).phase).toBe('break');
   });
 });

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { isValid, parseISO } from 'date-fns';
 import { PageHeader } from '@/components/shared/page-header';
+import { listBreakHabitOptions, listBreakIdeas, toBreakIdeaView } from '@/features/breaks/service';
 import { listSegments } from '@/features/life-segments/service';
 import { listProjectOptions } from '@/features/projects/queries';
 import { getPreferences } from '@/features/settings/service';
@@ -32,14 +33,17 @@ export default async function TimeRoute({ searchParams }: { searchParams: Search
   const { from, to } = rangeFor(kind, dateKey, prefs.timeZone, prefs.weekStartsOn);
   const initialView: TimeViewName = kind === 'day' ? 'timeGridDay' : 'timeGridWeek';
 
-  const [segments, projects, tasks, templates, running, initial] = await Promise.all([
-    listSegments(user.id),
-    listProjectOptions(user.id),
-    listTaskOptions(user.id),
-    listTemplates(user.id),
-    getRunningEntry(user.id),
-    buildTimeRange(user.id, from, to, prefs.timeZone),
-  ]);
+  const [segments, projects, tasks, templates, running, initial, breakIdeas, habits] =
+    await Promise.all([
+      listSegments(user.id),
+      listProjectOptions(user.id),
+      listTaskOptions(user.id),
+      listTemplates(user.id),
+      getRunningEntry(user.id),
+      buildTimeRange(user.id, from, to, prefs.timeZone),
+      listBreakIdeas(user.id),
+      listBreakHabitOptions(user.id),
+    ]);
   const segmentById = new Map(segments.map((s) => [s.id, s]));
   const runningSegment = running ? segmentById.get(running.lifeSegmentId) : null;
 
@@ -81,6 +85,8 @@ export default async function TimeRoute({ searchParams }: { searchParams: Search
           ),
           projects: Object.fromEntries(projects.map((p) => [p.id, p.title])),
         }}
+        breakIdeas={breakIdeas.map(toBreakIdeaView)}
+        habits={habits}
       />
     </>
   );

@@ -27,6 +27,36 @@ export function streakLabel(h: HabitOverview): string {
   return `${n} ${noun}${n === 1 ? '' : 's'} in a row`;
 }
 
+/** The short status beside a habit in a list: the 30-day rate for daily habits, else this period's count. */
+export function shortStatus(h: HabitOverview): string {
+  if (h.frequency === 'daily') return `${h.stats.rate30}% of 30 days`;
+  return `${h.stats.period.count}/${h.stats.period.target} this ${PERIOD_NOUN[h.frequency]}`;
+}
+
+/** The rates lead; the streak follows, small. A miss changes a number, not the story. */
+export function HabitRates({ habit }: { habit: HabitOverview }) {
+  const s = habit.stats;
+  return (
+    <div className="flex flex-col gap-0.5" data-slot="habit-rates">
+      <p className="text-sm">
+        <span className="font-medium">{s.rate30}%</span> of the last 30 days
+        <span className="text-muted-foreground"> · {s.rate90}% of 90</span>
+      </p>
+      <p className="text-muted-foreground text-xs">
+        This month {s.monthCount} · last month {s.lastMonthCount}
+      </p>
+    </div>
+  );
+}
+
+export function StreakBadge({ habit }: { habit: HabitOverview }) {
+  return (
+    <Badge variant="outline" className="text-muted-foreground h-4 px-1.5 text-[10px]">
+      {streakLabel(habit)} · best {habit.stats.longestStreak}
+    </Badge>
+  );
+}
+
 export function HabitCard({
   habit,
   weekKeys,
@@ -82,14 +112,8 @@ export function HabitCard({
 
         {!archived && (
           <>
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-              <Badge variant={habit.stats.currentStreak > 0 ? 'secondary' : 'outline'}>
-                {streakLabel(habit)}
-              </Badge>
-              <span className="text-muted-foreground">
-                Best {habit.stats.longestStreak} · {habit.stats.rate30}% of the last 30 days
-              </span>
-            </div>
+            <HabitRates habit={habit} />
+            <StreakBadge habit={habit} />
             <ProgressBar
               value={period.target ? Math.round((period.count / period.target) * 100) : 0}
               label={`This ${PERIOD_NOUN[habit.frequency]}`}

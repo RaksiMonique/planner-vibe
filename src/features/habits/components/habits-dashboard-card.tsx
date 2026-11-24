@@ -5,14 +5,14 @@ import { DashboardCard, EmptyNote } from '@/features/dashboard/components/dashbo
 import { getPreferences } from '@/features/settings/service';
 import { cn } from '@/lib/utils';
 import { getHabitOverview } from '../queries';
-import { PERIOD_NOUN } from '../schema';
-import { habitAccent, streakLabel } from './habit-card';
+import { habitAccent, shortStatus } from './habit-card';
 import { HabitToggle } from './habit-toggle';
+import { SlippedWhy } from './habit-why';
 import { NextUp } from './next-up';
 
 const PREVIEW = 8;
 
-/** Today's habit checklist with streaks. */
+/** Today's habit checklist, with how each habit is going. */
 export async function HabitsDashboardCard({
   userId,
   todayKey,
@@ -68,11 +68,10 @@ export async function HabitsDashboardCard({
                     {h.name}
                   </Link>
                   <NextUp habit={h} todayKey={todayKey} />
+                  <SlippedWhy habit={h} />
                 </span>
-                <span className="text-muted-foreground hidden text-xs sm:inline">
-                  {h.frequency === 'daily'
-                    ? streakLabel(h)
-                    : `${h.stats.period.count}/${h.stats.period.target} this ${PERIOD_NOUN[h.frequency]}`}
+                <span className="text-muted-foreground hidden shrink-0 text-xs sm:inline">
+                  {shortStatus(h)}
                 </span>
               </li>
             ))}

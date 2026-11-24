@@ -17,6 +17,7 @@ import {
 } from '@/db/schema';
 import { describeChapters, nextReading, planChapters } from '@/features/faith/plans';
 import { STUDY_STATUS_LABELS } from '@/features/faith/schema';
+import { listGoalOptions, listGoals } from '@/features/goals/queries';
 import { segmentRefColumns } from '@/features/life-segments/queries';
 import type { SegmentRef } from '@/features/life-segments/types';
 import {
@@ -106,12 +107,13 @@ export async function countCheckInsByHabit(
 
 // ── Overview with streaks (used by the habits page, dashboard and weekly view) ──
 
-import { subDays, parseISO } from 'date-fns';
+import { format, min, parseISO, startOfMonth, subDays, subMonths } from 'date-fns';
 import { toDateKey, type WeekStartsOn } from '@/lib/dates';
 import {
   completionRate,
   currentStreak,
   longestStreak,
+  monthCounts,
   periodSummary,
   type PeriodSummary,
 } from './streaks';
@@ -121,6 +123,11 @@ export type HabitStats = {
   longestStreak: number;
   /** Percent of the target achieved over the last 30 days. */
   rate30: number;
+  /** The same over the last 90 days: the kinder, steadier number. */
+  rate90: number;
+  /** Check-ins in the current calendar month and the one before it. */
+  monthCount: number;
+  lastMonthCount: number;
   period: PeriodSummary;
 };
 
@@ -145,7 +152,15 @@ export async function getHabitOverview(
 ): Promise<HabitOverview[]> {
   const rows = await listHabits(userId, { includeArchived: opts.includeArchived });
   if (rows.length === 0) return [];
-  const fromKey = toDateKey(subDays(parseISO(todayKey), opts.historyDays ?? 400));
+  // Far enough back for the 90-day rate (whole periods) and all of last month.
+  const today = parseISO(todayKey);
+  const fromKey = toDateKey(
+    min([
+      subDays(today, opts.historyDays ?? 400),
+      startOfMonth(subDays(today, 89)),
+      startOfMonth(subMonths(today, 1)),
+    ])
+  );
   const [checkIns, links, plans, inRoutines] = await Promise.all([
     listCheckInsBetween(userId, fromKey, todayKey),
     resolveLinks(userId, rows),
@@ -169,6 +184,8 @@ export async function getHabitOverview(
         currentStreak: currentStreak(input),
         longestStreak: longestStreak(input),
         rate30: completionRate(input),
+        rate90: completionRate(input, 90),
+        ...monthCounts(input),
         period: periodSummary(input),
       },
       link: links.get(habit.id) ?? null,
@@ -268,7 +285,7 @@ const ids = (rows: Habit[], key: keyof Habit) => [
   ...new Set(rows.map((r) => r[key]).filter((v): v is string => typeof v === 'string')),
 ];
 
-/** Titles and "what comes next" for every linked course, subject, study, plan and routine. */
+/** Titles and "what comes next" for every linked course, subject, study, plan, routine and goal. */
 async function resolveLinks(userId: string, rows: Habit[]): Promise<Map<string, HabitLink>> {
   const out = new Map<string, HabitLink>();
   const courseIds = ids(rows, 'courseId');
@@ -276,6 +293,7 @@ async function resolveLinks(userId: string, rows: Habit[]): Promise<Map<string, 
   const studyIds = ids(rows, 'bibleStudyId');
   const planIds = ids(rows, 'readingPlanId');
   const routineIds = ids(rows, 'routineId');
+  const goalIds = ids(rows, 'goalId');
 
   const [
     courseRows,
@@ -286,6 +304,7 @@ async function resolveLinks(userId: string, rows: Habit[]): Promise<Map<string, 
     planRows,
     progress,
     routineRows,
+    goalRows,
   ] = await Promise.all([
     courseIds.length
       ? db
@@ -358,6 +377,8 @@ async function resolveLinks(userId: string, rows: Habit[]): Promise<Map<string, 
           .from(routines)
           .where(and(eq(routines.userId, userId), inArray(routines.id, routineIds)))
       : [],
+    // listGoals computes progress for the whole tree, which one goal's number needs anyway.
+    goalIds.length ? listGoals(userId, { status: 'all' }) : [],
   ]);
 
   for (const habit of rows) {
@@ -422,6 +443,23 @@ async function resolveLinks(userId: string, rows: Habit[]): Promise<Map<string, 
         });
         break;
       }
+      case 'goal': {
+        const g = goalRows.find((x) => x.id === link.id);
+        if (!g) break;
+        out.set(habit.id, {
+          ...base,
+          title: g.title,
+          next:
+            g.status === 'achieved'
+              ? 'Achieved'
+              : g.progress !== null
+                ? `${g.progress}% along`
+                : g.targetDate
+                  ? `Target ${format(parseISO(g.targetDate), 'd MMM')}`
+                  : null,
+        });
+        break;
+      }
     }
   }
   return out;
@@ -429,7 +467,7 @@ async function resolveLinks(userId: string, rows: Habit[]): Promise<Map<string, 
 
 /** Everything a habit can be linked to, for the habit form. */
 export async function listHabitLinkOptions(userId: string): Promise<HabitLinkOption[]> {
-  const [courseRows, subjectRows, studyRows, planRows, routineRows] = await Promise.all([
+  const [courseRows, subjectRows, studyRows, planRows, routineRows, goalRows] = await Promise.all([
     db
       .select({ id: courses.id, title: courses.title })
       .from(courses)
@@ -477,6 +515,7 @@ export async function listHabitLinkOptions(userId: string): Promise<HabitLinkOpt
         and(eq(routines.userId, userId), isNull(routines.deletedAt), eq(routines.isTemplate, false))
       )
       .orderBy(asc(routines.name)),
+    listGoalOptions(userId),
   ]);
   const tag = (kind: HabitLinkKind, list: Array<{ id: string; title: string }>) =>
     list.map((r) => ({ kind, id: r.id, title: r.title }));
@@ -486,5 +525,6 @@ export async function listHabitLinkOptions(userId: string): Promise<HabitLinkOpt
     ...tag('bible_study', studyRows),
     ...tag('reading_plan', planRows),
     ...tag('routine', routineRows),
+    ...tag('goal', goalRows),
   ];
 }

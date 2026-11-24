@@ -4,6 +4,7 @@ import { db } from '@/db';
 import {
   bibleStudies,
   courses,
+  goals,
   habitCheckIns,
   habitPlanItems,
   habits,
@@ -41,6 +42,7 @@ const LINK_TABLES = {
   bible_study: bibleStudies,
   reading_plan: readingPlans,
   routine: routines,
+  goal: goals,
 } as const;
 
 /** The linked row must be the user's own; a stale option is a validation error. */
@@ -59,6 +61,7 @@ function toValues(input: HabitInput) {
     target: input.target,
     accent: input.accent ?? null,
     reminderTime: input.reminderTime ? `${input.reminderTime}:00` : null,
+    why: input.why || null,
     details: input.details || null,
     ...linkColumns(parseLinkValue(input.link)),
   };

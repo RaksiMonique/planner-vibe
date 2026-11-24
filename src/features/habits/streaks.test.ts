@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   completionRate,
   currentStreak,
+  daysCheckedIn,
   longestStreak,
+  monthCounts,
   periodSummary,
   type StreakInput,
 } from './streaks';
@@ -95,6 +97,45 @@ describe('completionRate', () => {
     };
     // window covers October and November: 4 of 8 possible
     expect(completionRate(input)).toBe(50);
+  });
+});
+
+describe('monthCounts', () => {
+  it('counts this month and last month by calendar month, nothing older', () => {
+    const input = daily([
+      '2026-09-30',
+      '2026-10-01',
+      '2026-10-15',
+      '2026-10-31',
+      '2026-11-01',
+      '2026-11-07',
+    ]);
+    expect(monthCounts(input)).toEqual({ monthCount: 2, lastMonthCount: 3 });
+  });
+  it('steps back over a year boundary', () => {
+    const input = daily(['2025-12-25', '2025-12-31', '2026-01-01'], '2026-01-10');
+    expect(monthCounts(input)).toEqual({ monthCount: 1, lastMonthCount: 2 });
+  });
+  it('adds up values and ignores dates after today', () => {
+    const input: StreakInput = {
+      checkIns: [{ date: '2026-11-03', value: 2 }, { date: '2026-11-04' }, { date: '2026-11-20' }],
+      frequency: 'daily',
+      target: 1,
+      todayKey: '2026-11-07',
+      weekStartsOn: 1,
+    };
+    expect(monthCounts(input)).toEqual({ monthCount: 3, lastMonthCount: 0 });
+    expect(monthCounts(daily([]))).toEqual({ monthCount: 0, lastMonthCount: 0 });
+  });
+});
+
+describe('daysCheckedIn', () => {
+  it('counts distinct days inside the window, today included', () => {
+    const dates = ['2026-10-08', '2026-10-09', '2026-10-09', '2026-11-07', '2026-11-08'];
+    // 9 Oct is the first day of the 30-day window ending 7 Nov; 8 Oct and 8 Nov fall outside.
+    expect(daysCheckedIn(dates, '2026-11-07')).toBe(2);
+    expect(daysCheckedIn(dates, '2026-11-07', 90)).toBe(3);
+    expect(daysCheckedIn([], '2026-11-07')).toBe(0);
   });
 });
 

@@ -7,14 +7,14 @@ import { EmptyState } from '@/components/shared/empty-state';
 import { PageHeader } from '@/components/shared/page-header';
 import { ProgressBar } from '@/components/shared/progress-bar';
 import { SegmentDot } from '@/components/shared/segment-badge';
-import { HabitCard, habitAccent, streakLabel } from '@/features/habits/components/habit-card';
+import { HabitCard, habitAccent, shortStatus } from '@/features/habits/components/habit-card';
 import { HabitFormDialog } from '@/features/habits/components/habit-form-dialog';
 import { HabitMonthCalendar } from '@/features/habits/components/habit-month-calendar';
 import { HabitToggle } from '@/features/habits/components/habit-toggle';
+import { SlippedWhy } from '@/features/habits/components/habit-why';
 import { NextUp } from '@/features/habits/components/next-up';
 import { buildHabitsHref } from '@/features/habits/hrefs';
 import { getHabitOverview, listHabitLinkOptions } from '@/features/habits/queries';
-import { PERIOD_NOUN } from '@/features/habits/schema';
 import { SegmentFilter } from '@/features/life-segments/components/segment-filter';
 import { listSegments } from '@/features/life-segments/service';
 import { getPreferences } from '@/features/settings/service';
@@ -154,11 +154,10 @@ export default async function HabitsPage({ searchParams }: { searchParams: Promi
                           {h.name}
                         </Link>
                         <NextUp habit={h} todayKey={todayKey} />
+                        <SlippedWhy habit={h} />
                       </span>
-                      <span className="text-muted-foreground text-xs">
-                        {h.frequency === 'daily'
-                          ? streakLabel(h)
-                          : `${h.stats.period.count}/${h.stats.period.target} this ${PERIOD_NOUN[h.frequency]}`}
+                      <span className="text-muted-foreground shrink-0 text-xs">
+                        {shortStatus(h)}
                       </span>
                     </li>
                   ))}

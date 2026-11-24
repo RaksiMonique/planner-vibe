@@ -8,6 +8,7 @@ export const HABIT_LINK_KINDS = [
   'bible_study',
   'reading_plan',
   'routine',
+  'goal',
 ] as const;
 export type HabitLinkKind = (typeof HABIT_LINK_KINDS)[number];
 
@@ -17,6 +18,7 @@ export const HABIT_LINK_LABELS: Record<HabitLinkKind, string> = {
   bible_study: 'Bible study',
   reading_plan: 'Reading plan',
   routine: 'Routine',
+  goal: 'Goal',
 };
 
 export const HABIT_LINK_GROUP_LABELS: Record<HabitLinkKind, string> = {
@@ -25,6 +27,7 @@ export const HABIT_LINK_GROUP_LABELS: Record<HabitLinkKind, string> = {
   bible_study: 'Bible studies',
   reading_plan: 'Reading plans',
   routine: 'Routines',
+  goal: 'Goals',
 };
 
 /** The form field value: `kind:id`, or empty for no link. */
@@ -38,6 +41,7 @@ export type HabitLinkColumns = {
   bibleStudyId: string | null;
   readingPlanId: string | null;
   routineId: string | null;
+  goalId: string | null;
 };
 
 const COLUMN_BY_KIND: Record<HabitLinkKind, keyof HabitLinkColumns> = {
@@ -46,6 +50,7 @@ const COLUMN_BY_KIND: Record<HabitLinkKind, keyof HabitLinkColumns> = {
   bible_study: 'bibleStudyId',
   reading_plan: 'readingPlanId',
   routine: 'routineId',
+  goal: 'goalId',
 };
 
 export function linkValue(kind: HabitLinkKind, id: string): HabitLinkValue {
@@ -73,6 +78,7 @@ export function linkColumns(link: { kind: HabitLinkKind; id: string } | null): H
     bibleStudyId: null,
     readingPlanId: null,
     routineId: null,
+    goalId: null,
   };
   if (link) out[COLUMN_BY_KIND[link.kind]] = link.id;
   return out;
@@ -99,6 +105,8 @@ export function linkHref(link: { kind: HabitLinkKind; id: string }): string {
       return '/bible';
     case 'routine':
       return '/routines';
+    case 'goal':
+      return `/goals/${link.id}`;
   }
 }
 

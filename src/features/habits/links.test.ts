@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { linkColumns, linkOf, nextPlanItem, parseLinkValue } from './links';
+import { linkColumns, linkHref, linkOf, nextPlanItem, parseLinkValue } from './links';
 
 const item = (id: string, sortOrder: number, plannedDate: string | null = null, done = false) => ({
   id,
@@ -43,8 +43,17 @@ describe('links', () => {
       bibleStudyId: null,
       readingPlanId: 'p1',
       routineId: null,
+      goalId: null,
     });
     expect(linkOf(cols)).toEqual({ kind: 'reading_plan', id: 'p1' });
     expect(linkOf(linkColumns(null))).toBeNull();
+  });
+  it('a goal is a link kind with its own page', () => {
+    expect(parseLinkValue('goal:g1')).toEqual({ kind: 'goal', id: 'g1' });
+    const cols = linkColumns({ kind: 'goal', id: 'g1' });
+    expect(cols.goalId).toBe('g1');
+    expect(cols.courseId).toBeNull();
+    expect(linkOf(cols)).toEqual({ kind: 'goal', id: 'g1' });
+    expect(linkHref({ kind: 'goal', id: 'g1' })).toBe('/goals/g1');
   });
 });

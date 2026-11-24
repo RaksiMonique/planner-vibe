@@ -224,10 +224,22 @@ function HabitForm({
             })}
           </NativeSelect>
           <FieldDescription>
-            The course, subject, Bible study, reading plan or routine this habit serves. Its next
-            lesson or reading shows beside the habit.
+            The course, subject, Bible study, reading plan, routine or goal this habit serves. Its
+            next lesson, reading or progress shows beside the habit.
           </FieldDescription>
           <FieldError errors={fieldErrors(state, 'link')} />
+        </Field>
+        <Field data-invalid={hasFieldError(state, 'why')}>
+          <FieldLabel htmlFor="habit-why">Why I do this</FieldLabel>
+          <Textarea
+            id="habit-why"
+            name="why"
+            rows={2}
+            maxLength={1000}
+            defaultValue={habit?.why ?? ''}
+            placeholder="The reason that will still be true on a bad day."
+          />
+          <FieldError errors={fieldErrors(state, 'why')} />
         </Field>
         <Field data-invalid={hasFieldError(state, 'details')}>
           <FieldLabel htmlFor="habit-details">How it goes</FieldLabel>

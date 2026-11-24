@@ -29,9 +29,11 @@ export const habitInput = z.object({
     .default('segment')
     .transform((v) => (v === 'segment' ? undefined : v)),
   reminderTime: timeKey.optional(),
+  /** The reason for the habit, the one that is still true on a bad day. */
+  why: z.string().trim().max(1000).optional(),
   /** How it goes: where to start, what counts, what a good session looks like. */
   details: z.string().trim().max(5000).optional(),
-  /** `kind:id` for the course, subject, Bible study, reading plan or routine it serves. */
+  /** `kind:id` for the course, subject, Bible study, reading plan, routine or goal it serves. */
   link: z
     .string()
     .optional()

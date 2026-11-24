@@ -8,9 +8,10 @@ import { toDateKey, todayInZone } from '@/lib/dates';
 import { cn } from '@/lib/utils';
 import { linkValue, type HabitLinkKind } from '../links';
 import { getHabitOverview, listHabitLinkOptions } from '../queries';
-import { habitAccent, streakLabel } from './habit-card';
+import { habitAccent, shortStatus } from './habit-card';
 import { HabitFormDialog } from './habit-form-dialog';
 import { HabitToggle } from './habit-toggle';
+import { SlippedWhy } from './habit-why';
 import { NextUp } from './next-up';
 
 /**
@@ -103,10 +104,11 @@ export async function LinkedHabits({
                       </Link>
                       <span className="text-muted-foreground ml-auto shrink-0 text-xs">
                         {'kinds' in match && h.link ? `${h.link.title} · ` : ''}
-                        {streakLabel(h)}
+                        {shortStatus(h)}
                       </span>
                     </div>
                     <NextUp habit={h} todayKey={todayKey} />
+                    <SlippedWhy habit={h} />
                   </div>
                 </li>
               ))}

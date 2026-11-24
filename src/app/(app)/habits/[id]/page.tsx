@@ -11,14 +11,13 @@ import {
   PencilIcon,
   Trash2Icon,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { PageHeader } from '@/components/shared/page-header';
 import { ProgressBar } from '@/components/shared/progress-bar';
 import { SegmentBadge } from '@/components/shared/segment-badge';
 import { deleteHabitAction, setHabitArchivedAction } from '@/features/habits/actions';
-import { habitAccent, streakLabel } from '@/features/habits/components/habit-card';
+import { HabitRates, StreakBadge, habitAccent } from '@/features/habits/components/habit-card';
 import { HabitFormDialog } from '@/features/habits/components/habit-form-dialog';
 import { HabitPlan } from '@/features/habits/components/habit-plan';
 import { HabitToggle } from '@/features/habits/components/habit-toggle';
@@ -30,7 +29,7 @@ import {
   listPlanItems,
 } from '@/features/habits/queries';
 import { FREQUENCY_LABELS, PERIOD_NOUN } from '@/features/habits/schema';
-import { isFutureKey } from '@/features/habits/streaks';
+import { daysCheckedIn, isFutureKey } from '@/features/habits/streaks';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
 import { listSegments } from '@/features/life-segments/service';
 import { getPreferences } from '@/features/settings/service';
@@ -63,6 +62,7 @@ export default async function HabitPage({ params }: { params: Promise<{ id: stri
   const checkIns = new Set(habit.checkInDates);
   const { period } = habit.stats;
   const next = nextUpText(habit, todayKey);
+  const missed = habit.stats.currentStreak === 0 && habit.stats.longestStreak > 0;
 
   return (
     <>
@@ -136,6 +136,14 @@ export default async function HabitPage({ params }: { params: Promise<{ id: stri
           </>
         }
       />
+      {habit.why && (
+        <p
+          className="text-muted-foreground -mt-3 mb-6 max-w-2xl text-base italic"
+          data-slot="habit-why"
+        >
+          “{habit.why}”
+        </p>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <div className="flex flex-col gap-6">
@@ -197,7 +205,7 @@ export default async function HabitPage({ params }: { params: Promise<{ id: stri
                 ) : (
                   <p className="text-muted-foreground">
                     Not linked. Edit the habit to tie it to a course, subject, Bible study, reading
-                    plan or routine; its next lesson or reading then shows here.
+                    plan, routine or goal; its next lesson, reading or progress then shows here.
                   </p>
                 )}
                 {habit.routineNames.length > 0 && (
@@ -214,15 +222,17 @@ export default async function HabitPage({ params }: { params: Promise<{ id: stri
             <h3 className="font-heading text-xl">Record</h3>
             <Card size="sm">
               <CardContent className="flex flex-col gap-3">
+                <HabitRates habit={habit} />
                 <div className="flex flex-wrap items-center gap-2 text-xs">
                   <SegmentBadge name={habit.segment.name} accent={habitAccent(habit)} />
-                  <Badge variant={habit.stats.currentStreak > 0 ? 'secondary' : 'outline'}>
-                    {streakLabel(habit)}
-                  </Badge>
-                  <span className="text-muted-foreground">
-                    Best {habit.stats.longestStreak} · {habit.stats.rate30}% of the last 30 days
-                  </span>
+                  <StreakBadge habit={habit} />
                 </div>
+                {missed && (
+                  <p className="text-muted-foreground text-xs" data-slot="miss-note">
+                    A miss is a day, not a verdict. {daysCheckedIn(habit.checkInDates, todayKey)} of
+                    the last 30 days.
+                  </p>
+                )}
                 <ProgressBar
                   value={period.target ? Math.round((period.count / period.target) * 100) : 0}
                   label={`This ${PERIOD_NOUN[habit.frequency]}`}

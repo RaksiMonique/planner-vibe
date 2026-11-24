@@ -147,6 +147,30 @@ export function completionRate(input: StreakInput, days = 30): number {
   return possible === 0 ? 0 : Math.round((achieved / possible) * 100);
 }
 
+/**
+ * Check-ins in the calendar month of `todayKey` and in the month before it,
+ * counted by value. Plain counts, no target: "This month 12, last month 9".
+ */
+export function monthCounts(input: StreakInput): { monthCount: number; lastMonthCount: number } {
+  const thisMonth = input.todayKey.slice(0, 7);
+  const lastMonth = format(subMonths(parseISO(input.todayKey), 1), 'yyyy-MM');
+  let monthCount = 0;
+  let lastMonthCount = 0;
+  for (const c of input.checkIns) {
+    if (c.date > input.todayKey) continue;
+    const month = c.date.slice(0, 7);
+    if (month === thisMonth) monthCount += c.value ?? 1;
+    else if (month === lastMonth) lastMonthCount += c.value ?? 1;
+  }
+  return { monthCount, lastMonthCount };
+}
+
+/** How many of the last `days` days (today included) have a check-in. */
+export function daysCheckedIn(dates: string[], todayKey: string, days = 30): number {
+  const fromKey = key(subDays(parseISO(todayKey), days - 1));
+  return new Set(dates.filter((d) => d >= fromKey && d <= todayKey)).size;
+}
+
 export function isFutureKey(dateKey: string, todayKey: string): boolean {
   return isBefore(parseISO(todayKey), parseISO(dateKey));
 }

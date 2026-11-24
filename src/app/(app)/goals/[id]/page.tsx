@@ -17,6 +17,7 @@ import { buildAncestorChain } from '@/features/goals/grouping';
 import { getGoal, listGoalOptions, listGoals, listMilestones } from '@/features/goals/queries';
 import { GOAL_STATUS_LABELS, HORIZON_LABELS } from '@/features/goals/schema';
 import { listLinkedProjectIds } from '@/features/goals/service';
+import { LinkedHabits } from '@/features/habits/components/linked-habits';
 import { GoalTimeline } from '@/features/horizons/components/goal-timeline';
 import { collectSubtree } from '@/features/horizons/timeline';
 import { ConfirmActionButton } from '@/features/life-segments/components/confirm-action-button';
@@ -238,6 +239,17 @@ export default async function GoalPage({ params }: PageProps<'/goals/[id]'>) {
             <GoalTimeline goals={horizonGoals} todayKey={todayKey} highlightId={goal.id} />
           </CardContent>
         </Card>
+
+        <div className="lg:col-span-3">
+          <LinkedHabits
+            userId={user.id}
+            segments={segments}
+            match={{ kind: 'goal', id: goal.id }}
+            defaultSegmentId={goal.lifeSegmentId}
+            title="Habits for this goal"
+            emptyText="No habit serves this goal yet. Add one, and its progress shows wherever you check in."
+          />
+        </div>
 
         <Card className="lg:col-span-3">
           <CardHeader>

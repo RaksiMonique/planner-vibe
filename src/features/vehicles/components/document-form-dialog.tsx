@@ -28,6 +28,7 @@ export function DocumentFormDialog({
   vehicleName,
   document,
   defaultKind,
+  renewing = false,
   trigger,
   variant = 'outline',
   size = 'xs',
@@ -37,6 +38,8 @@ export function DocumentFormDialog({
   document?: VehicleDocument;
   /** Preset for a standard slot such as Insurance; the field stays editable. */
   defaultKind?: string;
+  /** The paper is due: the dialog asks for its new date and the renewal task closes on save. */
+  renewing?: boolean;
   trigger: React.ReactNode;
   variant?: React.ComponentProps<typeof Button>['variant'];
   size?: React.ComponentProps<typeof Button>['size'];
@@ -50,19 +53,22 @@ export function DocumentFormDialog({
         <DialogHeader>
           <DialogTitle className="font-heading text-lg">
             {document
-              ? `Edit ${document.kind}`
+              ? `${renewing ? 'Renew' : 'Edit'} ${document.kind}`
               : kind
                 ? `${kind} for ${vehicleName}`
                 : 'New document'}
           </DialogTitle>
           <DialogDescription>
-            A reminder goes out a month before it expires, a week before and on the day.
+            {renewing
+              ? 'Enter the new expiry date. Once it is more than three months away the renewal task closes itself.'
+              : 'A task to renew it appears three months before it expires, and reminders go out a month before, a week before and on the day.'}
           </DialogDescription>
         </DialogHeader>
         <DocumentForm
           vehicleId={vehicleId}
           document={document}
           defaultKind={defaultKind}
+          renewing={renewing}
           onDone={() => setOpen(false)}
         />
       </DialogContent>
@@ -74,11 +80,13 @@ function DocumentForm({
   vehicleId,
   document,
   defaultKind,
+  renewing,
   onDone,
 }: {
   vehicleId: string;
   document?: VehicleDocument;
   defaultKind?: string;
+  renewing: boolean;
   onDone: () => void;
 }) {
   const [state, formAction] = useActionState(
@@ -117,14 +125,16 @@ function DocumentForm({
             <FieldError errors={fieldErrors(state, 'kind')} />
           </Field>
           <Field data-invalid={hasFieldError(state, 'expiresOn')}>
-            <FieldLabel htmlFor="document-expires">Expires on</FieldLabel>
+            <FieldLabel htmlFor="document-expires">
+              {renewing ? 'New expiry date' : 'Expires on'}
+            </FieldLabel>
             <Input
               id="document-expires"
               name="expiresOn"
               type="date"
               required
-              defaultValue={document?.expiresOn ?? ''}
-              autoFocus={Boolean(defaultKind) && !document}
+              defaultValue={renewing ? '' : (document?.expiresOn ?? '')}
+              autoFocus={renewing || (Boolean(defaultKind) && !document)}
             />
             <FieldError errors={fieldErrors(state, 'expiresOn')} />
           </Field>
@@ -162,7 +172,9 @@ function DocumentForm({
       )}
       <DialogFooter>
         <DialogClose render={<Button variant="outline" />}>Cancel</DialogClose>
-        <SubmitButton>{document ? 'Save changes' : 'Save date'}</SubmitButton>
+        <SubmitButton>
+          {renewing ? 'Save new date' : document ? 'Save changes' : 'Save date'}
+        </SubmitButton>
       </DialogFooter>
     </form>
   );

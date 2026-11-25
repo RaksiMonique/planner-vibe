@@ -17,6 +17,7 @@ import { ownerPolicies } from './_policies';
 import { budgets } from './finance';
 import { lifeSegments } from './organisation';
 import { ownerId } from './profiles';
+import { vehicleDocuments } from './vehicles';
 
 export const goalHorizonEnum = planner.enum('goal_horizon', [
   'lifelong',
@@ -164,6 +165,10 @@ export const tasks = planner.table(
     milestoneId: uuid('milestone_id').references(() => milestones.id, { onDelete: 'set null' }),
     /** A budget this task came out of in a monthly money review (8.22). */
     budgetId: uuid('budget_id').references(() => budgets.id, { onDelete: 'set null' }),
+    /** A vehicle paper this task renews (8.24): it closes only once the paper has a new date. */
+    vehicleDocumentId: uuid('vehicle_document_id').references(() => vehicleDocuments.id, {
+      onDelete: 'set null',
+    }),
     parentTaskId: uuid('parent_task_id').references((): AnyPgColumn => tasks.id, {
       onDelete: 'cascade',
     }),
@@ -192,6 +197,7 @@ export const tasks = planner.table(
     index('tasks_user_status_idx').on(t.userId, t.status),
     index('tasks_project_idx').on(t.projectId),
     index('tasks_parent_idx').on(t.parentTaskId),
+    index('tasks_vehicle_document_idx').on(t.vehicleDocumentId),
     ...ownerPolicies('tasks'),
   ]
 );

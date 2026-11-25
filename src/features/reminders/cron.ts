@@ -14,6 +14,7 @@ import { pushConfigured, sendPushToUser } from './push';
 import { listNotifications } from './queries';
 import { digestDue } from './schedule';
 import { generateDueNotifications } from './service';
+import { ensureRenewalTasks } from '@/features/vehicles/service';
 import { syncGoogle } from '@/features/integrations/google-sync';
 import { calendarConnections } from '@/db/schema';
 
@@ -244,9 +245,25 @@ export async function syncConnectedCalendars(): Promise<
   return out;
 }
 
+/** Opens the renewal task for every vehicle paper that came within three months of expiring. */
+export async function refreshRenewalTasks(): Promise<CronSummary> {
+  const summary = empty();
+  const users = await activeUsers();
+  summary.users = users.length;
+  for (const user of users) {
+    try {
+      await ensureRenewalTasks(user.id);
+    } catch (e) {
+      summary.errors.push(`renewals ${user.id}: ${describe(e)}`);
+    }
+  }
+  return summary;
+}
+
 /** The once-a-day job (vercel.json): reminders, digests regardless of the hour, pruning. */
 export async function runDaily(now: Date, siteUrl: string): Promise<CronSummary> {
   return merge(
+    await refreshRenewalTasks(),
     await processDueReminders(now, siteUrl),
     await sendDigests(now, siteUrl, { ignoreHour: true }),
     await pruneOld(now),

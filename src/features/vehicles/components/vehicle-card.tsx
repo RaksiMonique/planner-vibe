@@ -1,5 +1,5 @@
 import { format, parseISO } from 'date-fns';
-import { CarFrontIcon, PencilIcon, PlusIcon, Trash2Icon } from 'lucide-react';
+import { CarFrontIcon, PencilIcon, PlusIcon, RefreshCwIcon, Trash2Icon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { SegmentDot } from '@/components/shared/segment-badge';
@@ -95,6 +95,7 @@ export function VehicleCard({
               );
             }
             const status = documentStatus(doc.expiresOn, todayKey);
+            const renewing = status.state !== 'ok';
             return (
               <li
                 key={kind}
@@ -116,16 +117,28 @@ export function VehicleCard({
                     {doc.notes && ` · ${doc.notes}`}
                   </p>
                 </div>
-                <Badge variant="outline" className={cn('shrink-0', STATE_CLASS[status.state])}>
-                  {status.wording}
-                </Badge>
+                {renewing && (
+                  <Badge variant="outline" className={cn('shrink-0', STATE_CLASS[status.state])}>
+                    {status.wording}
+                  </Badge>
+                )}
                 <DocumentFormDialog
                   vehicleId={vehicle.id}
                   vehicleName={label}
                   document={doc}
-                  variant="ghost"
-                  size="icon-xs"
-                  trigger={<PencilIcon aria-label={`Edit ${kind} for ${label}`} />}
+                  renewing={renewing}
+                  variant={renewing ? 'outline' : 'ghost'}
+                  size={renewing ? 'xs' : 'icon-xs'}
+                  trigger={
+                    renewing ? (
+                      <>
+                        <RefreshCwIcon data-icon="inline-start" />
+                        Renew
+                      </>
+                    ) : (
+                      <PencilIcon aria-label={`Edit ${kind} for ${label}`} />
+                    )
+                  }
                 />
                 <ConfirmActionButton
                   action={deleteDocumentAction}

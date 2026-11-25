@@ -10,9 +10,9 @@ import { documentStatus, vehicleLabel } from '../status';
 import { STATE_CLASS } from './vehicle-card';
 
 const PREVIEW = 5;
-const HORIZON_DAYS = 60;
+const HORIZON_DAYS = 90;
 
-/** Vehicle papers already expired or expiring in the next two months, soonest first. */
+/** Vehicle papers already expired or expiring in the next three months, soonest first. */
 export async function VehiclesDashboardCard({
   userId,
   todayKey,
@@ -31,7 +31,7 @@ export async function VehiclesDashboardCard({
     <DashboardCard title="Vehicle papers" icon={CarFrontIcon} href="/vehicles" release={6}>
       {items.length === 0 ? (
         <EmptyNote>
-          Nothing expires in the next two months.{' '}
+          Nothing to renew in the next three months.{' '}
           <Link href="/vehicles" className="text-primary link">
             See the vehicles.
           </Link>

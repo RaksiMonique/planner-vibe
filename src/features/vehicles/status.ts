@@ -9,8 +9,13 @@ import { differenceInCalendarDays, parseISO } from 'date-fns';
 /** The papers every vehicle card shows a slot for, in this order. */
 export const STANDARD_DOCUMENT_KINDS = ['Insurance', 'Fitness', 'Registration', 'Service'] as const;
 
-/** A document is "due" this many days before it expires; reminders go out at these marks. */
-export const WARN_DAYS = 30;
+/**
+ * A document needs renewing from this many days before it expires: a task to
+ * renew it appears then, and it closes only once the paper has a date further
+ * out than this. Anything further away is simply in date and says nothing.
+ */
+export const RENEW_WITHIN_DAYS = 90;
+/** Reminders go out at these marks before the expiry date. */
 export const REMINDER_DAYS_BEFORE = [30, 7, 0] as const;
 
 export type DocumentState = 'expired' | 'due' | 'ok';
@@ -19,14 +24,14 @@ export type DocumentStatus = {
   state: DocumentState;
   /** Whole days until it expires; negative once it has. */
   days: number;
-  /** "Expires in 12 days", "Expired 3 days ago", "Expires today". */
+  /** "Expires in 12 days", "Expired 3 days ago"; empty while the paper is comfortably in date. */
   wording: string;
 };
 
 export function documentStatus(expiresOn: string, todayKey: string): DocumentStatus {
   const days = differenceInCalendarDays(parseISO(expiresOn), parseISO(todayKey));
-  const state: DocumentState = days < 0 ? 'expired' : days <= WARN_DAYS ? 'due' : 'ok';
-  return { state, days, wording: wording(days) };
+  const state: DocumentState = days < 0 ? 'expired' : days <= RENEW_WITHIN_DAYS ? 'due' : 'ok';
+  return { state, days, wording: state === 'ok' ? '' : wording(days) };
 }
 
 function wording(days: number): string {
@@ -37,6 +42,11 @@ function wording(days: number): string {
   if (days < 60) return `Expires in ${days} days`;
   const months = Math.round(days / 30);
   return `Expires in ${months} months`;
+}
+
+/** Title of the task that renews a paper. */
+export function renewalTitle(kind: string, vehicleName: string): string {
+  return `Renew ${kind} for ${vehicleName}`;
 }
 
 /** What to call a vehicle: its name, or its year, make and model. */

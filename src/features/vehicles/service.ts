@@ -1,14 +1,21 @@
 import 'server-only';
-import { and, eq } from 'drizzle-orm';
-import { subDays, parseISO, format } from 'date-fns';
+import { and, eq, isNull, ne } from 'drizzle-orm';
+import { addDays, subDays, parseISO, format } from 'date-fns';
 import { fromZonedTime } from 'date-fns-tz';
 import { db } from '@/db';
-import { lifeSegments, reminders, vehicleDocuments, vehicles } from '@/db/schema';
+import { lifeSegments, reminders, tasks, vehicleDocuments, vehicles } from '@/db/schema';
 import { getPreferences } from '@/features/settings/service';
+import { toDateKey, todayInZone } from '@/lib/dates';
 import { NotFoundError, ValidationError } from '@/lib/errors';
 import { getDocument, getVehicle, type Vehicle, type VehicleDocument } from './queries';
 import type { DocumentInput, VehicleInput } from './schema';
-import { REMINDER_DAYS_BEFORE } from './status';
+import {
+  documentStatus,
+  REMINDER_DAYS_BEFORE,
+  RENEW_WITHIN_DAYS,
+  renewalTitle,
+  vehicleLabel,
+} from './status';
 
 /** Reminders for a paper go out at nine in the morning, local time. */
 const REMINDER_HOUR = '09:00:00';
@@ -55,6 +62,8 @@ export async function updateVehicle(
     .set(vehicleValues(input))
     .where(and(eq(vehicles.userId, userId), eq(vehicles.id, id)))
     .returning();
+  // A renamed vehicle renames its renewal tasks.
+  await ensureRenewalTasks(userId);
   return row;
 }
 
@@ -65,7 +74,10 @@ export async function removeVehicle(userId: string, id: string): Promise<void> {
     .select({ id: vehicleDocuments.id })
     .from(vehicleDocuments)
     .where(and(eq(vehicleDocuments.userId, userId), eq(vehicleDocuments.vehicleId, id)));
-  for (const d of docs) await clearDocumentReminders(userId, d.id);
+  for (const d of docs) {
+    await clearDocumentReminders(userId, d.id);
+    await dropRenewalTasks(userId, d.id);
+  }
   await db
     .update(vehicles)
     .set({ deletedAt: new Date() })
@@ -101,15 +113,134 @@ export async function saveDocument(
       .returning();
   }
   await syncDocumentReminders(userId, row);
+  await syncRenewalTask(userId, row);
   return row;
 }
 
 export async function removeDocument(userId: string, id: string): Promise<void> {
   if (!(await getDocument(userId, id))) throw new NotFoundError('That document does not exist.');
   await clearDocumentReminders(userId, id);
+  await dropRenewalTasks(userId, id);
   await db
     .delete(vehicleDocuments)
     .where(and(eq(vehicleDocuments.userId, userId), eq(vehicleDocuments.id, id)));
+}
+
+// ── Renewal tasks ─────────────────────────────────────────────────────────────
+
+const RENEWAL_NOTES =
+  'Enter the new expiry date on the Vehicles page. This task closes itself once the paper is more than three months from running out.';
+
+async function openRenewalTasks(userId: string, documentId: string) {
+  return db
+    .select()
+    .from(tasks)
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        eq(tasks.vehicleDocumentId, documentId),
+        ne(tasks.status, 'done'),
+        isNull(tasks.deletedAt)
+      )
+    );
+}
+
+async function dropRenewalTasks(userId: string, documentId: string) {
+  const open = await openRenewalTasks(userId, documentId);
+  if (open.length === 0) return;
+  await db
+    .update(tasks)
+    .set({ deletedAt: new Date() })
+    .where(
+      and(
+        eq(tasks.userId, userId),
+        eq(tasks.vehicleDocumentId, documentId),
+        ne(tasks.status, 'done'),
+        isNull(tasks.deletedAt)
+      )
+    );
+}
+
+/**
+ * One open "Renew X for Y" task while a paper is within three months of
+ * expiring or already expired, due on the expiry date. Once the paper has a
+ * date further out the task completes itself; it cannot be ticked off by hand
+ * before then (tasks/service.ts refuses). Keeps title and due date current.
+ */
+async function syncRenewalTask(
+  userId: string,
+  doc: VehicleDocument,
+  todayKey?: string,
+  vehicle?: Vehicle | null
+): Promise<void> {
+  const v = vehicle ?? (await getVehicle(userId, doc.vehicleId));
+  if (!v) return;
+  const today = todayKey ?? toDateKey(todayInZone((await getPreferences(userId)).timeZone));
+  const status = documentStatus(doc.expiresOn, today);
+  const open = await openRenewalTasks(userId, doc.id);
+  if (status.state === 'ok') {
+    if (open.length > 0) {
+      await db
+        .update(tasks)
+        .set({ status: 'done', completedAt: new Date() })
+        .where(
+          and(
+            eq(tasks.userId, userId),
+            eq(tasks.vehicleDocumentId, doc.id),
+            ne(tasks.status, 'done'),
+            isNull(tasks.deletedAt)
+          )
+        );
+    }
+    return;
+  }
+  const title = renewalTitle(doc.kind, vehicleLabel(v));
+  if (open.length === 0) {
+    await db.insert(tasks).values({
+      userId,
+      lifeSegmentId: v.lifeSegmentId,
+      title,
+      notes: RENEWAL_NOTES,
+      dueDate: doc.expiresOn,
+      isImportant: true,
+      vehicleDocumentId: doc.id,
+    });
+    return;
+  }
+  const [task] = open;
+  if (
+    task.title !== title ||
+    task.dueDate !== doc.expiresOn ||
+    task.lifeSegmentId !== v.lifeSegmentId
+  ) {
+    await db
+      .update(tasks)
+      .set({ title, dueDate: doc.expiresOn, lifeSegmentId: v.lifeSegmentId })
+      .where(eq(tasks.id, task.id));
+  }
+}
+
+/**
+ * Brings every live vehicle's renewal tasks up to date: creates the ones that
+ * fell within three months since last time, closes the ones whose paper was
+ * renewed. Run when the Vehicles page opens and once a day by the cron.
+ */
+export async function ensureRenewalTasks(userId: string): Promise<void> {
+  const prefs = await getPreferences(userId);
+  const todayKey = toDateKey(todayInZone(prefs.timeZone));
+  const rows = await db
+    .select({ document: vehicleDocuments, vehicle: vehicles })
+    .from(vehicleDocuments)
+    .innerJoin(vehicles, eq(vehicleDocuments.vehicleId, vehicles.id))
+    .where(and(eq(vehicleDocuments.userId, userId), isNull(vehicles.deletedAt)));
+  for (const { document, vehicle } of rows) {
+    await syncRenewalTask(userId, document, todayKey, vehicle);
+  }
+}
+
+/** The day a paper's renewal task appears, for the card. */
+export function renewalWindowStart(expiresOn: string): string {
+  return format(addDays(parseISO(expiresOn), -RENEW_WITHIN_DAYS), 'yyyy-MM-dd');
 }
 
 async function clearDocumentReminders(userId: string, documentId: string) {

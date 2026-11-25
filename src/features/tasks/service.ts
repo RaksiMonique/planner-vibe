@@ -11,8 +11,10 @@ import {
   projects,
   taskDependencies,
   tasks,
+  vehicleDocuments,
 } from '@/db/schema';
 import { pickLinkedGoal } from '@/features/goals/linked-goal';
+import { documentStatus } from '@/features/vehicles/status';
 import { saveEntry } from '@/features/journal/service';
 import type { JournalEntry } from '@/features/journal/queries';
 import { NotFoundError, ValidationError } from '@/lib/errors';
@@ -309,10 +311,33 @@ export async function updateTask(
   return row;
 }
 
+export const RENEWAL_NOT_DONE =
+  'Enter the new expiry date on the Vehicles page first. This task closes itself once the paper is more than three months from running out.';
+
+/**
+ * A task that renews a vehicle paper (8.24) is done when the paper is, not
+ * when it is ticked: it stays open until the document carries a date more
+ * than three months away. A paper that no longer exists frees the task.
+ */
+async function assertRenewalDone(userId: string, task: Task, todayKey: string) {
+  if (!task.vehicleDocumentId) return;
+  const [doc] = await db
+    .select({ expiresOn: vehicleDocuments.expiresOn })
+    .from(vehicleDocuments)
+    .where(
+      and(eq(vehicleDocuments.userId, userId), eq(vehicleDocuments.id, task.vehicleDocumentId))
+    )
+    .limit(1);
+  if (doc && documentStatus(doc.expiresOn, todayKey).state !== 'ok') {
+    throw new ValidationError(RENEWAL_NOT_DONE);
+  }
+}
+
 /** Marks done and, for a repeating task, creates the next occurrence (instructions.md 5.4). */
 export async function completeTask(userId: string, id: string, ctx: TaskContext): Promise<Task> {
   const current = await getTaskOrThrow(userId, id);
   if (current.status === 'done') return current;
+  await assertRenewalDone(userId, current, ctx.todayKey);
   const [row] = await db
     .update(tasks)
     .set({ status: 'done', completedAt: new Date() })

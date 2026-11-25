@@ -547,6 +547,20 @@ export function TaskSheet(props: TaskSheetProps) {
             )}
           </div>
         </form>
+        {task?.vehicleDocumentId && (
+          <section className="border-t p-4" data-slot="sheet-renewal">
+            <h3 className="tracking-eyebrow text-muted-foreground mb-2 text-xs uppercase">
+              Renewal
+            </h3>
+            <p className="text-sm">
+              This task renews a vehicle paper. It closes itself once the paper has a new date more
+              than three months away.{' '}
+              <Link href="/vehicles" className="text-primary link">
+                Enter the new date on the Vehicles page.
+              </Link>
+            </p>
+          </section>
+        )}
         {task && stuck && (
           <section className="border-t p-4" data-slot="sheet-stuck">
             <h3 className="tracking-eyebrow text-muted-foreground mb-2 text-xs uppercase">

@@ -58,7 +58,7 @@ test('a vehicle tracks the expiry of its papers', async ({ page }) => {
   await expect(fitnessRow).toContainText('Expired yesterday');
   await expect(fitnessRow).toHaveAttribute('data-state', 'expired');
 
-  // Registration next year: fine, and a custom paper joins the list.
+  // A paper more than three months out says nothing, and a custom paper joins the list.
   await card.getByRole('button', { name: 'Other document' }).click();
   const other = page.getByRole('dialog', { name: 'New document' });
   await other.getByLabel('Document').fill('Road tax');
@@ -66,21 +66,39 @@ test('a vehicle tracks the expiry of its papers', async ({ page }) => {
   await other.getByRole('button', { name: 'Save date' }).click();
   await expect(other).toBeHidden();
   const taxRow = card.locator('[data-slot="document-row"]', { hasText: 'Road tax' });
-  await expect(taxRow).toContainText(/Expires in \d+ months/);
   await expect(taxRow).toHaveAttribute('data-state', 'ok');
+  await expect(taxRow.locator('[data-slot="badge"]')).toHaveCount(0);
+  await expect(taxRow.getByRole('button', { name: 'Renew' })).toHaveCount(0);
 
   // The page sums it up.
-  await expect(page.locator('[data-slot="vehicle-summary"]')).toContainText('expired');
+  await expect(page.locator('[data-slot="vehicle-summary"]')).toContainText(/\d+ expired/);
 
-  // Renewing moves it out of the red.
-  await fitnessRow.getByRole('button', { name: `Edit Fitness for ${label}` }).click();
-  const edit = page.getByRole('dialog', { name: 'Edit Fitness' });
-  await edit.getByLabel('Expires on').fill(daysFromNow(365));
-  await edit.getByRole('button', { name: 'Save changes' }).click();
-  await expect(edit).toBeHidden();
-  await expect(fitnessRow).toHaveAttribute('data-state', 'ok');
+  // Each paper within three months has a renewal task that cannot be ticked off by hand.
+  await page.goto('/tasks');
+  const renewTitle = `Renew Fitness for ${label}`;
+  await expect(page.getByText(renewTitle).first()).toBeVisible();
+  await expect(page.getByText(`Renew Insurance for ${label}`).first()).toBeVisible();
+  await expect(page.getByText(`Renew Road tax for ${label}`)).toHaveCount(0);
+  const tick = page.getByRole('checkbox', { name: `Complete ${renewTitle}` }).first();
+  await tick.click();
+  await expect(
+    page.getByText(/Enter the new expiry date on the Vehicles page first/).first()
+  ).toBeVisible();
+  await expect(tick).not.toBeChecked();
 
-  // Search finds the vehicle by its plate.
+  // Renewing with a date further than three months out closes the task.
   await page.goto('/vehicles');
-  await expect(card).toBeVisible();
+  await fitnessRow.getByRole('button', { name: 'Renew' }).click();
+  const renew = page.getByRole('dialog', { name: 'Renew Fitness' });
+  await expect(renew.getByLabel('New expiry date')).toHaveValue('');
+  await renew.getByLabel('New expiry date').fill(daysFromNow(365));
+  await renew.getByRole('button', { name: 'Save new date' }).click();
+  await expect(renew).toBeHidden();
+  await expect(fitnessRow).toHaveAttribute('data-state', 'ok');
+  await expect(fitnessRow.locator('[data-slot="badge"]')).toHaveCount(0);
+
+  await page.goto('/tasks');
+  await expect(page.getByText(renewTitle)).toHaveCount(0);
+  await page.goto('/tasks?done=1');
+  await expect(page.getByText(renewTitle).first()).toBeVisible();
 });

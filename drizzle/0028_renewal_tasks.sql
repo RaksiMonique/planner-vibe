@@ -1,0 +1,3 @@
+ALTER TABLE "planner"."tasks" ADD COLUMN "vehicle_document_id" uuid;--> statement-breakpoint
+ALTER TABLE "planner"."tasks" ADD CONSTRAINT "tasks_vehicle_document_id_vehicle_documents_id_fk" FOREIGN KEY ("vehicle_document_id") REFERENCES "planner"."vehicle_documents"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+CREATE INDEX "tasks_vehicle_document_idx" ON "planner"."tasks" USING btree ("vehicle_document_id");

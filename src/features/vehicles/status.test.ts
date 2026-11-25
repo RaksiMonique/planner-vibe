@@ -11,20 +11,25 @@ describe('documentStatus', () => {
     });
     expect(documentStatus('2026-11-01', today).wording).toBe('Expired 23 days ago');
   });
-  it('is due within thirty days, including today', () => {
+  it('needs renewing within three months, including today', () => {
     expect(documentStatus('2026-11-24', today)).toMatchObject({
       state: 'due',
       wording: 'Expires today',
     });
     expect(documentStatus('2026-11-25', today).wording).toBe('Expires tomorrow');
-    expect(documentStatus('2026-12-24', today)).toMatchObject({ state: 'due', days: 30 });
-  });
-  it('is fine beyond thirty days and rounds long waits to months', () => {
-    expect(documentStatus('2026-12-25', today)).toMatchObject({
-      state: 'ok',
-      wording: 'Expires in 31 days',
+    expect(documentStatus('2026-12-24', today)).toMatchObject({
+      state: 'due',
+      wording: 'Expires in 30 days',
     });
-    expect(documentStatus('2027-05-24', today).wording).toBe('Expires in 6 months');
+    expect(documentStatus('2027-02-22', today)).toMatchObject({
+      state: 'due',
+      days: 90,
+      wording: 'Expires in 3 months',
+    });
+  });
+  it('says nothing beyond three months', () => {
+    expect(documentStatus('2027-02-23', today)).toEqual({ state: 'ok', days: 91, wording: '' });
+    expect(documentStatus('2027-11-24', today).wording).toBe('');
   });
 });
 

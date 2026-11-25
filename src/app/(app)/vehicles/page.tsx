@@ -7,7 +7,8 @@ import { getPreferences } from '@/features/settings/service';
 import { VehicleCard } from '@/features/vehicles/components/vehicle-card';
 import { VehicleFormDialog } from '@/features/vehicles/components/vehicle-form-dialog';
 import { listVehicles } from '@/features/vehicles/queries';
-import { documentStatus, WARN_DAYS } from '@/features/vehicles/status';
+import { ensureRenewalTasks } from '@/features/vehicles/service';
+import { documentStatus } from '@/features/vehicles/status';
 import { requireUser } from '@/lib/auth';
 import { toDateKey, todayInZone } from '@/lib/dates';
 import { cn } from '@/lib/utils';
@@ -17,6 +18,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function VehiclesPage() {
   const user = await requireUser();
+  // Renewal tasks open the moment a paper comes within three months, not only when the cron runs.
+  await ensureRenewalTasks(user.id);
   const [segments, prefs, vehicles] = await Promise.all([
     listSegments(user.id),
     getPreferences(user.id),
@@ -45,7 +48,8 @@ export default async function VehiclesPage() {
     <>
       <PageHeader
         title="Vehicles"
-        description={`Each vehicle and the dates its papers run out: insurance, fitness, registration, service and anything else. A document counts as due ${WARN_DAYS} days before it expires, and reminders go out a month before, a week before and on the day.`}
+        description="Each vehicle and the dates its papers run out: insurance, fitness, registration, service and anything else. Three months before a paper expires a task to renew it joins your list and stays until you enter the new date here; reminders go out a month before, a week before and on the day."
+
         actions={newDialog}
       />
       {vehicles.length === 0 ? (
@@ -70,12 +74,12 @@ export default async function VehiclesPage() {
           >
             {expired === 0 && due === 0
               ? 'Everything is in date.'
-              : [
+              : `${[
                   expired > 0 && `${expired} expired`,
-                  due > 0 && `${due} due within ${WARN_DAYS} days`,
+                  due > 0 && `${due} to renew within three months`,
                 ]
                   .filter(Boolean)
-                  .join(' · ')}
+                  .join(' · ')} · the renewal tasks are on your list`}
           </p>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {vehicles.map((v) => (

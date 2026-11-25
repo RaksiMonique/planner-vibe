@@ -32,6 +32,7 @@ export * from './reminders';
 export * from './scheduling';
 export * from './system';
 export * from './tracking';
+export * from './vehicles';
 export * from './vision';
 export * from './wellness';
 export * from './work';

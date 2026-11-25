@@ -51,6 +51,7 @@ const ROUTES: Array<[string, RegExp]> = [
   // Release 6
   ['/settings/integrations', /integrations/i],
   ['/analytics', /analytics/i],
+  ['/vehicles', /vehicles/i],
 ];
 
 for (const [route, heading] of ROUTES) {

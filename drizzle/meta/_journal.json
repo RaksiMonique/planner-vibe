@@ -183,6 +183,20 @@
       "when": 1795531975763,
       "tag": "0025_routine_cadence",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1795579217203,
+      "tag": "0026_vehicles",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1795579571698,
+      "tag": "0027_vehicle_tables",
+      "breakpoints": true
     }
   ]
 }

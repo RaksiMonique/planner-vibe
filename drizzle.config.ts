@@ -30,6 +30,7 @@ export default defineConfig({
     './src/db/schema/work.ts',
     './src/db/schema/finance.ts',
     './src/db/schema/integrations.ts',
+    './src/db/schema/vehicles.ts',
   ],
   out: './drizzle',
   // In development the planner shares a Supabase project with another team

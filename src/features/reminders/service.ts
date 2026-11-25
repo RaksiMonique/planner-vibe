@@ -11,8 +11,11 @@ import {
   routines,
   tasks,
   timeBlocks,
+  vehicleDocuments,
+  vehicles,
 } from '@/db/schema';
 import { getPreferences } from '@/features/settings/service';
+import { documentStatus, vehicleLabel } from '@/features/vehicles/status';
 import { listRemindersFor, type Reminder } from './queries';
 import {
   presetForReminder,
@@ -186,6 +189,28 @@ async function describeEntity(
         .limit(1);
       if (!row) return null;
       return { title: row.name, body: 'Routine', href: '/routines' };
+    }
+    case 'vehicle_document': {
+      const [row] = await db
+        .select({ document: vehicleDocuments, vehicle: vehicles })
+        .from(vehicleDocuments)
+        .innerJoin(vehicles, eq(vehicleDocuments.vehicleId, vehicles.id))
+        .where(
+          and(
+            eq(vehicleDocuments.userId, userId),
+            eq(vehicleDocuments.id, r.entityId),
+            isNull(vehicles.deletedAt)
+          )
+        )
+        .limit(1);
+      if (!row) return null;
+      const todayKey = formatInTimeZone(new Date(), timeZone, 'yyyy-MM-dd');
+      const status = documentStatus(row.document.expiresOn, todayKey);
+      return {
+        title: `${row.document.kind} for ${vehicleLabel(row.vehicle)}`,
+        body: `${status.wording}, ${day(row.document.expiresOn)}`,
+        href: '/vehicles',
+      };
     }
     case 'time_block': {
       const [b] = await db

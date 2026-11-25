@@ -23,6 +23,7 @@ export const SEARCH_TYPES = [
   'gift',
   'vision_board',
   'product',
+  'vehicle',
 ] as const;
 
 export type SearchType = (typeof SEARCH_TYPES)[number];
@@ -46,6 +47,7 @@ export const TYPE_LABELS: Record<SearchType, string> = {
   gift: 'Gifts',
   vision_board: 'Vision boards',
   product: 'Self-care products',
+  vehicle: 'Vehicles',
 };
 
 export type SearchHit = {
@@ -111,6 +113,8 @@ export function hrefFor(hit: { type: SearchType; id: string; extra?: string | nu
       return `/vision-boards/${id}`;
     case 'product':
       return '/wellness/self-care';
+    case 'vehicle':
+      return '/vehicles';
   }
 }
 

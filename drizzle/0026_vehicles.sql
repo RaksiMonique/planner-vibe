@@ -1,0 +1,2 @@
+ALTER TYPE "planner"."reminder_entity" ADD VALUE 'vehicle_document';--> statement-breakpoint
+ALTER TABLE "planner"."user_preferences" ALTER COLUMN "enabled_modules" SET DEFAULT '{"planning":true,"life-segments":true,"faith":true,"study":true,"wellness":true,"habits":true,"routines":true,"time":true,"journal":true,"reviews":true,"meals":true,"media":true,"gifts":true,"vision-boards":true,"work":true,"notes":true,"important-info":true,"finance":true,"vehicles":true,"cycle-tracking":false}'::jsonb;

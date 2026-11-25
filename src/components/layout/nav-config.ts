@@ -13,6 +13,7 @@ import {
   Briefcase,
   CalendarClock,
   CalendarDays,
+  CarFront,
   ChartPie,
   Clapperboard,
   Clock,
@@ -157,6 +158,7 @@ export const navGroups: NavGroup[] = [
         release: 4,
         module: 'vision-boards',
       },
+      { label: 'Vehicles', href: '/vehicles', icon: CarFront, release: 6, module: 'vehicles' },
     ],
   },
   {

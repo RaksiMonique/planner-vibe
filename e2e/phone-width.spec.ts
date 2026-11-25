@@ -96,3 +96,43 @@ test('a long quote with long tags does not widen the quotes page', async ({ page
     expect(widths.beyond, `${route} elements past the right edge`).toBe(0);
   }
 });
+
+test('a long vehicle name and document reference do not widen the vehicles page', async ({
+  page,
+}) => {
+  const model = `Land Cruiser Prado VX Limited Edition Twin Turbo ${stamp}`;
+  await page.goto('/vehicles');
+  await page
+    .getByRole('button', { name: /new vehicle/i })
+    .first()
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'New vehicle' });
+  await dialog.getByLabel('Make').fill('Toyota');
+  await dialog.getByLabel('Model').fill(model);
+  await dialog.getByLabel('Licence plate').fill('LONGPLATE 99999');
+  await dialog.getByRole('button', { name: 'Add vehicle' }).click();
+  await expect(dialog).toBeHidden();
+  const label = `Toyota ${model}`;
+  const card = page.locator('[data-slot="vehicle-card"]', { hasText: label });
+  await card.getByRole('button', { name: `Add Insurance for ${label}` }).click();
+  const insurance = page.getByRole('dialog', { name: `Insurance for ${label}` });
+  await insurance.getByLabel('Expires on').fill('2030-01-31');
+  await insurance
+    .getByLabel('Reference')
+    .fill('POLICYNUMBERWITHOUTANYSPACESATALL-0000000000-9999999999');
+  await insurance.getByRole('button', { name: 'Save date' }).click();
+  await expect(insurance).toBeHidden();
+
+  await page.goto('/vehicles');
+  await page.waitForLoadState('networkidle').catch(() => {});
+  const widths = await page.evaluate(() => ({
+    scroll: document.documentElement.scrollWidth,
+    client: document.documentElement.clientWidth,
+    beyond: [...document.querySelectorAll('main *')].filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.right > window.innerWidth + 1;
+    }).length,
+  }));
+  expect(widths.scroll, '/vehicles scroll width').toBeLessThanOrEqual(widths.client);
+  expect(widths.beyond, '/vehicles elements past the right edge').toBe(0);
+});

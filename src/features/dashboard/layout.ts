@@ -42,6 +42,7 @@ export type DashboardCardKey =
   | 'media'
   | 'gifts'
   | 'vision'
+  | 'vehicles'
   | 'work-projects'
   | 'work-tasks'
   | 'work-hours'
@@ -329,6 +330,14 @@ export const DASHBOARD_CARDS: CardDefinition[] = [
     description: 'A glimpse of your current board',
     group: 'Lifestyle',
     module: 'vision-boards',
+    optional: true,
+  },
+  {
+    key: 'vehicles',
+    label: 'Vehicle papers',
+    description: 'Insurance, fitness and registration dates coming due',
+    group: 'Lifestyle',
+    module: 'vehicles',
     optional: true,
   },
   {

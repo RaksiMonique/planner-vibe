@@ -53,6 +53,7 @@ import { MealsDashboardCard } from '@/features/meals/components/meals-dashboard-
 import { GroceriesDashboardCard } from '@/features/meals/components/groceries-dashboard-card';
 import { MediaDashboardCard } from '@/features/media/components/media-dashboard-card';
 import { GiftsDashboardCard } from '@/features/gifts/components/gifts-dashboard-card';
+import { VehiclesDashboardCard } from '@/features/vehicles/components/vehicles-dashboard-card';
 import { VisionDashboardCard } from '@/features/vision/components/vision-dashboard-card';
 import { WorkProjectsDashboardCard } from '@/features/work/components/work-projects-dashboard-card';
 import { WorkTasksDashboardCard } from '@/features/work/components/work-tasks-dashboard-card';
@@ -153,6 +154,7 @@ export function Dashboard({
     media: one(<MediaDashboardCard {...cardProps} />),
     gifts: one(<GiftsDashboardCard {...cardProps} />),
     vision: one(<VisionDashboardCard {...cardProps} />),
+    vehicles: one(<VehiclesDashboardCard {...cardProps} />),
     'work-projects': one(<WorkProjectsDashboardCard {...cardProps} />),
     'work-tasks': one(<WorkTasksDashboardCard {...cardProps} />),
     'work-hours': one(<WorkHoursDashboardCard {...cardProps} />),

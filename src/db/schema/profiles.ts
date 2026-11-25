@@ -33,6 +33,7 @@ export const MODULE_KEYS = [
   'notes',
   'important-info',
   'finance',
+  'vehicles',
   /** Off by default (instructions.md 8.19). */
   'cycle-tracking',
 ] as const;

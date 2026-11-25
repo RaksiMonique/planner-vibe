@@ -10,6 +10,7 @@ export const reminderEntityEnum = planner.enum('reminder_entity', [
   'habit',
   'routine',
   'time_block',
+  'vehicle_document',
 ]);
 export const notificationKindEnum = planner.enum('notification_kind', ['reminder', 'system']);
 

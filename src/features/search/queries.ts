@@ -19,6 +19,7 @@ import {
   recipes,
   routines,
   tasks,
+  vehicles,
   visionBoards,
 } from '@/db/schema';
 import { hrefFor, isSearchType, type SearchHit, type SearchType } from './results';
@@ -182,6 +183,13 @@ const BRANCHES: Branch[] = [
     title: products.name,
     body: nothing,
     updatedAt: products.updatedAt,
+  },
+  {
+    type: 'vehicle',
+    table: vehicles,
+    title: sql`coalesce(nullif(${vehicles.name}, ''), ${join(vehicles.make, vehicles.model)})`,
+    body: join(vehicles.licensePlate, vehicles.notes),
+    updatedAt: vehicles.updatedAt,
   },
 ];
 
